@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v54 -->
+<!-- v55 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -503,7 +503,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
         <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:18px;">
           <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase;">Don't have access yet?</div>
-          <a href="https://whop.com/sports-card-counters" target="_blank" style="display:block;text-decoration:none;">
+          <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" style="display:block;text-decoration:none;">
             <div style="background:var(--green);border-radius:6px;padding:13px;text-align:center;cursor:pointer;">
               <span style="color:#000;font-size:13px;font-weight:900;letter-spacing:1px;text-transform:uppercase;">Get Access on Whop →</span>
             </div>
@@ -1680,7 +1680,7 @@ async function handleWhopCallback() {
     if (!result.has_access) {
       msg('re-msg', 'No active Whop membership found. Purchase access to continue.', 'error');
       setTimeout(() => {
-        window.open('https://whop.com/sports-card-counters', '_blank');
+        window.open('https://whop.com/checkout/plan_9sCCSYErzxWuE', '_blank');
       }, 1500);
       switchTab('register');
       return true;
@@ -1804,7 +1804,7 @@ async function doRegister() {
 
   if (!member) {
     g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
-    return msg('re-msg','No active Whop membership found for this email. <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--green);">Get access here</a>','error');
+    return msg('re-msg','No active Whop membership found for this email. <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" style="color:var(--green);">Get access here</a>','error');
   }
 
   g('btn-re').textContent='Creating account...';
