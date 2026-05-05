@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v55 -->
+<!-- v56 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -985,100 +985,78 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     </div>
 
-    <!-- GRADEIQ (ADMIN ONLY) -->
+    <!-- GRADEIQ ADMIN -->
     <div class="sec" id="sec-scanner">
+
+      <!-- HEADER -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
         <div>
           <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Scanner</h2>
-          <div style="font-size:12px;color:var(--text-muted);">Auto-scanned opportunities ranked by EV%. Last run: <span id="scanner-last-run">Never</span></div>
+          <div style="font-size:12px;color:var(--text-muted);">Last run: <span id="scanner-last-run">--</span></div>
         </div>
-        <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run Scanner Now</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run Scanner Now</button>
+        </div>
       </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Opps</div><div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div></div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div></div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div><div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div></div>
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Top EV%</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-topev">--</div></div>
+      <!-- STATS ROW -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Cards</div>
+          <div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div>
+          <div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sets Tracked</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-sets">--</div>
+        </div>
       </div>
+
+      <!-- SETS OVERVIEW -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;">Sets Overview</div>
+          <button class="btn-c" style="font-size:11px;padding:4px 10px;" onclick="loadSetsOverview()">&#8635; Refresh</button>
+        </div>
+        <div id="sc-sets-table">
+          <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;">Loading sets...</div>
+        </div>
+      </div>
+
+      <!-- FILTERS + CARD LIST -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;">
-
-          <!-- Player multi-select -->
-          <div class="ff" style="grid-column:1/-1;">
-            <label>Players <span style="font-size:10px;color:var(--text-muted);font-weight:400;">— type to search, click to add</span></label>
-            <div class="sc-tag-wrap-outer">
-              <div class="sc-tag-wrap" id="sc-tag-wrap" onclick="g('sc-player-input').focus()">
-                <div id="sc-tags"></div>
-                <input type="text" id="sc-player-input" class="sc-tag-input" placeholder="e.g. Caleb Williams..." oninput="scPlayerInput()" onkeydown="scPlayerKey(event)">
-              </div>
-              <div class="sc-suggestions" id="sc-suggestions" style="display:none;"></div>
-            </div>
-          </div>
-
-          <!-- Sport -->
-          <div class="ff"><label>Sport</label>
-            <select class="fi" id="sc-sport" onchange="filterScanner()" style="width:100%;">
-              <option value="">All Sports</option>
-              <option value="Baseball">Baseball</option>
-              <option value="Football">Football</option>
-              <option value="Basketball">Basketball</option>
-            </select>
-          </div>
-
-          <!-- Min Raw Price -->
-          <div class="ff"><label>Min Raw $</label>
-            <input class="fi" type="number" id="sc-min-price" placeholder="0" value="0" oninput="filterScanner()" style="width:100%;">
-          </div>
-
-          <!-- Max Raw Price -->
-          <div class="ff"><label>Max Raw $</label>
-            <input class="fi" type="number" id="sc-max-price" placeholder="No limit" oninput="filterScanner()" style="width:100%;">
-          </div>
-
-          <!-- EV% Slider -->
-          <div class="ff"><label>Min EV% <span id="sc-ev-label" style="color:var(--green);font-weight:700;">40%</span></label>
-            <input type="range" id="sc-ev-slider" min="0" max="300" step="5" value="40" oninput="updateEVSlider()" style="width:100%;accent-color:var(--green);">
-          </div>
-
-          <!-- Sort -->
-          <div class="ff"><label>Sort By</label>
-            <select class="fi" id="sc-sort" onchange="filterScanner()" style="width:100%;">
-              <option value="scc_score">SCC Score High→Low</option>
-              <option value="ev_pct">EV% High→Low</option>
-              <option value="ev_dollar">EV$ High→Low</option>
-              <option value="raw_price">Raw Price Low→High</option>
-            </select>
-          </div>
-
-          <!-- Volume Range -->
-          <div class="ff" style="grid-column:1/-1;">
-            <label>Sales Volume <span id="sc-vol-label" style="color:var(--amber);font-weight:700;">0 – Any</span></label>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
-              <span style="font-size:10px;color:var(--text-muted);min-width:20px;">0</span>
-              <div style="flex:1;position:relative;">
-                <input type="range" id="sc-vol-min" min="0" max="500" step="10" value="0" oninput="updateVolSlider()" style="width:100%;accent-color:var(--amber);">
-              </div>
-              <span style="font-size:10px;color:var(--text-muted);min-width:30px;">Max</span>
-              <div style="flex:1;position:relative;">
-                <input type="range" id="sc-vol-max" min="0" max="500" step="10" value="500" oninput="updateVolSlider()" style="width:100%;accent-color:var(--amber);">
-              </div>
-              <span style="font-size:10px;color:var(--text-muted);min-width:30px;">500+</span>
-            </div>
-          </div>
-
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <select class="fi" id="sc-sport" onchange="filterScanner()" style="min-width:130px;">
+            <option value="">All Sports</option>
+            <option value="Baseball">Baseball</option>
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+          <select class="fi" id="sc-decision-filter" onchange="filterScanner()" style="min-width:120px;">
+            <option value="BUY">BUY Only</option>
+            <option value="">All Decisions</option>
+            <option value="CAUTION">CAUTION</option>
+          </select>
+          <select class="fi" id="sc-sort" onchange="filterScanner()" style="min-width:150px;">
+            <option value="scc_score">IQ Score High→Low</option>
+            <option value="ev_pct">EV% High→Low</option>
+            <option value="ev_dollar">EV$ High→Low</option>
+            <option value="raw_price">Raw Price Low→High</option>
+          </select>
+          <input class="fi" type="text" id="sc-search" placeholder="Search player..." oninput="filterScanner()" style="flex:1;min-width:140px;">
           <span class="fcnt" id="sc-cnt"></span>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-a" style="font-size:11px;padding:5px 12px;" onclick="saveScannerFilter()">&#128190; Save Filter</button>
-            <button class="btn-c" style="font-size:11px;padding:5px 12px;" onclick="resetScannerFilters()">Reset</button>
-          </div>
         </div>
       </div>
       <div id="sc-list"></div>
-    </div>
 
+    </div>
     <!-- FINANCIALS -->
     <div class="sec" id="sec-financials" style="min-height:100px;">
 
@@ -2046,7 +2024,7 @@ function goSec(name,btn) {
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='gradeiq') loadGradeIQ();
-  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
+  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{filterScanner();loadSetsOverview();});}
   if (name==='help') renderHelp();
 }
 
@@ -5204,21 +5182,14 @@ function updateVolSlider(){
 
 function filterScanner(){
   const sport=(g('sc-sport')||{value:''}).value;
-  const sort=(g('sc-sort')||{value:'ev_pct'}).value;
-  const minPrice=parseFloat((g('sc-min-price')||{value:'0'}).value)||0;
-  const maxPrice=parseFloat((g('sc-max-price')||{value:''}).value)||Infinity;
-  const minEV=parseFloat((g('sc-ev-slider')||{value:'40'}).value)/100;
-  const minVol=parseInt((g('sc-vol-min')||{value:'0'}).value)||0;
-  const maxVolRaw=parseInt((g('sc-vol-max')||{value:'500'}).value)||500;
-  const maxVol=maxVolRaw>=500?Infinity:maxVolRaw;
+  const sort=(g('sc-sort')||{value:'scc_score'}).value;
+  const decision=(g('sc-decision-filter')||{value:'BUY'}).value;
+  const search=((g('sc-search')||{value:''}).value||'').toLowerCase().trim();
   SCANNER_FILTERED=SCANNER_DATA.filter(r=>{
-    const mp=!SC_SELECTED_PLAYERS.length||SC_SELECTED_PLAYERS.some(p=>(r.player||'').toLowerCase().includes(p.toLowerCase()));
     const ms=!sport||(r.sport||'')===sport;
-    const mPrice=(r.raw_price||0)>=minPrice&&(r.raw_price||0)<=maxPrice;
-    const mEV=(r.ev_pct||0)>=minEV;
-    const vol=r.sales_volume||0;
-    const mVol=vol>=minVol&&vol<=maxVol;
-    return mp&&ms&&mPrice&&mEV&&mVol;
+    const md=!decision||(r.decision||'')===decision;
+    const mq=!search||(r.player||'').toLowerCase().includes(search)||(r.set_name||'').toLowerCase().includes(search);
+    return ms&&md&&mq;
   });
   SCANNER_FILTERED.sort((a,b)=>
     sort==='scc_score'?(b.scc_score||0)-(a.scc_score||0):
@@ -5442,7 +5413,66 @@ async function deleteScannerEntry(id) {
   closeModal('scanner-edit-modal');filterScanner();toast('Entry deleted.');
 }
 
-async function runScanner(){
+async function loadSetsOverview() {
+  const el = document.getElementById('sc-sets-table');
+  if (!el) return;
+  el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;">Loading...</div>';
+
+  const { data, error } = await sb.from('ev_scanner')
+    .select('set_name, sport, decision, scanned_at, ev_pct')
+    .order('scanned_at', { ascending: false });
+
+  if (error || !data) { el.innerHTML = '<div style="color:#F87171;font-size:12px;padding:12px;">Error loading sets</div>'; return; }
+
+  // Group by set
+  const sets: Record<string, any> = {};
+  for (const r of data) {
+    if (!sets[r.set_name]) sets[r.set_name] = { set_name: r.set_name, sport: r.sport, total: 0, buys: 0, last_scan: r.scanned_at, ev_sum: 0 };
+    sets[r.set_name].total++;
+    if (r.decision === 'BUY') sets[r.set_name].buys++;
+    sets[r.set_name].ev_sum += r.ev_pct || 0;
+    if (r.scanned_at > sets[r.set_name].last_scan) sets[r.set_name].last_scan = r.scanned_at;
+  }
+
+  const rows = Object.values(sets).sort((a: any, b: any) => b.buys - a.buys);
+  const now = new Date();
+
+  if (!rows.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:12px;">No sets scanned yet.</div>'; return; }
+
+  el.innerHTML = '<div style="overflow-x:auto;">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+    '<thead><tr style="border-bottom:1px solid var(--border);">' +
+    '<th style="text-align:left;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Set</th>' +
+    '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Sport</th>' +
+    '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Cards</th>' +
+    '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">BUYs</th>' +
+    '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Last Scan</th>' +
+    '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Health</th>' +
+    '</tr></thead><tbody>' +
+    rows.map((s: any) => {
+      const scanDate = new Date(s.last_scan);
+      const daysSince = Math.floor((now.getTime() - scanDate.getTime()) / (1000 * 60 * 60 * 24));
+      const health = daysSince <= 7 ? { label: 'Fresh', color: 'var(--green)' }
+        : daysSince <= 30 ? { label: 'Good', color: 'var(--amber)' }
+        : { label: 'Stale', color: '#F87171' };
+      const setShort = s.set_name.replace(/^(Baseball|Football|Basketball) Cards /i, '');
+      return '<tr style="border-bottom:1px solid var(--border);">' +
+        '<td style="padding:8px;color:var(--text);font-weight:600;">' + setShort + '</td>' +
+        '<td style="padding:8px;text-align:center;color:var(--text-muted);">' + (s.sport || '--') + '</td>' +
+        '<td style="padding:8px;text-align:center;color:var(--text);">' + s.total + '</td>' +
+        '<td style="padding:8px;text-align:center;font-weight:700;color:var(--green);">' + s.buys + '</td>' +
+        '<td style="padding:8px;text-align:center;color:var(--text-muted);">' + scanDate.toLocaleDateString('en-US', {month:'short',day:'numeric'}) + '</td>' +
+        '<td style="padding:8px;text-align:center;"><span style="font-size:10px;font-weight:700;color:' + health.color + ';">' + health.label + '</span></td>' +
+        '</tr>';
+    }).join('') +
+    '</tbody></table></div>';
+
+  // Update sets count stat
+  const scSets = document.getElementById('sc-sets');
+  if (scSets) scSets.textContent = String(rows.length);
+}
+
+
   if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
   toast('Scanner queued - results will appear in a few minutes. Check back shortly!');
   try{
