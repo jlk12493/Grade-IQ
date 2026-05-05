@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v56 -->
+<!-- v57 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -5472,7 +5472,7 @@ async function loadSetsOverview() {
   if (scSets) scSets.textContent = String(rows.length);
 }
 
-
+async function runScanner(){
   if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
   toast('Scanner queued - results will appear in a few minutes. Check back shortly!');
   try{
