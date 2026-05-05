@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v57 -->
+<!-- v58 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -5434,7 +5434,7 @@ async function loadSetsOverview() {
     if (r.scanned_at > sets[r.set_name].last_scan) sets[r.set_name].last_scan = r.scanned_at;
   }
 
-  const rows = Object.values(sets).sort((a: any, b: any) => b.buys - a.buys);
+  const rows = Object.values(sets).sort(function(a, b) { return b.buys - a.buys; });
   const now = new Date();
 
   if (!rows.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:12px;">No sets scanned yet.</div>'; return; }
@@ -5449,7 +5449,7 @@ async function loadSetsOverview() {
     '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Last Scan</th>' +
     '<th style="text-align:center;padding:6px 8px;color:var(--text-muted);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;">Health</th>' +
     '</tr></thead><tbody>' +
-    rows.map((s: any) => {
+    rows.map(function(s) {
       const scanDate = new Date(s.last_scan);
       const daysSince = Math.floor((now.getTime() - scanDate.getTime()) / (1000 * 60 * 60 * 24));
       const health = daysSince <= 7 ? { label: 'Fresh', color: 'var(--green)' }
