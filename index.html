@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v52 -->
+<!-- v53 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -16,10 +16,10 @@
   --green:#B6FF00;--amber:#F59E0B;--blue:#3B82F6;--r:8px;
 }
 body.light-mode{
-  --black:#D0CBC4;--near-black:#C4BEB7;
-  --surface:#B8B2AB;--surface-2:#ADA79F;--surface-3:#A29C94;
-  --border:#8A8480;--text:#111111;--text-2:#2A2A2A;--text-muted:#4A4540;
-  --green:#3A7000;
+  --black:#F5F5F5;--near-black:#EBEBEB;
+  --surface:#FFFFFF;--surface-2:#F5F5F5;--surface-3:#EBEBEB;
+  --border:#D0D0D0;--text:#111111;--text-2:#333333;--text-muted:#777777;
+  --green:#2D6000;
 }
 
 /* Light mode — force ALL text dark */
@@ -31,10 +31,10 @@ body.light-mode .btn-a,
 body.light-mode .btn-p,
 body.light-mode .auth-tab.active,
 body.light-mode .pbtn.active { color: #fff; }
-body.light-mode .ntab.active { color: #3A7000; }
-body.light-mode .kval.g { color: #3A7000; }
+body.light-mode .ntab.active { color: #2D6000; }
+body.light-mode .kval.g { color: #2D6000; }
 body.light-mode .kval.r { color: var(--red); }
-body.light-mode .dtbl td.gn { color: #3A7000; }
+body.light-mode .dtbl td.gn { color: #2D6000; }
 body.light-mode .dtbl td.rd { color: #CC2200; }
 body.light-mode .text-muted,
 body.light-mode .ksub,
@@ -46,18 +46,18 @@ body.light-mode .auth-note { color: #777066; }
 
 /* Backgrounds */
 body.light-mode { background: var(--black); }
-body.light-mode .hdr { background: #DDD9D4; border-bottom: 3px solid var(--green); }
-body.light-mode .hdr-top { background: var(--green); }
-body.light-mode #auth-screen { background: #C4BEB7; }
+body.light-mode .hdr { background: #FFFFFF; border-bottom: 3px solid #2D6000; }
+body.light-mode .hdr-top { background: #2D6000; }
+body.light-mode #auth-screen { background: #EBEBEB; }
 body.light-mode .auth-card,
 body.light-mode .modal,
 body.light-mode .panel,
 body.light-mode .kcard,
 body.light-mode .bcard,
-body.light-mode .aform { background: #B8B2AB; border-color: #8A8480; }
+body.light-mode .aform { background: #FFFFFF; border-color: #D0D0D0; }
 body.light-mode .auth-tabs { background: #DDD9D4; }
 body.light-mode .auth-tab { color: #777066; }
-body.light-mode .auth-tab.active { background: var(--green); color: #000; }
+body.light-mode .auth-tab.active { background: #2D6000; color: #FFFFFF; }
 
 /* Inputs and selects */
 body.light-mode input,
@@ -76,15 +76,15 @@ body.light-mode .gen-code-input {
 }
 body.light-mode input::placeholder,
 body.light-mode textarea::placeholder { color: #AAA09A; }
-body.light-mode select option { background: #B8B2AB; color: #111111; }
+body.light-mode select option { background: #FFFFFF; color: #111111; }
 
 /* Tables */
 body.light-mode .dtbl thead { background: #DDD9D4; }
-body.light-mode .dtbl th { color: #666; border-bottom-color: var(--green); }
+body.light-mode .dtbl th { color: #555; border-bottom-color: #2D6000; }
 body.light-mode .dtbl td { color: #3A3A3A; border-bottom-color: #D5D0CB; }
 body.light-mode .dtbl tr:hover td { background: rgba(0,0,0,.03); }
-body.light-mode .stbl th { color: #333; border-bottom-color: #8A8480; }
-body.light-mode .stbl td { color: #111111; border-bottom-color: #A8A39D; }
+body.light-mode .stbl th { color: #555; border-bottom-color: #D0D0D0; }
+body.light-mode .stbl td { color: #333333; border-bottom-color: #E0E0E0; }
 
 /* Buttons */
 body.light-mode .btn-out,
@@ -102,7 +102,7 @@ body.light-mode .ntab { color: #666; }
 body.light-mode .ntab:hover { color: #1A1A1A; background: #DDD9D4; }
 
 /* Misc */
-body.light-mode .defbox { background: #E8E4DF; border-left-color: var(--green); }
+body.light-mode .defbox { background: #F5F5F5; border-left-color: #2D6000; }
 body.light-mode .code-row,
 body.light-mode .user-row { background: #E8E4DF; border-color: #C8C4BF; }
 body.light-mode #toast { background: #F0EDE9; border-color: #C8C4BF; }
@@ -110,7 +110,7 @@ body.light-mode .import-drop { background: #E8E4DF; border-color: #C8C4BF; }
 body.light-mode .import-preview { background: #E8E4DF; border-color: #C8C4BF; }
 body.light-mode .scan-area { background: #E8E4DF; border-color: #C8C4BF; }
 body.light-mode .pbtn { background: #E8E4DF; border-color: #C8C4BF; color: #555; }
-body.light-mode .pbtn.active { background: var(--green); border-color: var(--green); color: #000; }
+body.light-mode .pbtn.active { background: #2D6000; border-color: #2D6000; color: #FFFFFF; }
 body.light-mode .modal-bg { background: rgba(0,0,0,.5); }
 body.light-mode #bl-preview,
 body.light-mode #qa-ev-preview { background: #E8E4DF; border-color: #C8C4BF; }
