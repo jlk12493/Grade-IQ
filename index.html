@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v53 -->
+<!-- v54 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -493,14 +493,23 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
 
       <div id="tab-register" style="display:none;">
-        <div style="background:rgba(204,0,0,.08);border:1px solid rgba(204,0,0,.2);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+        <div style="background:rgba(182,255,0,.06);border:1px solid rgba(182,255,0,.2);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--text-muted);line-height:1.6;">
           Use the <strong style="color:var(--text);">same email</strong> as your Whop membership to register.
         </div>
         <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com" autocomplete="email"></div>
         <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters" autocomplete="new-password"></div>
         <button class="btn-p" id="btn-re" onclick="doRegister()">Create Account</button>
         <div class="amsg" id="re-msg"></div>
-        <div class="auth-note">No membership yet? <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--green);">Get access on Whop →</a></div>
+
+        <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:18px;">
+          <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase;">Don't have access yet?</div>
+          <a href="https://whop.com/sports-card-counters" target="_blank" style="display:block;text-decoration:none;">
+            <div style="background:var(--green);border-radius:6px;padding:13px;text-align:center;cursor:pointer;">
+              <span style="color:#000;font-size:13px;font-weight:900;letter-spacing:1px;text-transform:uppercase;">Get Access on Whop →</span>
+            </div>
+          </a>
+          <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px;">Subscribe on Whop, then come back here to register.</div>
+        </div>
       </div>
     </div>
   </div>
