@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v63 -->
+<!-- v65 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -4339,425 +4339,194 @@ var GR_PARSED_DATA = [];
 
 
 function previewGemRateCSV(){
-  const file=g('gr-csv').files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const text=e.target.result;
-    const lines=text.split('\n').filter(l=>l.trim());
-    let dataStart=0;
-    for(let i=0;i<Math.min(5,lines.length);i++){
-      if(lines[i].includes('Gemrate_id')||lines[i].includes('Name')){dataStart=i+1;break;}
-    }
-    GR_PARSED_DATA=[];
-    for(let i=dataStart;i<lines.length;i++){
-      const cols=parseCSVLine(lines[i]);
-      if(!cols||cols.length<10)continue;
-      const player=(cols[2]||'').trim(),parallel=(cols[3]||'').trim();
-      const cardNo=(cols[4]||'').trim(),cardDesc=(cols[5]||'').trim();
-      const gems=parseInt((cols[6]||'0').replace(/,/g,''))||0;
-      const total=parseInt((cols[7]||'0').replace(/,/g,''))||0;
-      const gemRate=parseFloat((cols[8]||'0%').replace('%','').trim())/100||0;
-      const gmMonth=cols[9]?parseFloat((cols[9]||'').replace('%','').trim())/100:null;
-      const certUrl=(cols[17]||'');
-      const certMatch=certUrl.match(/\/cert\/(\d+)\//);
-      if(!player||!cardNo||total<5)continue;
-      GR_PARSED_DATA.push({gemrate_id:(cols[0]||'').trim(),player,parallel,card_no:cardNo,
-        card_description:cardDesc,gems,total,gem_rate:gemRate,gem_rate_month:gmMonth,
-        psa_cert:certMatch?certMatch[1]:null,set_name:'',last_updated:new Date().toISOString()});
-    }
-    g('gr-preview').style.display='block';
-    g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name;
-    g('gr-import-btn').style.display='inline-block';
-    g('gr-status').textContent='';
-    // Only auto-detect if no set name already confirmed
-    const confirmedVal = (g('gr-confirmed-name')?g('gr-confirmed-name').value:'').trim();
-    if (!confirmedVal) {
-      const hintVal = (g('gr-hint')?g('gr-hint').value:'').trim();
-      if(hintVal){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hintVal);}
-    }
-  };
-  reader.readAsText(file);
-}
-function parseCSVLine(line){
-  const result=[];let current='';let inQuotes=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){inQuotes=!inQuotes;}
-    else if(ch===','&&!inQuotes){result.push(current);current='';}
-    else{current+=ch;}
-  }
-  result.push(current);return result;
-}
-async function detectSCPSetName(q){
-  // Never run detection if a set is already confirmed
-  const confirmedEl = g('gr-confirmed-name');
-  if (confirmedEl && confirmedEl.value.trim()) return;
-  try{
-    const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q='+encodeURIComponent(q),
-      {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}});
-    const data=await res.json();
-    const el=g('gr-scp-detect');
-    if(!el||!data.scp_set_name){if(g('gr-status'))g('gr-status').textContent='';return;}
-    const confirmed = g('gr-confirmed-name');
-    const allNames = data.all_names || [data.scp_set_name];
-    // If multiple names found show a select, otherwise just set the field
-    if (allNames.length > 1) {
-      el.style.display = 'block';
-      let h = '<div style="font-size:11px;color:var(--amber);margin-bottom:6px;">&#9888; Multiple found — pick one or edit above:</div>';
-      h += '<select class="fi" style="font-size:11px;" onchange="const c=g(\'gr-confirmed-name\');if(c){c.value=this.value;c.style.borderColor=\'var(--green)\';}"><option value="">-- select --</option>';
-      allNames.forEach(function(n){h+='<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>';});
-      h += '</select>';
-      el.innerHTML = h;
-    } else {
-      el.style.display = 'none';
-    }
-    if (confirmed && data.scp_set_name) {
-      confirmed.value = data.scp_set_name;
-      confirmed.style.borderColor = 'var(--green)';
-    }
-    if(g('gr-status'))g('gr-status').textContent='';
-  }catch(e){if(g('gr-status'))g('gr-status').textContent='';}
-}
-function grDropzoneClick(){g('gr-csv').click();}
-function grDragOver(e){e.preventDefault();const dz=g('gr-dropzone');if(dz){dz.style.borderColor='var(--red)';dz.style.background='rgba(204,0,0,.05)';}}
-function grDragLeave(e){const dz=g('gr-dropzone');if(dz){dz.style.borderColor='var(--border)';dz.style.background='var(--surface-2)';}}
-function grDrop(e){
-  e.preventDefault();grDragLeave(e);
-  const file=e.dataTransfer.files[0];
-  if(!file||!file.name.endsWith('.csv')){toast('Please drop a CSV file',true);return;}
-  const dt=new DataTransfer();dt.items.add(file);g('gr-csv').files=dt.files;previewGemRateCSV();
-}
-// ── IMPORTED SETS ──
-async function loadImportedSets() {
-  try {
-    const {data} = await sb.from('gem_rates')
-      .select('set_name')
-      .not('set_name', 'is', null);
-    
-    // Count by set name
-    const counts = {};
-    (data||[]).forEach(r => { counts[r.set_name] = (counts[r.set_name]||0) + 1; });
-    const sets = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
-    
-    const cnt = g('imported-sets-count');
-    if (cnt) cnt.textContent = sets.length + ' sets · ' + (data||[]).length + ' cards';
-    
-    renderImportedSets(sets, '');
-  } catch(e) { console.error('Imported sets error:', e); }
-}
-
-function renderImportedSets(sets, filter) {
-  const el = g('imported-sets-list');
-  if (!el) return;
-  const filtered = filter ? sets.filter(([name]) => name.toLowerCase().includes(filter.toLowerCase())) : sets;
-  if (!filtered.length) {
-    el.innerHTML = '<div style="color:var(--text-muted);padding:8px 0;">No sets found.</div>';
-    return;
-  }
-  el.innerHTML = filtered.map(([name, count]) =>
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
-    '<span style="font-size:12px;color:var(--text);">' + name + '</span>' +
-    '<span style="font-size:11px;color:var(--text-muted);background:var(--surface-2);padding:1px 7px;border-radius:10px;">' + count + ' cards</span>' +
-    '</div>'
-  ).join('');
-}
-
-var ALL_IMPORTED_SETS = [];
-async function loadImportedSetsFiltered() {
-  const {data} = await sb.from('gem_rates').select('set_name').not('set_name','is',null);
-  const counts = {};
-  (data||[]).forEach(r => { counts[r.set_name] = (counts[r.set_name]||0) + 1; });
-  ALL_IMPORTED_SETS = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
-  const cnt = g('imported-sets-count');
-  if (cnt) cnt.textContent = ALL_IMPORTED_SETS.length + ' sets · ' + (data||[]).length + ' cards';
-  filterImportedSets('');
-}
-
-function filterImportedSets(q) {
-  renderImportedSets(ALL_IMPORTED_SETS, q);
-}
-
-function toggleImportedSets() {
-  const body = g('imported-sets-body'), chev = g('imported-sets-chevron');
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
-  if (open) loadImportedSetsFiltered();
-}
-
-// ── SET REGISTRY ──
-var SET_REGISTRY = [];
-
-async function loadSetRegistry() {
-  try {
-    const {data} = await sb.from('set_registry').select('*').order('import_name');
-    SET_REGISTRY = data || [];
-    renderSetRegistry();
-    populateRegistryDropdown();
-  } catch(e) { console.error('Registry load error:', e); }
-}
-
-function renderSetRegistry() {
-  const el = g('registry-list');
-  const cnt = g('registry-count');
-  if (cnt) cnt.textContent = SET_REGISTRY.length + ' sets';
-  if (!el) return;
-  if (!SET_REGISTRY.length) {
-    el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No sets registered yet. Add your first set above.</div>';
-    return;
-  }
-  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);padding:4px 0;margin-bottom:4px;border-bottom:1px solid var(--border);">' +
-    '<span>Your Import Name</span><span>SCP Set Name</span><span></span></div>' +
-    SET_REGISTRY.map(r =>
-      '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
-      '<span style="font-size:12px;">' + r.import_name + '</span>' +
-      '<span style="font-size:11px;color:var(--text-muted);">' + r.scp_name + '</span>' +
-      '<button onclick="deleteSetMapping(' + r.id + ')" style="background:none;border:none;color:#F87171;cursor:pointer;font-size:13px;padding:0 4px;">&#10005;</button>' +
-      '</div>'
-    ).join('');
-}
-
-function populateRegistryDropdown() {
-  // No-op - autocomplete handles display
-}
-
-function filterRegistryDropdown(q) {
-  const results = g('gr-registry-results');
-  if (!results) return;
-  const filtered = q.trim()
-    ? SET_REGISTRY.filter(r =>
-        r.import_name.toLowerCase().includes(q.toLowerCase()) ||
-        r.scp_name.toLowerCase().includes(q.toLowerCase()))
-    : SET_REGISTRY.slice(0, 20); // Show first 20 when empty/focused
-
-  if (!filtered.length) {
-    results.innerHTML = '<div style="padding:10px;color:var(--text-muted);font-size:12px;">No sets found</div>';
-  } else {
-    results.innerHTML = filtered.map(function(r) {
-      var div = document.createElement('div');
-      div.style.cssText = 'padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);';
-      div.dataset.scp = r.scp_name;
-      div.dataset.imp = r.import_name;
-      div.onmousedown = function(){ pickRegistrySet(this); };
-      div.innerHTML = '<span style="color:var(--text);">' + r.import_name + '</span><span style="color:var(--text-muted);margin-left:6px;">→ ' + r.scp_name + '</span>';
-      return div.outerHTML;
-    }).join('');
-  }
-  results.style.display = 'block';
-}
-
-function pickRegistrySet(el) {
-  const scpName = el.dataset.scp;
-  const importName = el.dataset.imp;
-  const search = g('gr-registry-search');
-  if (search) search.value = importName;
-  const results = g('gr-registry-results');
-  if (results) results.style.display = 'none';
-  // Set the confirmed name field directly - this is the source of truth
-  const confirmed = g('gr-confirmed-name');
-  if (confirmed) {
-    confirmed.value = scpName;
-    confirmed.style.borderColor = 'var(--green)';
-  }
-}
-
-function grRegistrySelect(val) {
-  // Legacy - use gr-confirmed-name instead
-  const confirmed = g('gr-confirmed-name');
-  if (confirmed && val) confirmed.value = val;
-}
-
-function grConfirmedNameChanged(val) {
-  const confirmed = g('gr-confirmed-name');
-  if (confirmed) confirmed.style.borderColor = val.trim() ? 'var(--green)' : 'var(--border)';
-}
-
-// ── BULK SET LIST IMPORT ──
-var BULK_SETS = [];
-
-function bulkDragOver(e) {
-  e.preventDefault();
-  const dz = g('bulk-dropzone');
-  if(dz){dz.style.borderColor='var(--green)';dz.style.background='rgba(34,197,94,.05)';}
-}
-function bulkDragLeave(e) {
-  const dz = g('bulk-dropzone');
-  if(dz){dz.style.borderColor='var(--border)';dz.style.background='var(--surface-2)';}
-}
-function bulkDrop(e) {
-  e.preventDefault(); bulkDragLeave(e);
-  const file = e.dataTransfer.files[0];
-  if (!file || !file.name.endsWith('.csv')) { toast('Please drop a CSV file', true); return; }
-  const dt = new DataTransfer(); dt.items.add(file);
-  g('bulk-csv').files = dt.files;
-  parseBulkSetList();
-}
-
-function parseBulkSetList() {
-  const file = g('bulk-csv').files[0];
-  if (!file) return;
-  const year = (g('bulk-year').value || '').trim();
-  const sport = g('bulk-sport').value || 'Baseball';
-  if (!year) { toast('Please enter a year first', true); return; }
-
-  const reader = new FileReader();
+  var file = g('gr-csv') ? g('gr-csv').files[0] : null;
+  if(!file) return;
+  var reader = new FileReader();
   reader.onload = function(e) {
-    const lines = e.target.result.split('\n').filter(l => l.trim());
-    BULK_SETS = [];
+    var text = e.target.result;
+    var lines = text.split('\n').filter(function(l){return l.trim();});
+    GR_PARSED_DATA = [];
+    var skipped = 0;
 
-    // Parse set names from CSV (column index 1 = Name)
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCSVLine(lines[i]);
-      const name = (cols[1] || '').trim();
-      if (!name) continue;
-      BULK_SETS.push({
-        import_name: name,
-        hint: year + ' ' + name + ' ' + sport,
-        scp_name: '',
-        detecting: true
-      });
+    // ── DETECT FORMAT ──
+    // Player-based: has "Cat","Year","Set","Name" columns
+    // Set-based: has "Gemrate_id","Year","Name","Parallel" columns
+    var isPlayerBased = false;
+    var headerLine = '';
+    for(var i=0;i<Math.min(5,lines.length);i++){
+      var l = lines[i].toLowerCase();
+      if(l.includes('"cat"') || l.includes(',cat,') || (l.includes('year') && l.includes('set') && l.includes('name') && l.includes('parallel'))){
+        isPlayerBased = true;
+        headerLine = lines[i];
+        break;
+      }
+      if(l.includes('gemrate_id') || l.includes('name') && l.includes('gem rate')){
+        isPlayerBased = false;
+        headerLine = lines[i];
+        break;
+      }
     }
 
-    if (!BULK_SETS.length) { toast('No sets found in CSV', true); return; }
+    if(isPlayerBased){
+      // ── PLAYER-BASED FORMAT (Cat, Year, Set, Name, Parallel, Card#, Gems, Total, Gem Rate) ──
+      var dataStart = 0;
+      for(var i=0;i<Math.min(5,lines.length);i++){
+        var l = lines[i].toLowerCase();
+        if(l.includes('"cat"') || (l.includes('year') && l.includes('set') && l.includes('name'))){
+          dataStart = i+1; break;
+        }
+      }
 
-    // Show the table immediately
-    g('bulk-preview').style.display = 'block';
-    renderBulkTable();
+      // Hide the set name / sport fields - not needed for player-based
+      var setNameEl = g('gr-set-name');
+      var sportEl = g('gr-sport');
+      if(setNameEl) setNameEl.closest('.ff').style.display = 'none';
+      if(sportEl) sportEl.closest('.ff').style.display = 'none';
 
-    // Auto-detect SCP names one by one
-    detectBulkSets(year, sport);
+      for(var i=dataStart;i<lines.length;i++){
+        var cols = parseCSVLine(lines[i]);
+        if(!cols || cols.length < 9) continue;
+        var cat = (cols[1]||'').trim();
+        var year = (cols[2]||'').trim();
+        var setRaw = (cols[3]||'').trim();
+        var player = (cols[4]||'').trim();
+        var parallel = (cols[5]||'').trim();
+        var cardNo = (cols[6]||'').trim();
+        var gems = parseInt((cols[7]||'0').replace(/,/g,''))||0;
+        var total = parseInt((cols[8]||'0').replace(/,/g,''))||0;
+        var gemRateRaw = (cols[9]||'').replace('%','').trim();
+        var gemRate = parseFloat(gemRateRaw)/100||0;
+
+        // Skip empty rows
+        if(!player && !setRaw) continue;
+
+        // Handle multi-player cards - use first player listed
+        if(player.includes('/')){
+          player = player.split('/')[0].trim();
+        }
+
+        // Skip missing card numbers
+        if(!cardNo){skipped++;continue;}
+
+        // Skip very low population
+        if(total < 5){skipped++;continue;}
+
+        // Build full set name: "Basketball Cards 2011 SP Authentic"
+        var sportMap = {'baseball':'Baseball','football':'Football','basketball':'Basketball','hockey':'Hockey'};
+        var sport = sportMap[cat.toLowerCase()] || cat;
+        var fullSetName = sport + ' Cards ' + (year ? year+' ' : '') + setRaw;
+
+        var parallelClean = (parallel && parallel.toLowerCase() !== 'base') ? parallel : null;
+
+        GR_PARSED_DATA.push({
+          player: player,
+          parallel: parallelClean,
+          card_no: cardNo,
+          card_description: '',
+          gems: gems,
+          total: total,
+          gem_rate: gemRate,
+          gem_rate_month: null,
+          psa_cert: null,
+          set_name: fullSetName,
+          sport: sport,
+          year: year || null,
+          last_updated: new Date().toISOString()
+        });
+      }
+
+      // Show preview
+      var uniqueSets = new Set(GR_PARSED_DATA.map(function(r){return r.set_name;})).size;
+      var players = new Set(GR_PARSED_DATA.map(function(r){return r.player;})).size;
+      g('gr-preview').style.display = 'block';
+      g('gr-preview-text').innerHTML = '<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> across '+uniqueSets+' sets, '+players+' players'+(skipped?' &bull; <span style="color:var(--amber);">'+skipped+' skipped</span> (missing card #)':'');
+      g('gr-import-btn').style.display = 'inline-block';
+      g('gr-status').textContent = '';
+
+    } else {
+      // ── SET-BASED FORMAT (original gemrate.com set export) ──
+      var setNameEl = g('gr-set-name');
+      var sportEl = g('gr-sport');
+      if(setNameEl) setNameEl.closest('.ff').style.display = '';
+      if(sportEl) sportEl.closest('.ff').style.display = '';
+
+      var dataStart = 0;
+      for(var i=0;i<Math.min(5,lines.length);i++){
+        if(lines[i].includes('Gemrate_id')||lines[i].includes('Name')){dataStart=i+1;break;}
+      }
+      for(var i=dataStart;i<lines.length;i++){
+        var cols=parseCSVLine(lines[i]);
+        if(!cols||cols.length<10)continue;
+        var player=(cols[2]||'').trim(),parallel=(cols[3]||'').trim();
+        var cardNo=(cols[4]||'').trim(),cardDesc=(cols[5]||'').trim();
+        var gems=parseInt((cols[6]||'0').replace(/,/g,''))||0;
+        var total=parseInt((cols[7]||'0').replace(/,/g,''))||0;
+        var gemRate=parseFloat((cols[8]||'0%').replace('%','').trim())/100||0;
+        var gmMonth=cols[9]?parseFloat((cols[9]||'').replace('%','').trim())/100:null;
+        var certUrl=(cols[17]||'');
+        var certMatch=certUrl.match(/\/cert\/(\d+)\//);
+        if(!player||!cardNo||total<5)continue;
+        GR_PARSED_DATA.push({
+          gemrate_id:(cols[0]||'').trim(),player:player,
+          parallel:parallel&&parallel.toLowerCase()!=='base'?parallel:null,
+          card_no:cardNo,card_description:cardDesc,gems:gems,total:total,
+          gem_rate:gemRate,gem_rate_month:gmMonth,
+          psa_cert:certMatch?certMatch[1]:null,
+          set_name:'',last_updated:new Date().toISOString()
+        });
+      }
+      g('gr-preview').style.display='block';
+      g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name+' &bull; Enter set name above to import';
+      g('gr-import-btn').style.display='inline-block';
+      g('gr-status').textContent='';
+    }
   };
   reader.readAsText(file);
 }
 
-async function detectBulkSets(year, sport) {
-  const status = g('bulk-status');
-  for (let i = 0; i < BULK_SETS.length; i++) {
-    if (status) status.textContent = 'Detecting ' + (i+1) + '/' + BULK_SETS.length + '...';
-    const set = BULK_SETS[i];
-    try {
-      const res = await fetch(
-        'https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q=' + encodeURIComponent(set.hint),
-        {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}}
-      );
-      const data = await res.json();
-      set.scp_name = data.scp_set_name || '';
-      set.all_names = data.all_names || [];
-    } catch(e) {
-      set.scp_name = '';
-    }
-    set.detecting = false;
-    renderBulkTable();
-    // Small delay to avoid hammering SCP
-    await new Promise(r => setTimeout(r, 500));
-  }
-  if (status) status.textContent = 'Detection complete. Review and register.';
-}
 
-function renderBulkTable() {
-  const el = g('bulk-table');
-  if (!el) return;
-  el.innerHTML = BULK_SETS.map((s, i) =>
-    '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
-    '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;margin-bottom:' + (s.detecting?'0':'4px') + ';">' +
-    '<span style="font-size:12px;color:var(--text);font-weight:600;">' + s.import_name + '</span>' +
-    (s.detecting
-      ? '<span style="font-size:11px;color:var(--text-muted);">&#8987; Detecting...</span>'
-      : s.all_names && s.all_names.length > 1
-        ? '<select class="fi" style="font-size:11px;padding:3px 6px;" onchange="BULK_SETS[' + i + '].scp_name=this.value;g(\'bulk-custom-' + i + '\').value=this.value;">' +
-          s.all_names.map(n => '<option value="' + n.replace(/"/g,'&quot;') + '"' + (n===s.scp_name?' selected':'') + '>' + n + '</option>').join('') +
-          '</select>'
-        : '<span style="font-size:11px;color:' + (s.scp_name?'var(--green)':'var(--text-muted)') + ';">' + (s.scp_name||'Not detected') + '</span>'
-    ) +
-    '</div>' +
-    (!s.detecting
-      ? '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;">' +
-        '<span style="font-size:10px;color:var(--text-muted);">Custom name:</span>' +
-        '<input class="fi" id="bulk-custom-' + i + '" style="font-size:11px;padding:3px 6px;" ' +
-        'value="' + (s.scp_name||'').replace(/"/g,'&quot;') + '" ' +
-        'oninput="BULK_SETS[' + i + '].scp_name=this.value" ' +
-        'placeholder="Type custom SCP name to override...">' +
-        '</div>'
-      : '') +
-    '</div>'
-  ).join('');
-}
-
-async function registerAllSets() {
-  const toRegister = BULK_SETS.filter(s => s.scp_name && s.scp_name.trim());
-  if (!toRegister.length) { toast('No sets with SCP names to register', true); return; }
-  const status = g('bulk-status');
-  if (status) status.textContent = 'Registering ' + toRegister.length + ' sets...';
-
-  const rows = toRegister.map(s => ({import_name: s.import_name, scp_name: s.scp_name.trim()}));
-  const {error} = await sb.from('set_registry').upsert(rows, {onConflict: 'scp_name'});
-
-  if (error) {
-    toast('Error: ' + error.message, true);
-    if (status) status.textContent = 'Error: ' + error.message;
-  } else {
-    toast('Registered ' + toRegister.length + ' sets!');
-    if (status) status.textContent = '';
-    g('bulk-preview').style.display = 'none';
-    BULK_SETS = [];
-    loadSetRegistry();
-  }
-}
-
-async function deleteSetMapping(id) {
-  await sb.from('set_registry').delete().eq('id', id);
-  loadSetRegistry();
-}
-
-function toggleSetRegistry() {
-  const body = g('registry-body'), chev = g('registry-chevron');
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
-  if (open) loadSetRegistry();
-}
-
-function manualDetect(){
-  const hint = (g('gr-hint')?g('gr-hint').value:'').trim();
-  if (!hint) { toast('Type a set name hint first', true); return; }
-  // Clear confirmed name so detection can run
-  const confirmed = g('gr-confirmed-name');
-  if (confirmed) { confirmed.value = ''; confirmed.style.borderColor = 'var(--border)'; }
-  const det = g('gr-scp-detect');
-  if (det) det.style.display = 'none';
-  const regSearch = g('gr-registry-search');
-  if (regSearch) regSearch.value = '';
-  g('gr-status').textContent = 'Detecting...';
-  detectSCPSetName(hint);
-}
-
-function toggleGRImport(){
-  const body=g('gr-import-body'),chev=g('gr-chevron');
-  const open=body.style.display==='none';
-  body.style.display=open?'block':'none';
-  if(chev)chev.style.transform=open?'rotate(90deg)':'';
-  if(open) { loadSetRegistry(); loadGemRateCount(); }
-}
 async function importGemRateCSV(){
   if(!GR_PARSED_DATA.length){toast('No data to import',true);return;}
-  const setNameEl = g('gr-set-name');
-  const sportEl = g('gr-sport');
-  const setNameRaw = setNameEl ? setNameEl.value.trim() : '';
-  const sport = sportEl ? sportEl.value : 'Baseball';
+
+  var isPlayerBased = GR_PARSED_DATA.length>0 && GR_PARSED_DATA[0].set_name && GR_PARSED_DATA[0].set_name.length>0;
+
+  if(isPlayerBased){
+    g('gr-status').textContent='Importing '+GR_PARSED_DATA.length+' cards across multiple sets...';
+    g('gr-import-btn').disabled=true;
+    var bySet={};
+    GR_PARSED_DATA.forEach(function(r){if(!bySet[r.set_name])bySet[r.set_name]=[];bySet[r.set_name].push(r);});
+    var totalImported=0,totalErrors=0,setNames=Object.keys(bySet);
+    for(var s=0;s<setNames.length;s++){
+      var setName=setNames[s],cards=bySet[setName];
+      g('gr-status').textContent='Importing set '+(s+1)+'/'+setNames.length+': '+setName;
+      await sb.from('gem_rates').delete().eq('set_name',setName);
+      for(var i=0;i<cards.length;i+=50){
+        var chunk=cards.slice(i,i+50);
+        var res=await sb.from('gem_rates').insert(chunk);
+        if(res.error)totalErrors+=chunk.length;
+        else totalImported+=chunk.length;
+      }
+    }
+    g('gr-import-btn').disabled=false;
+    g('gr-status').textContent='';
+    toast('Imported '+totalImported+' gem rates across '+setNames.length+' sets'+(totalErrors?' ('+totalErrors+' errors)':'')+'!');
+    loadGemRateCount();
+    return;
+  }
+
+  var setNameEl=g('gr-set-name'),sportEl=g('gr-sport');
+  var setNameRaw=setNameEl?setNameEl.value.trim():'';
+  var sport=sportEl?sportEl.value:'Baseball';
   if(!setNameRaw){toast('Please enter a set name first',true);return;}
-
-  // Build full set name with sport prefix e.g. "Baseball Cards 2025 Topps Chrome"
-  const setName = sport + ' Cards ' + setNameRaw;
-
+  var setName=sport+' Cards '+setNameRaw;
   g('gr-status').textContent='Importing '+GR_PARSED_DATA.length+' cards...';
   g('gr-import-btn').disabled=true;
-  let imported=0,errors=0;
+  var imported=0,errors=0;
   await sb.from('gem_rates').delete().eq('set_name',setName);
-  for(let i=0;i<GR_PARSED_DATA.length;i+=50){
-    const chunk=GR_PARSED_DATA.slice(i,i+50).map(r=>({...r,set_name:setName,sport:sport}));
-    const {error}=await sb.from('gem_rates').insert(chunk);
-    if(error){g('gr-status').textContent='Error: '+error.message;errors+=chunk.length;}
+  for(var i=0;i<GR_PARSED_DATA.length;i+=50){
+    var chunk=GR_PARSED_DATA.slice(i,i+50).map(function(r){return Object.assign({},r,{set_name:setName,sport:sport});});
+    var res=await sb.from('gem_rates').insert(chunk);
+    if(res.error)errors+=chunk.length;
     else imported+=chunk.length;
     g('gr-status').textContent='Importing... '+imported+'/'+GR_PARSED_DATA.length;
   }
