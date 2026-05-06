@@ -4245,127 +4245,17 @@ function renderTopPicks() {
     var setShort=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
     var sccColor=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
     var evColor=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;" onclick="var s=document.getElementById('giq-search');if(s){s.value=''+encodeURIComponent(r.player||'')+'';filterGradeIQ();}">'
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
       +'<div style="font-size:10px;font-weight:700;color:'+sccColor+';margin-bottom:2px;">IQ '+(r.scc_score||'--')+'</div>'
       +'<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>'
       +'<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+setShort+(r.card_no?' #'+r.card_no:'')+(r.parallel?' · '+r.parallel:'')+'</div>'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;">'
         +'<span style="font-size:15px;font-weight:800;color:'+evColor+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</span>'
-        +'<span style="font-size:11px;color:var(--text-muted);">Buy &le; <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></span>'
+        +'<span style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></span>'
       +'</div>'
     +'</div>';
   }).join('');
 }
-
-function renderGradeIQ() {
-  var list=g('giq-list');
-  if(!list) return;
-  var buys=GRADEIQ_FILTERED;
-  if(!buys.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No signals match your filters</div><div style="font-size:12px;">Try adjusting the filters above</div></div>';return;}
-  var now=Date.now();
-  var html='';
-  for(var idx=0;idx<buys.length;idx++){
-    var r=buys[idx];
-    var setShort=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
-    var sccColor=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
-    var evColor=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    var cardId='giq-card-'+idx;
-    var bKey=encodeURIComponent((r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||''));
-    var isBookmarked=!!GIQ_BOOKMARKS[decodeURIComponent(bKey)];
-    var isNew=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
-    var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+setShort+' '+(r.card_no?'#'+r.card_no:'')+' raw -psa -bgs -sgc -cgc');
-    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_Sold=1&LH_Complete=1';
-    var parallelDisplay=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
-    html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
-    html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cardId+'">';
-    html+='<div style="min-width:36px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div><div style="font-size:15px;font-weight:800;color:'+sccColor+';line-height:1.2;">'+(r.scc_score||'--')+'</div></div>';
-    html+='<div style="flex:1;min-width:0;">';
-    html+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>';
-    if(isNew) html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>';
-    if(parallelDisplay) html+='<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+parallelDisplay+'</span>';
-    html+='</div>';
-    html+='<div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+setShort+(r.card_no?' #'+r.card_no:'')+'</div></div>';
-    html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
-    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+evColor+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div><div style="font-size:11px;color:var(--text-muted);">Buy &le; <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div></div>';
-    html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;" title="Find raw on eBay">&#128722;</a>';
-    html+='<button class="giq-bookmark'+(isBookmarked?' saved':'')+'" data-bkey="'+bKey+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(isBookmarked?'★':'☆')+'</button>';
-    html+='<span id="chev-'+cardId+'" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>';
-    html+='</div></div>';
-    html+='<div id="'+cardId+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
-    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
-    if(r.scc_score!=null) html+=giqCell('IQ Rating',String(r.scc_score),sccColor,true);
-    if(r.ev_pct) html+=giqCell('EV%',(r.ev_pct*100).toFixed(1)+'%',evColor,true);
-    if(r.ev_dollar!=null) html+=giqCell('EV$',f$(r.ev_dollar),(r.ev_dollar||0)>=0?'var(--green)':'#F87171',true);
-    if(r.raw_price!=null) html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
-    if(r.psa10_price!=null) html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
-    if(r.psa9_price!=null) html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
-    if(r.max_buy_40!=null) html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
-    html+='</div>';
-    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-    html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
-    html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
-    html+='</div></div></div>';
-  }
-  list.innerHTML=html;
-  list.querySelectorAll('[data-giqadd]').forEach(function(btn){
-    btn.addEventListener('click',function(e){e.stopPropagation();giqAddToInventory(parseInt(this.dataset.giqadd));});
-  });
-  try{localStorage.setItem('giq_last_visit',now.toString());}catch(e){}
-}
-
-function toggleGIQCard(el) {
-  var id=el.dataset.giqid;
-  var body=document.getElementById(id);
-  var chev=document.getElementById('chev-'+id);
-  if(!body) return;
-  var isOpen=body.style.display!=='none';
-  body.style.display=isOpen?'none':'';
-  if(chev) chev.style.transform=isOpen?'':'rotate(90deg)';
-}
-
-function giqCell(label,value,color,bold) {
-  return '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div><div style="font-size:'+(bold?'18':'14')+'px;font-weight:'+(bold?'800':'600')+';color:'+(color||'var(--text)')+';">'+value+'</div></div>';
-}
-
-function toggleGIQBookmark(key,btn) {
-  if(GIQ_BOOKMARKS[key]){delete GIQ_BOOKMARKS[key];btn.classList.remove('saved');btn.textContent='☆';}
-  else{GIQ_BOOKMARKS[key]=Date.now();btn.classList.add('saved');btn.textContent='★';}
-  try{localStorage.setItem('giq_bookmarks',JSON.stringify(GIQ_BOOKMARKS));}catch(e){}
-}
-
-function giqAddToInventory(idx) {
-  var r=GRADEIQ_FILTERED[idx];
-  if(!r) return toast('Card not found',true);
-  openQuickAdd();
-  setTimeout(function(){
-    if(r.player&&g('qa-player')) g('qa-player').value=r.player;
-    if(r.year&&g('qa-year')) g('qa-year').value=r.year;
-    if(r.sport&&g('qa-sport')) g('qa-sport').value=r.sport;
-    if(r.set_name){var sc=r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'').split(' ');if(g('qa-brand'))g('qa-brand').value=sc[0]||'';if(g('qa-set'))g('qa-set').value=sc.slice(1).join(' ')||'';}
-    if(r.parallel&&g('qa-parallel')) g('qa-parallel').value=r.parallel;
-    if(r.card_no&&g('qa-cno')) g('qa-cno').value=r.card_no;
-    if(r.psa10_price&&g('qa-p10')) g('qa-p10').value=r.psa10_price;
-    if(r.psa9_price&&g('qa-p9')) g('qa-p9').value=r.psa9_price;
-    if(g('qa-grade')) g('qa-grade').value=30;
-    if(g('qa-disp')) g('qa-disp').value='Grade';
-    qaCalcCost();qaCalcEV();qaShowStep(1);
-    toast('Card pre-filled — add your purchase price!');
-  },250);
-}
-
-function showTrialBanner() {
-  if(!CU||CU.email===ADMIN) return;
-  sb.from('profiles').select('created_at').eq('id',CU.id).single().then(function(res){
-    if(!res.data) return;
-    var created=new Date(res.data.created_at||CU.created_at);
-    var daysSince=Math.floor((new Date()-created)/86400000);
-    var daysLeft=30-daysSince;
-    var banner=g('giq-trial-banner');
-    var text=g('giq-trial-text');
-    if(banner&&daysLeft>0&&daysLeft<30){banner.style.display='flex';if(text)text.textContent='Free trial — Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}
-  });
-}
-
 
 function renderGradeIQ() {
   var buys = GRADEIQ_FILTERED;
