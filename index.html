@@ -1214,9 +1214,9 @@ async function doLogin() {
   const email = g('li-email').value.trim();
   const pw = g('li-pw').value;
   if (!email||!pw) return msg('li-msg','Please fill in all fields','error');
-  g('btn-li').disabled=true; g('btn-li').textContent='Signing in...';
+  if(g('btn-li')) g('btn-li').disabled=true; g('btn-li').textContent='Signing in...';
   const {data,error} = await sb.auth.signInWithPassword({email,password:pw});
-  g('btn-li').disabled=false; g('btn-li').textContent='Sign In';
+  if(g('btn-li')) g('btn-li').disabled=false; g('btn-li').textContent='Sign In';
   if (error) return msg('li-msg',error.message,'error');
   CU = data.user;
   await loadApp();
@@ -1227,17 +1227,17 @@ async function doRegister() {
   const pw = g('re-pw').value;
   if (!email||!pw) return msg('re-msg','Please fill in all fields','error');
   if (pw.length<6) return msg('re-msg','Password must be at least 6 characters','error');
-  g('btn-re').disabled=true; g('btn-re').textContent='Checking membership...';
+  if(g('btn-re')) g('btn-re').disabled=true; g('btn-re').textContent='Checking membership...';
   const {data:member} = await sb.from('whop_members').select('email,status').eq('email',email).eq('status','active').maybeSingle();
   if (!member) {
-    g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
+    if(g('btn-re')) g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
     return msg('re-msg','No active Whop membership found for this email. <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" style="color:var(--green);">Get access here</a>','error');
   }
-  g('btn-re').textContent='Creating account...';
+  if(g('btn-re')) g('btn-re').textContent='Creating account...';
   const {data:ad,error:ae} = await sb.auth.signUp({email,password:pw});
   if (ae) { g('btn-re').disabled=false; g('btn-re').textContent='Create Account'; return msg('re-msg',ae.message,'error'); }
   await sb.from('profiles').upsert({id:ad.user.id,email,last_active:new Date().toISOString()});
-  g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
+  if(g('btn-re')) g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
   msg('re-msg','Account created! You can now sign in.','success');
 }
 
@@ -1411,10 +1411,10 @@ async function doResetPassword() {
   if (pw.length < 6) return msg('rp-msg', 'Password must be at least 6 characters', 'error');
   if (pw !== pw2) return msg('rp-msg', 'Passwords do not match', 'error');
   g('btn-rp').disabled = true;
-  g('btn-rp').textContent = 'Saving...';
+  if(g('btn-rp')) g('btn-rp').textContent = 'Saving...';
   const { error } = await sb.auth.updateUser({ password: pw });
   g('btn-rp').disabled = false;
-  g('btn-rp').textContent = 'Set New Password';
+  if(g('btn-rp')) g('btn-rp').textContent = 'Set New Password';
   if (error) return msg('rp-msg', error.message, 'error');
   msg('rp-msg', 'Password updated! Signing you in...', 'success');
   setTimeout(async () => {
@@ -1432,7 +1432,7 @@ async function doResetPassword() {
 
 async function loadApp() {
   g('auth-screen').style.display='none';
-  g('u-email').textContent = CU.email;
+  if(g('u-email')) g('u-email').textContent = CU.email;
   // Record last active timestamp
   await sb.from('profiles').upsert({id: CU.id, email: CU.email, last_active: new Date().toISOString()});
   if (CU.email===ADMIN) {
@@ -1605,11 +1605,11 @@ function clearInvFilters() {
 function renderInv() {
   const tot = invF.length, pgs = Math.ceil(tot/PP);
   const sl = invF.slice((invPg-1)*PP, invPg*PP);
-  g('inv-cnt').textContent = tot + ' cards';
+  if(g('inv-cnt')) g('inv-cnt').textContent = tot + ' cards';
   const wrap = g('inv-list');
   if (!tot) {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div>';
-    g('inv-pag').innerHTML = '';
+    if(g('inv-pag')) g('inv-pag').innerHTML = '';
 
   g('inv-list').querySelectorAll('[data-copyid]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();copyCard(this.dataset.copyid);});});
   g('inv-list').querySelectorAll('.inv-check').forEach(function(cb){cb.checked=SEL_IDS.has(cb.dataset.cid);cb.addEventListener('click',function(e){e.stopPropagation();if(this.checked)SEL_IDS.add(this.dataset.cid);else SEL_IDS.delete(this.dataset.cid);updateSelBar();});});
@@ -1685,7 +1685,7 @@ function renderInv() {
     '</div>';
   }).join('');
 
-  g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
+  if(g('inv-pag')) g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
     Array.from({length:pgs}, (_,i) => '<button class="pbtn ' + (i+1===invPg?'active':'') + '" onclick="invPage(' + (i+1) + ')">' + (i+1) + '</button>').join('');
 }
 
@@ -1776,8 +1776,8 @@ function calcPerCardCost() {
   if (!cards.length) { g('per-card-preview').style.display='none'; return; }
   const perCard = totalCost / cards.length;
   g('per-card-preview').style.display = '';
-  g('pcc-cards').textContent = cards.length;
-  g('pcc-cost').textContent = f$(perCard);
+  if(g('pcc-cards')) g('pcc-cards').textContent = cards.length;
+  if(g('pcc-cost')) g('pcc-cost').textContent = f$(perCard);
 }
 
 async function addBatch() {
@@ -1947,7 +1947,7 @@ function renderSoldRows(sold){
   const tb=g('sold-tbody');
   if(!sold.length){
     tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory</div></div></td></tr>';
-    g('s-cnt').textContent='0';g('s-proc').textContent='$0.00';g('s-prof').textContent='$0.00';g('s-avg').textContent='--';
+    if(g('s-cnt')) g('s-cnt').textContent='0';g('s-proc').textContent='$0.00';g('s-prof').textContent='$0.00';g('s-avg').textContent='--';
     return;
   }
   const openIds=new Set();
@@ -1993,10 +1993,10 @@ function renderSoldRows(sold){
   });
   const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
   const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0),0);
-  g('s-cnt').textContent=sold.length;
-  g('s-proc').textContent=f$(proc);
-  g('s-prof').textContent=f$(prof);
-  g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
+  if(g('s-cnt')) g('s-cnt').textContent=sold.length;
+  if(g('s-proc')) g('s-proc').textContent=f$(proc);
+  if(g('s-prof')) g('s-prof').textContent=f$(prof);
+  if(g('s-avg')) g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
 }
 
 function soldDCell(label,value,color){
@@ -2189,10 +2189,10 @@ function openQuickAdd() {
   g('qa-disp').value='Grade';
   g('qa-stat').value='Raw';
   g('qa-date').value=new Date().toISOString().split('T')[0];
-  g('qa-total').textContent='$0.00';
+  if(g('qa-total')) g('qa-total').textContent='$0.00';
   g('qa-ev-preview').style.display='none';
   g('qa-save-btn').disabled=false;
-  g('qa-save-btn').textContent='Save Card';
+  if(g('qa-save-btn')) g('qa-save-btn').textContent='Save Card';
   qaShowStep(1);
   g('quickadd-modal').classList.add('open');
   setTimeout(()=>g('qa-player').focus(),100);
@@ -2227,7 +2227,7 @@ function qaCalcCost() {
   const p=parseFloat(g('qa-price').value)||0;
   const s=parseFloat(g('qa-ship').value)||0;
   const gr=parseFloat(g('qa-grade').value)||0;
-  g('qa-total').textContent='$'+(p+s+gr).toFixed(2);
+  if(g('qa-total')) g('qa-total').textContent='$'+(p+s+gr).toFixed(2);
 }
 
 function qaCalcEV() {
@@ -2247,9 +2247,9 @@ function qaCalcEV() {
   const mb35=Math.max(0,(expectedProceeds-grade)/1.35);
   const dec=evDecision(evp);
   g('qa-ev-preview').style.display='';
-  g('qa-ev-dollar').textContent=f$(ev); g('qa-ev-dollar').style.color=ev>=0?'var(--green)':'#F87171';
-  g('qa-ev-pct').textContent=(evp*100).toFixed(1)+'%'; g('qa-ev-pct').style.color=evp>=0.40?'var(--green)':'#F87171';
-  g('qa-ev-dec').textContent=dec; g('qa-ev-dec').style.color=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  if(g('qa-ev-dollar')) g('qa-ev-dollar').textContent=f$(ev); g('qa-ev-dollar').style.color=ev>=0?'var(--green)':'#F87171';
+  if(g('qa-ev-pct')) g('qa-ev-pct').textContent=(evp*100).toFixed(1)+'%'; g('qa-ev-pct').style.color=evp>=0.40?'var(--green)':'#F87171';
+  if(g('qa-ev-dec')) g('qa-ev-dec').textContent=dec; g('qa-ev-dec').style.color=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
 }
 
 async function qaSave() {
@@ -2266,7 +2266,7 @@ async function qaSave() {
   if (!setName) { g('qa-set').style.borderColor='var(--red)'; toast('Set is required',true); return; }
   if (!parallel) { g('qa-parallel').style.borderColor='var(--red)'; toast('Parallel is required — use "Base" if no parallel',true); return; }
   if (!cardNo) { g('qa-cno').style.borderColor='var(--red)'; toast('Card # is required',true); return; }
-  g('qa-save-btn').disabled=true; g('qa-save-btn').textContent='Saving...';
+  if(g('qa-save-btn')) g('qa-save-btn').disabled=true; g('qa-save-btn').textContent='Saving...';
   const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
   const cardID = generateCardID(player, year, brand, parallel, cardNo, existingIDs);
   const price=parseFloat(g('qa-price').value)||0;
@@ -2350,7 +2350,7 @@ function handleImport(input) {
       importRawRows = XLSX.utils.sheet_to_json(ws, {defval:null});
       if (!importRawRows.length) { toast('No data found in spreadsheet', true); return; }
       importHeaders = Object.keys(importRawRows[0]);
-      g('imp-col-count').textContent = importHeaders.length + ' columns';
+      if(g('imp-col-count')) g('imp-col-count').textContent = importHeaders.length + ' columns';
 
       // Auto-detect mappings
       let autoMatched = 0;
@@ -2363,11 +2363,11 @@ function handleImport(input) {
       });
 
       const pct = Math.round(autoMatched/importHeaders.length*100);
-      g('imp-auto-msg').textContent = autoMatched + ' of ' + importHeaders.length + ' columns matched automatically (' + pct + '%). Review below then click Import.';
+      if(g('imp-auto-msg')) g('imp-auto-msg').textContent = autoMatched + ' of ' + importHeaders.length + ' columns matched automatically (' + pct + '%). Review below then click Import.';
       g('imp-auto-msg').style.color = pct === 100 ? 'var(--green)' : 'var(--amber)';
 
       const fieldOpts = IMP_FIELDS.map(f => '<option value="' + f.key + '">' + f.label + '</option>').join('');
-      g('imp-mapping-rows').innerHTML = importHeaders.map(function(h) {
+      if(g('imp-mapping-rows')) g('imp-mapping-rows').innerHTML = importHeaders.map(function(h) {
         const mapped = importMappings[h];
         const sample = importRawRows.slice(0,3).map(r => r[h]).filter(v => v != null).slice(0,2).join(', ');
         const isMatched = mapped !== 'skip';
@@ -2458,7 +2458,7 @@ async function confirmImport() {
   if (!importRows.length) { toast('No valid cards found — make sure Player is mapped', true); return; }
 
   g('btn-import-confirm').disabled = true;
-  g('btn-import-confirm').textContent = 'Importing...';
+  if(g('btn-import-confirm')) g('btn-import-confirm').textContent = 'Importing...';
 
   const chunks = [];
   for (let i = 0; i < importRows.length; i+=50) chunks.push(importRows.slice(i,i+50));
@@ -2473,7 +2473,7 @@ async function confirmImport() {
   renderAll();
   migrateCardIDs();
   g('btn-import-confirm').disabled = false;
-  g('btn-import-confirm').textContent = 'Import Cards';
+  if(g('btn-import-confirm')) g('btn-import-confirm').textContent = 'Import Cards';
   toast('Imported ' + count + ' cards successfully!');
 }
 
@@ -2545,8 +2545,8 @@ function calcSoldPreview() {
   const prof = proc - price - ship - grade;
   const roi = basis > 0 ? (prof/basis*100) : 0;
   g('sold-preview').style.display = 'block';
-  g('sp-proc').textContent = f$(proc);
-  g('sp-prof').textContent = f$(prof);
+  if(g('sp-proc')) g('sp-proc').textContent = f$(proc);
+  if(g('sp-prof')) g('sp-prof').textContent = f$(prof);
   g('sp-prof').style.color = prof >= 0 ? 'var(--green)' : '#F87171';
   const roiEl = g('sp-roi');
   if (roiEl) { roiEl.textContent = roi.toFixed(1)+'%'; roiEl.style.color = roi>=0?'var(--green)':'#F87171'; }
@@ -3398,10 +3398,10 @@ function filterSold() {
   // Update KPIs to reflect filtered view
   const proc = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
   const prof = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0),0);
-  g('s-cnt').textContent = filtered.length;
-  g('s-proc').textContent = f$(proc);
-  g('s-prof').textContent = f$(prof);
-  g('s-avg').textContent = filtered.length ? f$(prof/filtered.length) : '--';
+  if(g('s-cnt')) g('s-cnt').textContent = filtered.length;
+  if(g('s-proc')) g('s-proc').textContent = f$(proc);
+  if(g('s-prof')) g('s-prof').textContent = f$(prof);
+  if(g('s-avg')) g('s-avg').textContent = filtered.length ? f$(prof/filtered.length) : '--';
 }
 
 // - EV RECALC -
@@ -3580,7 +3580,7 @@ function openMarkSold(id){
   var r=INV.find(function(c){return c.id===id;});
   if(!r)return;
   g('sold-modal-id').value=id;
-  g('sold-modal-card-info').innerHTML='<strong style="color:var(--text);">'+(r.player||'--')+'</strong> &nbsp;·&nbsp; '+(r.year||'')+(r.set_name?' '+r.set_name:'')+(r.parallel?' · '+r.parallel:'')+(r.card_no?' #'+r.card_no:'')+'<br><span style="margin-top:4px;display:inline-block;">Cost basis: <strong style="color:var(--text);">'+f$(r.total_cost)+'</strong></span>';
+  if(g('sold-modal-card-info')) g('sold-modal-card-info').innerHTML='<strong style="color:var(--text);">'+(r.player||'--')+'</strong> &nbsp;·&nbsp; '+(r.year||'')+(r.set_name?' '+r.set_name:'')+(r.parallel?' · '+r.parallel:'')+(r.card_no?' #'+r.card_no:'')+'<br><span style="margin-top:4px;display:inline-block;">Cost basis: <strong style="color:var(--text);">'+f$(r.total_cost)+'</strong></span>';
   g('sm-date').value=new Date().toISOString().split('T')[0];
   g('sm-price').value='';g('sm-fees').value='';g('sm-ship').value='';
   g('sm-preview').style.display='none';
@@ -3601,10 +3601,10 @@ function calcSoldModal(){
   var prof=proc-basis;
   var roi=basis>0?(prof/basis*100):0;
   g('sm-preview').style.display='';
-  g('sm-proc').textContent=f$(proc);
-  g('sm-prof').textContent=(prof>=0?'+':'')+f$(prof);
+  if(g('sm-proc')) g('sm-proc').textContent=f$(proc);
+  if(g('sm-prof')) g('sm-prof').textContent=(prof>=0?'+':'')+f$(prof);
   g('sm-prof').style.color=prof>=0?'var(--green)':'#F87171';
-  g('sm-roi').textContent=roi.toFixed(1)+'%';
+  if(g('sm-roi')) g('sm-roi').textContent=roi.toFixed(1)+'%';
   g('sm-roi').style.color=roi>=0?'var(--green)':'#F87171';
 }
 
@@ -3676,8 +3676,8 @@ function calcEditBatchCost(){
   if(!cards.length){ g('eb-cost-preview').style.display='none'; return; }
   var perCard = totalCost / cards.length;
   g('eb-cost-preview').style.display = '';
-  g('eb-card-count').textContent = cards.length;
-  g('eb-per-card').textContent = f$(perCard);
+  if(g('eb-card-count')) g('eb-card-count').textContent = cards.length;
+  if(g('eb-per-card')) g('eb-per-card').textContent = f$(perCard);
 }
 
 async function saveEditBatch(){
@@ -3752,10 +3752,10 @@ function eblCalc(){
   const mb=(gem*n10+(1-gem)*n9)/1.40;
   const decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
   g('ebl-preview').style.display='';
-  g('ebl-ev').textContent=f$(ev);g('ebl-ev').style.color=ev>=0?'var(--green)':'#F87171';
-  g('ebl-evp').textContent=(evp*100).toFixed(1)+'%';g('ebl-evp').style.color=decColor;
-  g('ebl-mb').textContent=f$(mb);
-  g('ebl-dec').textContent=dec;g('ebl-dec').style.color='#fff';g('ebl-dec').style.background=decColor;
+  if(g('ebl-ev')) g('ebl-ev').textContent=f$(ev);g('ebl-ev').style.color=ev>=0?'var(--green)':'#F87171';
+  if(g('ebl-evp')) g('ebl-evp').textContent=(evp*100).toFixed(1)+'%';g('ebl-evp').style.color=decColor;
+  if(g('ebl-mb')) g('ebl-mb').textContent=f$(mb);
+  if(g('ebl-dec')) g('ebl-dec').textContent=dec;g('ebl-dec').style.color='#fff';g('ebl-dec').style.background=decColor;
 }
 
 async function saveEditBL(){
