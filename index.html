@@ -1466,7 +1466,7 @@ async function loadApp() {
   INV=ir.data||[]; BATCHES=br.data||[]; BL=lr.data||[];
   invF=[...INV]; blF=[...BL];
   await loadExpenses();
-  await loadUserSettings();
+  // loadUserSettings removed
   renderAll();renderHelp();
   g('app-screen').style.display='block'; document.body.classList.add('logged-in');
   migrateCardIDs();
