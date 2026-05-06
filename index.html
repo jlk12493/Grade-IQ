@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v66 -->
+<!-- v67 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -307,7 +307,12 @@ input.fi{flex:1;min-width:160px;}
 .scan-field label{display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
 .scan-field input{width:100%;background:var(--surface-3);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:5px;font-size:12px;outline:none;}
 .scan-field input:focus{border-color:var(--red);}
-.scan-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.giq-sport-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;color:var(--text-muted);background:transparent;transition:all .15s;}
+.giq-sport-btn.active{background:var(--green);border-color:var(--green);color:#000;}
+.giq-sport-btn:hover:not(.active){border-color:var(--green);color:var(--green);}
+.giq-bookmark{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:14px;padding:4px;line-height:1;transition:color .15s;}
+.giq-bookmark.saved{color:var(--green);}
+
 .scan-tab{flex:1;padding:7px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-radius:4px;border:1px solid var(--border);background:transparent;}
 .scan-tab.active{background:var(--green);color:#000;border-color:var(--green);}
 
@@ -652,331 +657,73 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     <!-- GRADEIQ PUBLIC BUY SIGNALS -->
     <div class="sec" id="sec-gradeiq">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-        <div>
-          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Buy Signals</h2>
-          <div style="font-size:12px;color:var(--text-muted);">Cards our algorithm flagged as grading opportunities. Updated nightly.</div>
+
+      <!-- TRIAL BANNER (shown to non-admin trial users) -->
+      <div id="giq-trial-banner" style="display:none;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:13px;">&#9201;</span>
+          <span id="giq-trial-text" style="font-size:13px;color:var(--amber);font-weight:600;">Free trial active</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <select class="fi" id="giq-sport" onchange="filterGradeIQ()" style="width:130px;">
-            <option value="">All Sports</option>
-            <option value="Baseball">Baseball</option>
-            <option value="Football">Football</option>
-            <option value="Basketball">Basketball</option>
+        <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" style="font-size:12px;font-weight:700;color:#000;background:var(--amber);padding:5px 12px;border-radius:4px;text-decoration:none;">Upgrade Now</a>
+      </div>
+
+      <!-- SPORT TABS -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button class="giq-sport-btn active" data-sport="" onclick="setGIQSport(this)">All</button>
+        <button class="giq-sport-btn" data-sport="Baseball" onclick="setGIQSport(this)">&#9918; Baseball</button>
+        <button class="giq-sport-btn" data-sport="Football" onclick="setGIQSport(this)">&#127944; Football</button>
+        <button class="giq-sport-btn" data-sport="Basketball" onclick="setGIQSport(this)">&#127936; Basketball</button>
+      </div>
+
+      <!-- TOP PICKS -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">&#11088; Top Picks Today</div>
+        <div id="giq-top-picks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:11px;color:var(--text-muted);">All Signals</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+
+      <!-- FILTERS -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;">
+            <option value="scc_score">IQ Rating High&#8594;Low</option>
+            <option value="ev_pct">EV% High&#8594;Low</option>
+            <option value="raw_price">Raw Price Low&#8594;High</option>
           </select>
-          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="width:150px;">
-            <option value="scc_score">SCC Score High→Low</option>
-            <option value="ev_pct">EV% High→Low</option>
-            <option value="raw_price">Raw Price Low→High</option>
+          <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="min-width:120px;">
+            <option value="">All Cards</option>
+            <option value="base">Base Only</option>
+            <option value="parallel">Parallels Only</option>
           </select>
+          <select class="fi" id="giq-price-filter" onchange="filterGradeIQ()" style="min-width:120px;">
+            <option value="">Any Price</option>
+            <option value="5">Under $5</option>
+            <option value="20">$5 - $20</option>
+            <option value="50">$20 - $50</option>
+            <option value="999">$50+</option>
+          </select>
+          <input class="fi" type="text" id="giq-search" placeholder="Search player..." oninput="filterGradeIQ()" style="flex:1;min-width:120px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="giq-iq70" onchange="filterGradeIQ()" checked style="accent-color:var(--green);">
+            IQ 70+ only
+          </label>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text-muted);">
+          Showing <strong id="giq-showing" style="color:var(--text);">--</strong> of <strong id="giq-total" style="color:var(--text);">--</strong> signals
+          <span id="giq-new-count" style="display:none;margin-left:8px;color:var(--green);font-weight:700;"></span>
         </div>
       </div>
 
-      <!-- KPI STRIP -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px;">
-        <div class="kcard" style="border-top-color:var(--green);">
-          <div class="klbl">Buy Signals</div>
-          <div class="kval g" id="giq-count">--</div>
-          <div class="ksub">Active opportunities</div>
-        </div>
-        <div class="kcard" style="border-top-color:#3B82F6;">
-          <div class="klbl">Sets Covered</div>
-          <div class="kval" style="color:#3B82F6;" id="giq-sets">--</div>
-          <div class="ksub">Across all sports</div>
-        </div>
-        <div class="kcard" style="border-top-color:var(--amber);">
-          <div class="klbl">Avg IQ Rating</div>
-          <div class="kval" style="color:var(--amber);" id="giq-avgscc">--</div>
-          <div class="ksub">Of buy signals</div>
-        </div>
-        <div class="kcard" style="border-top-color:var(--green);">
-          <div class="klbl">Top EV%</div>
-          <div class="kval g" id="giq-topev">--</div>
-          <div class="ksub">Highest opportunity</div>
-        </div>
-      </div>
-
-      <!-- DISCLAIMER -->
-      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text-muted);">
-        &#8505;&#65039; These are <strong style="color:var(--text);">grading opportunities</strong> — raw cards worth submitting to PSA based on gem rate data and current market pricing. Always verify raw card prices before purchasing. Premium members can see full EV calculations, max buy prices, and use the complete GradeIQ scanner.
-      </div>
-
-      <!-- BUY SIGNALS LIST -->
       <div id="giq-list"></div>
     </div>
 
-    <!-- INVENTORY -->
-    <div class="sec" id="sec-inventory">
-      <!-- QUICK ADD + IMPORT -->
-      <div class="fbar" style="margin-bottom:10px;">
-        <button class="btn-s" onclick="openQuickAdd()" style="border-color:var(--red);color:var(--red);">+ Quick Add Card</button>
-        <button class="btn-s" onclick="openImport()">📂 Import Spreadsheet</button>
-      </div>
-      <div id="inv-form" style="display:none;">
-        <div class="aform">
-          <div class="stitle" style="margin-bottom:14px;">Add Card</div>
-          <div class="fgrid">
-            <!-- Card ID is auto-generated -->
-            <div class="ff"><label>Player *</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
-            <div class="ff"><label>Year *</label><input type="number" id="f-year" placeholder="2024"></div>
-            <div class="ff"><label>Brand *</label>
-              <input type="text" id="f-set" placeholder="e.g. Topps" list="f-brand-list" autocomplete="off">
-              <datalist id="f-brand-list">
-                <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
-                <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
-              </datalist>
-            </div>
-            <div class="ff"><label>Set *</label>
-              <input type="text" id="f-setname" placeholder="e.g. Chrome" list="f-set-list" autocomplete="off">
-              <datalist id="f-set-list">
-                <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
-                <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
-                <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
-                <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
-              </datalist>
-            </div>
-            <div class="ff"><label>Parallel *</label>
-              <input type="text" id="f-par" placeholder="e.g. Base" list="f-par-list" autocomplete="off">
-              <datalist id="f-par-list">
-                <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
-                <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
-                <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
-                <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
-                <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
-              </datalist>
-            </div>
-            <div class="ff"><label>Card # *</label><input type="text" id="f-cno" placeholder="264"></div>
-            <div class="ff"><label>Sport</label><select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
-            <div class="ff"><label>Date Acquired</label><input type="date" id="f-date"></div>
-            <div class="ff"><label>Source</label><input type="text" id="f-src" placeholder="eBay"></div>
-            <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="f-price" placeholder="19.99"></div>
-            <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="f-ship" placeholder="2.50"></div>
-            <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="f-grade" placeholder="27.25"></div>
-            <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="f-gem" placeholder="0.75"></div>
-            <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="f-p10" placeholder="150.00"></div>
-            <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="f-p9" placeholder="50.00"></div>
-            <div class="ff"><label>Disposition</label><select id="f-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
-            <div class="ff"><label>Status</label><select id="f-stat"><option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option></select></div>
-            <div class="ff"><label>Batch ID</label><input type="text" id="f-batch" placeholder="14442636"></div>
-          </div>
-          <div class="factions">
-            <button class="btn-a" onclick="addCard()">Save Card</button>
-            <button class="btn-c" onclick="toggleForm('inv-form',false)">Cancel</button>
-          </div>
-        </div>
-      </div>
-      <div class="fbar" style="gap:6px;">
-        <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
-        <button class="btn-export" onclick="exportCSV()">Export CSV</button>
-        <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">Update Comps</button>
-        <button class="btn-s" id="btn-select-mode" onclick="toggleSelectMode()">&#9745; Select</button>
-      </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Search</div>
-            <input class="fi" type="text" id="inv-q" placeholder="Player, set, card ID..." oninput="filterInv()" style="width:100%;">
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Player</div>
-            <select class="fi" id="inv-player" onchange="filterInv()" style="width:100%;"><option value="">All Players</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Set / Brand</div>
-            <select class="fi" id="inv-set" onchange="filterInv()" style="width:100%;"><option value="">All Sets</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Card #</div>
-            <input class="fi" type="text" id="inv-cardno" placeholder="e.g. 264" oninput="filterInv()" style="width:100%;">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:end;">
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sport</div>
-            <select class="fi" id="inv-sport" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Year</div>
-            <select class="fi" id="inv-year" onchange="filterInv()" style="width:100%;"><option value="">All Years</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Status</div>
-            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Awaiting Item</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Disposition</div>
-            <select class="fi" id="inv-disp" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Grade</option><option>Sell Raw</option><option>Hold</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Batch ID</div>
-            <select class="fi" id="inv-batch-filter" onchange="filterInv()" style="width:100%;"><option value="">All Batches</option></select>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sort By</div>
-            <select class="fi" id="inv-sort" onchange="filterInv()" style="width:100%;">
-              <option value="newest">Newest First</option>
-              <option value="player">Player A-Z</option>
-              <option value="year-desc">Year (Newest)</option>
-              <option value="year-asc">Year (Oldest)</option>
-              <option value="ev-desc">EV% High to Low</option>
-              <option value="ev-asc">EV% Low to High</option>
-              <option value="cost-desc">Cost High to Low</option>
-              <option value="cost-asc">Cost Low to High</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
-          <span class="fcnt" id="inv-cnt"></span>
-          <button onclick="clearInvFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;">Clear all filters</button>
-        </div>
-      </div>
-      <div class="inv-select-bar" id="inv-select-bar">
-        <span class="sel-count" id="sel-count">0 selected</span>
-        <button class="btn-s" onclick="selAll()">Select All</button>
-        <button class="btn-s" onclick="selNone()">Clear</button>
-        <select id="bulk-stat-sel" class="fi" style="min-width:140px;"><option value="">Change Status...</option><option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option><option value="Sold">Sold</option></select>
-        <select id="bulk-disp-sel" class="fi" style="min-width:140px;"><option value="">Change Disposition...</option><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select>
-        <input type="text" id="bulk-batch-inp" class="fi" placeholder="Assign Batch ID..." style="min-width:140px;">
-        <button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="applyBulkChanges()">Apply</button>
-        <button class="btn-c" style="font-size:11px;padding:6px 14px;" onclick="selNone()">Cancel</button>
-      </div>
-      <div id="inv-list"></div>
-      <div class="pag" id="inv-pag"></div>
-    </div>
 
-    <!-- SUBMISSIONS -->
-    <div class="sec" id="sec-submissions">
-      <div id="sub-form" style="display:none;">
-        <div class="aform">
-          <div class="stitle" style="margin-bottom:14px;">New Batch</div>
-          <div class="fgrid">
-            <div class="ff"><label>Batch ID</label><input type="text" id="sf-id" placeholder="14442636"></div>
-            <div class="ff"><label>Submit Date</label><input type="date" id="sf-date"></div>
-            <div class="ff"><label>Grader</label><select id="sf-grader"><option>PSA</option><option>BGS</option><option>SGC</option><option>CGC</option></select></div>
-            <div class="ff"><label>Service Level</label><input type="text" id="sf-svc" placeholder="Value Bulk"></div>
-            <div class="ff"><label>Status</label><select id="sf-stat"><option>Sent</option><option>Received</option><option>Graded</option><option>Returned</option><option>Sold</option></select></div>
-            <div class="ff"><label>Notes</label><input type="text" id="sf-notes" placeholder="Optional"></div>
-            <div class="ff"><label>Total Submission Cost $</label><input type="number" step="0.01" id="sf-total-cost" placeholder="0.00" oninput="calcPerCardCost()"></div>
-          </div>
-          <div id="per-card-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px;margin-bottom:12px;">
-            <div style="display:flex;align-items:center;gap:20px;">
-              <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards in Batch</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="pcc-cards">0</div></div>
-              <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cost Per Card</div><div style="font-size:16px;font-weight:700;color:var(--green);" id="pcc-cost">--</div></div>
-              <div style="font-size:11px;color:var(--text-muted);">Grading cost will be updated for all cards in this batch</div>
-            </div>
-          </div>
-          <div class="factions">
-            <button class="btn-a" onclick="addBatch()">Save Batch</button>
-            <button class="btn-c" onclick="toggleForm('sub-form',false)">Cancel</button>
-          </div>
-        </div>
-      </div>
-      <div class="fbar"><button class="btn-s" onclick="toggleForm('sub-form',true)">+ Add Batch</button></div>
-      <div id="batches-wrap"></div>
-    </div>
-
-    <!-- SOLD -->
-    <div class="sec" id="sec-sold">
-      <div class="fbar" style="margin-bottom:12px;">
-        <input class="fi" type="text" id="sold-q" placeholder="Search player, set..." oninput="filterSold()" style="flex:1;min-width:160px;">
-        <select class="fi" id="sold-year" onchange="filterSold()"><option value="">All Years</option></select>
-        <button onclick="g('sold-q').value='';g('sold-year').value='';renderSold();" class="btn-s" style="font-size:10px;">Clear</button>
-      </div>
-      <div class="kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
-        <div class="kcard"><div class="klbl">Cards Sold</div><div class="kval" id="s-cnt">0</div></div>
-        <div class="kcard"><div class="klbl">Total Proceeds</div><div class="kval" id="s-proc">$0.00</div></div>
-        <div class="kcard"><div class="klbl">Realized Profit</div><div class="kval g" id="s-prof">$0.00</div></div>
-        <div class="kcard"><div class="klbl">Avg Profit/Card</div><div class="kval g" id="s-avg">—</div></div>
-      </div>
-      <div class="twrap">
-        <table class="dtbl">
-          <thead><tr><th></th><th>Player</th><th>Set</th><th>Date Sold</th><th>Profit</th><th>EV% Returned</th></tr></thead>
-          <tbody id="sold-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- EV BUY LOG -->
-    <div class="sec" id="sec-buylog">
-      <div id="bl-form" style="display:none;">
-        <div class="aform">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-            <div class="stitle" style="margin-bottom:0;">Quick Eval</div>
-            <button onclick="toggleBLDetails()" id="bl-details-toggle" class="btn-s" style="font-size:10px;padding:4px 10px;">+ Card Details</button>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
-            <div class="ff"><label>Gem Rate *</label><input type="number" step="0.01" id="bl-gem" oninput="blCalc()" placeholder="0.75" style="font-size:16px;padding:10px;"></div>
-            <div class="ff"><label>PSA 10 $ *</label><input type="number" step="0.01" id="bl-p10" oninput="blCalc()" placeholder="200.00" style="font-size:16px;padding:10px;"></div>
-            <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="bl-p9" oninput="blCalc()" placeholder="50.00" style="font-size:16px;padding:10px;"></div>
-            <div class="ff"><label>Your Cost $ *</label><input type="number" step="0.01" id="bl-cost" oninput="blCalc()" placeholder="55.00" style="font-size:16px;padding:10px;"></div>
-          </div>
-          <div id="bl-preview" style="display:none;border-radius:8px;padding:16px;margin-bottom:14px;border:2px solid var(--border);">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;align-items:center;">
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">Net PSA 10</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="c-n10">--</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">Net PSA 9</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="c-n9">--</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">EV$</div><div style="font-size:16px;font-weight:700;" id="c-ev">--</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">EV%</div><div style="font-size:16px;font-weight:700;" id="c-evp">--</div></div>
-              <div style="text-align:center;"><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">Decision</div><div style="font-size:20px;font-weight:900;padding:6px 12px;border-radius:6px;" id="c-dec">--</div></div>
-            </div>
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:20px;">
-              <div style="font-size:11px;color:var(--text-muted);">Max Buy @ 40%: <strong style="color:var(--text);" id="c-maxbuy">--</strong></div>
-              <div style="font-size:11px;color:var(--text-muted);">Max Buy @ 35%: <strong style="color:var(--text);" id="c-maxbuy35">--</strong></div>
-            </div>
-          </div>
-          <div id="bl-details" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
-            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional — needed to generate Card ID)</div>
-            <div class="fgrid">
-              <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani" autocomplete="off"></div>
-              <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
-              <div class="ff"><label>Brand</label>
-                <input type="text" id="bl-brand" placeholder="e.g. Topps" list="bl-brand-list" autocomplete="off">
-                <datalist id="bl-brand-list">
-                  <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
-                  <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
-                </datalist>
-              </div>
-              <div class="ff"><label>Set</label>
-                <input type="text" id="bl-set" placeholder="e.g. Chrome" list="bl-set-list" autocomplete="off">
-                <datalist id="bl-set-list">
-                  <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
-                  <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
-                  <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
-                  <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
-                </datalist>
-              </div>
-              <div class="ff"><label>Parallel</label>
-                <input type="text" id="bl-parallel" placeholder="e.g. Base" list="bl-par-list" autocomplete="off">
-                <datalist id="bl-par-list">
-                  <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
-                  <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
-                  <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
-                  <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
-                  <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
-                </datalist>
-              </div>
-              <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="e.g. 264" autocomplete="off"></div>
-              <div class="ff"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional"></div>
-            </div>
-          </div>
-          <div class="factions">
-            <button class="btn-a" onclick="addBL()">Save Entry</button>
-            <button class="btn-c" onclick="toggleForm('bl-form',false);g('bl-preview').style.display='none';g('bl-details').style.display='none';">Cancel</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="fbar">
-        <button class="btn-s" onclick="toggleForm('bl-form',true)">+ Log Evaluation</button>
-        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()" style="flex:1;min-width:140px;">
-        <select class="fi" id="bl-player-filter" onchange="filterBL()" style="min-width:130px;"><option value="">All Players</option></select>
-        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>CAUTION</option><option>PASS</option></select>
-        <span class="fcnt" id="bl-cnt"></span>
-      </div>
-      <div id="bl-list"></div>
-
-    </div>
-
-    <!-- GRADEIQ (ADMIN ONLY) -->
     <div class="sec" id="sec-scanner">
 
       <!-- HEADER -->
@@ -1733,7 +1480,7 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
-  if (name==='gradeiq') loadGradeIQ();
+  if (name==='gradeiq') { loadGradeIQ(); showTrialBanner(); }
   if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
 }
@@ -4171,138 +3918,219 @@ async function loadGradeIQ() {
     .order('scc_score', { ascending: false, nullsFirst: false });
   GRADEIQ_DATA = data || [];
   GRADEIQ_FILTERED = [...GRADEIQ_DATA];
-  renderGradeIQ();
+  filterGradeIQ();
+}
+
+var GIQ_BOOKMARKS = JSON.parse(localStorage.getItem('giq_bookmarks') || '{}');
+var GIQ_LAST_VISIT = parseInt(localStorage.getItem('giq_last_visit') || '0');
+var GIQ_SELECTED_SPORT = '';
+
+function setGIQSport(btn) {
+  document.querySelectorAll('.giq-sport-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  GIQ_SELECTED_SPORT = btn.dataset.sport || '';
+  filterGradeIQ();
 }
 
 function filterGradeIQ() {
-  const sport = (g('giq-sport') || {value:''}).value;
-  const sort = (g('giq-sort') || {value:'scc_score'}).value;
-  GRADEIQ_FILTERED = GRADEIQ_DATA.filter(r => !sport || r.sport === sport);
-  GRADEIQ_FILTERED.sort((a,b) =>
-    sort === 'scc_score' ? (b.scc_score||0) - (a.scc_score||0) :
-    sort === 'ev_pct' ? (b.ev_pct||0) - (a.ev_pct||0) :
-    (a.raw_price||0) - (b.raw_price||0)
-  );
+  var sort = (g('giq-sort')||{value:'scc_score'}).value;
+  var parallelFilter = (g('giq-parallel-filter')||{value:''}).value;
+  var priceFilter = (g('giq-price-filter')||{value:''}).value;
+  var search = ((g('giq-search')||{value:''}).value||'').toLowerCase().trim();
+  var iq70 = g('giq-iq70') ? g('giq-iq70').checked : false;
+
+  GRADEIQ_FILTERED = GRADEIQ_DATA.filter(function(r) {
+    if (GIQ_SELECTED_SPORT && (r.sport||'') !== GIQ_SELECTED_SPORT) return false;
+    if (iq70 && (r.scc_score||0) < 70) return false;
+    if (parallelFilter === 'base' && r.parallel) return false;
+    if (parallelFilter === 'parallel' && !r.parallel) return false;
+    if (priceFilter) {
+      var p = r.raw_price || 0;
+      if (priceFilter === '5' && p >= 5) return false;
+      if (priceFilter === '20' && (p < 5 || p >= 20)) return false;
+      if (priceFilter === '50' && (p < 20 || p >= 50)) return false;
+      if (priceFilter === '999' && p < 50) return false;
+    }
+    if (search && !(r.player||'').toLowerCase().includes(search) && !(r.set_name||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  GRADEIQ_FILTERED.sort(function(a,b) {
+    if (sort === 'scc_score') return (b.scc_score||0)-(a.scc_score||0);
+    if (sort === 'ev_pct') return (b.ev_pct||0)-(a.ev_pct||0);
+    return (a.raw_price||0)-(b.raw_price||0);
+  });
+
+  var showingEl = g('giq-showing'), totalEl = g('giq-total');
+  if (showingEl) showingEl.textContent = GRADEIQ_FILTERED.length;
+  if (totalEl) totalEl.textContent = GRADEIQ_DATA.length;
+
+  // New count
+  var newCount = GRADEIQ_FILTERED.filter(function(r){
+    return r.scanned_at && new Date(r.scanned_at).getTime() > GIQ_LAST_VISIT;
+  }).length;
+  var newEl = g('giq-new-count');
+  if (newEl) {
+    if (newCount > 0) {
+      newEl.style.display = 'inline';
+      newEl.textContent = '+' + newCount + ' new';
+    } else {
+      newEl.style.display = 'none';
+    }
+  }
+
   renderGradeIQ();
+  renderTopPicks();
+}
+
+function renderTopPicks() {
+  var el = g('giq-top-picks');
+  if (!el) return;
+  var top = GRADEIQ_FILTERED.slice(0, 5);
+  if (!top.length) { el.innerHTML = ''; return; }
+  el.innerHTML = top.map(function(r) {
+    var setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var sccColor = (r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
+    var evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;" onclick="expandTopPick(this)" data-player="'+encodeURIComponent(r.player||'')+'">'+
+      '<div style="font-size:10px;font-weight:700;color:'+sccColor+';margin-bottom:2px;">IQ '+( r.scc_score||'--')+'</div>'+
+      '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>'+
+      '<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+setShort+(r.card_no?' #'+r.card_no:'')+(r.parallel?' · '+r.parallel:'')+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;">'+
+        '<span style="font-size:15px;font-weight:800;color:'+evColor+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</span>'+
+        '<span style="font-size:11px;color:var(--text-muted);">Buy &#8804; <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function expandTopPick(el) {
+  var player = decodeURIComponent(el.dataset.player);
+  var searchEl = g('giq-search');
+  if (searchEl) { searchEl.value = player; filterGradeIQ(); }
+  // scroll to list
+  var list = g('giq-list');
+  if (list) setTimeout(function(){ list.scrollIntoView({behavior:'smooth'}); }, 100);
+}
+
+function toggleGIQBookmark(key, btn) {
+  if (GIQ_BOOKMARKS[key]) {
+    delete GIQ_BOOKMARKS[key];
+    btn.classList.remove('saved');
+    btn.textContent = '☆';
+  } else {
+    GIQ_BOOKMARKS[key] = Date.now();
+    btn.classList.add('saved');
+    btn.textContent = '★';
+  }
+  try { localStorage.setItem('giq_bookmarks', JSON.stringify(GIQ_BOOKMARKS)); } catch(e){}
 }
 
 function renderGradeIQ() {
   var buys = GRADEIQ_FILTERED;
-  var allBuys = GRADEIQ_DATA;
-  var sets = new Set(allBuys.map(function(r){return r.set_name;})).size;
-  var avgSCC = allBuys.length ? (allBuys.reduce(function(s,r){return s+(r.scc_score||0);},0)/allBuys.length).toFixed(1) : '--';
-  var topEV = allBuys.length ? Math.max.apply(null,allBuys.map(function(r){return r.ev_pct||0;})) : 0;
-  if(g('giq-count')) g('giq-count').textContent = buys.length;
-  if(g('giq-sets')) g('giq-sets').textContent = sets;
-  if(g('giq-avgscc')) g('giq-avgscc').textContent = avgSCC;
-  if(g('giq-topev')) g('giq-topev').textContent = (topEV*100).toFixed(0)+'%';
   var list = g('giq-list');
   if (!list) return;
+
   if (!buys.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No buy signals yet</div><div style="font-size:12px;">Check back soon — scanner runs nightly</div></div>';
+    list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No signals match your filters</div><div style="font-size:12px;">Try adjusting the filters above</div></div>';
     return;
   }
+
+  var now = Date.now();
+
   list.innerHTML = buys.map(function(r, idx) {
     var setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
     var parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
-    var sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
+    var sccColor = (r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
     var evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    var sportBadge = r.sport==='Football'?'&#127944;':r.sport==='Baseball'?'&#9918;':r.sport==='Basketball'?'&#127936;':'';
-    var scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
     var cardId = 'giq-card-' + idx;
+    var bKey = (r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||'');
+    var isBookmarked = !!GIQ_BOOKMARKS[bKey];
+    var isNew = r.scanned_at && new Date(r.scanned_at).getTime() > GIQ_LAST_VISIT;
     var enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">' +
-      '<div style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="' + cardId + '">' +
-        '<i id="chev-' + cardId + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;">&#9658;</i>' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-            '<span style="font-size:14px;font-weight:800;color:var(--text);">' + (r.player||'--') + '</span>' +
-            '<span style="font-size:10px;font-weight:700;background:var(--green);color:#000;padding:2px 7px;border-radius:20px;">BUY</span>' +
-            (parallelDisplay ? '<span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;border:1px solid rgba(239,68,68,.3);">' + parallelDisplay + '</span>' : '') +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
-            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + '</span>' +
-            '<span style="font-size:11px;font-weight:700;color:' + sccColor + ';">IQ ' + (r.scc_score||'--') + '</span>' +
-            '<span style="font-size:11px;font-weight:700;color:' + evColor + ';">EV ' + (r.ev_pct ? (r.ev_pct*100).toFixed(0)+'%' : '--') + '</span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">' + f$(r.raw_price) + '</strong></span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--green);">' + f$(r.max_buy_40) + '</strong></span>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div id="' + cardId + '" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
-          giqCell('IQ Rating', r.scc_score!=null?String(r.scc_score):'--', sccColor, true) +
-          giqCell('EV%', r.ev_pct ? (r.ev_pct*100).toFixed(1)+'%' : '--', evColor, true) +
-          giqCell('EV$', r.ev_dollar!=null?f$(r.ev_dollar):'--', (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
-          giqCell('Raw Price', r.raw_price!=null?f$(r.raw_price):'--', 'var(--text)', false) +
-          giqCell('PSA 10 Price', r.psa10_price!=null?f$(r.psa10_price):'--', 'var(--text)', false) +
-          giqCell('PSA 9 Price', r.psa9_price!=null?f$(r.psa9_price):'--', 'var(--text-muted)', false) +
-          giqCell('Max Buy @40%', r.max_buy_40!=null?f$(r.max_buy_40):'--', 'var(--green)', true) +
-        '</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + idx + '">+ Add to Inventory</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" data-giqebay="' + enc + '">&#128722; Find Raw on eBay</button>' +
-        '</div>' +
-      '</div>' +
+    var ebayUrl = 'https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+(setShort||'')+' #'+(r.card_no||'')+' raw -psa -bgs -sgc -cgc')+'&_sacat=0&LH_Sold=1&LH_Complete=1';
+
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">'+
+
+      // ── COLLAPSED ROW ──
+      '<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cardId+'">'+
+        '<div style="min-width:36px;text-align:center;">'+
+          '<div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div>'+
+          '<div style="font-size:15px;font-weight:800;color:'+sccColor+';line-height:1.2;">'+(r.scc_score||'--')+'</div>'+
+        '</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">'+
+            '<span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>'+
+            (isNew ? '<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>' : '')+
+            (parallelDisplay ? '<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+parallelDisplay+'</span>' : '')+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+setShort+(r.card_no?' #'+r.card_no:'')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'+
+          '<div style="text-align:right;">'+
+            '<div style="font-size:14px;font-weight:800;color:'+evColor+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div>'+
+            '<div style="font-size:11px;color:var(--text-muted);">Buy &#8804; <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div>'+
+          '</div>'+
+          '<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" title="Find on eBay" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;line-height:1;" title="Find raw on eBay">&#128722;</a>'+
+          '<button class="giq-bookmark'+(isBookmarked?' saved':'')+'" onclick="event.stopPropagation();toggleGIQBookmark(''+bKey.replace(/'/g,"\'")+''',this)" title="Save to watchlist">'+(isBookmarked?'★':'☆')+'</button>'+
+          '<i id="chev-'+cardId+'" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</i>'+
+        '</div>'+
+      '</div>'+
+
+      // ── EXPANDED DETAIL ──
+      '<div id="'+cardId+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">'+
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">'+
+          giqCell('IQ Rating', r.scc_score!=null?String(r.scc_score):'--', sccColor, true)+
+          giqCell('EV%', r.ev_pct?(r.ev_pct*100).toFixed(1)+'%':'--', evColor, true)+
+          giqCell('EV$', r.ev_dollar!=null?f$(r.ev_dollar):'--', (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true)+
+          giqCell('Raw Price', r.raw_price!=null?f$(r.raw_price):'--', 'var(--text)', false)+
+          giqCell('PSA 10', r.psa10_price!=null?f$(r.psa10_price):'--', 'var(--text)', false)+
+          giqCell('PSA 9', r.psa9_price!=null?f$(r.psa9_price):'--', 'var(--text-muted)', false)+
+          giqCell('Max Buy @40%', r.max_buy_40!=null?f$(r.max_buy_40):'--', 'var(--green)', true)+
+        '</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="'+idx+'">+ Add to Inventory</button>'+
+          '<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>'+
+        '</div>'+
+      '</div>'+
     '</div>';
   }).join('');
 
   list.querySelectorAll('[data-giqadd]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      giqAddToInventory(parseInt(this.dataset.giqadd));
-    });
+    btn.addEventListener('click', function(e) { e.stopPropagation(); giqAddToInventory(parseInt(this.dataset.giqadd)); });
   });
-  list.querySelectorAll('[data-giqebay]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openGradeIQEbay(this.dataset.giqebay);
-    });
-  });
+
+  // Save last visit timestamp
+  try { localStorage.setItem('giq_last_visit', now.toString()); } catch(e) {}
 }
+
+
+
 
 function giqCell(label, value, color, bold) {
   if (!value || value === '--') return '';
-  return '<div>' +
-    '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
-    '<div style="font-size:' + (bold?'18':'14') + 'px;font-weight:' + (bold?'800':'600') + ';color:' + (color||'var(--text)') + ';">' + value + '</div>' +
+  return '<div>'+
+    '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div>'+
+    '<div style="font-size:'+(bold?'18':'14')+'px;font-weight:'+(bold?'800':'600')+';color:'+(color||'var(--text)')+';">'+value+'</div>'+
   '</div>';
 }
 
-function toggleGIQCard(el) {
-  var id = el.dataset.giqid;
-  var body = document.getElementById(id);
-  var chev = document.getElementById('chev-' + id);
-  if (!body) return;
-  var isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : '';
-  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
-}
-
-function giqAddToInventory(idx) {
-  var r = GRADEIQ_FILTERED[idx];
-  if (!r) return toast('Card not found', true);
-  openQuickAdd();
-  setTimeout(function() {
-    if (r.player && g('qa-player')) g('qa-player').value = r.player;
-    if (r.year && g('qa-year')) g('qa-year').value = r.year;
-    if (r.sport && g('qa-sport')) g('qa-sport').value = r.sport;
-    if (r.set_name) {
-      var setClean = r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'');
-      var parts = setClean.split(' ');
-      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
-      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
+function showTrialBanner() {
+  if (!CU || CU.email === ADMIN) return;
+  // Check trial status from profiles
+  sb.from('profiles').select('last_active,created_at').eq('id', CU.id).single().then(function(res) {
+    if (!res.data) return;
+    var created = new Date(res.data.created_at || CU.created_at);
+    var now = new Date();
+    var daysSince = Math.floor((now - created) / 86400000);
+    var daysLeft = 30 - daysSince;
+    var banner = g('giq-trial-banner');
+    var text = g('giq-trial-text');
+    if (banner && daysLeft > 0 && daysLeft < 30) {
+      banner.style.display = 'flex';
+      if (text) text.textContent = 'Free trial — Day ' + daysSince + ' of 30 · ' + daysLeft + ' days remaining';
     }
-    if (r.parallel && g('qa-parallel')) g('qa-parallel').value = r.parallel;
-    if (r.card_no && g('qa-cno')) g('qa-cno').value = r.card_no;
-    if (r.psa10_price && g('qa-p10')) g('qa-p10').value = r.psa10_price;
-    if (r.psa9_price && g('qa-p9')) g('qa-p9').value = r.psa9_price;
-    if (r.actual_gem_rate && g('qa-gem')) g('qa-gem').value = r.actual_gem_rate;
-    if (g('qa-grade')) g('qa-grade').value = 30.00;
-    if (g('qa-disp')) g('qa-disp').value = 'Grade';
-    qaCalcCost(); qaCalcEV(); qaShowStep(1);
-    toast('Card pre-filled from GradeIQ — add your purchase price!');
-  }, 250);
+  });
 }
 
 
