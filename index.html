@@ -1603,22 +1603,18 @@ function clearInvFilters() {
 
 
 function renderInv() {
+  const wrap = g('inv-list');
+  if (!wrap) return;
   const tot = invF.length, pgs = Math.ceil(tot/PP);
   const sl = invF.slice((invPg-1)*PP, invPg*PP);
   if(g('inv-cnt')) g('inv-cnt').textContent = tot + ' cards';
-  const wrap = g('inv-list');
   if (!tot) {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div>';
     if(g('inv-pag')) g('inv-pag').innerHTML = '';
-
-  g('inv-list').querySelectorAll('[data-copyid]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();copyCard(this.dataset.copyid);});});
-  g('inv-list').querySelectorAll('.inv-check').forEach(function(cb){cb.checked=SEL_IDS.has(cb.dataset.cid);cb.addEventListener('click',function(e){e.stopPropagation();if(this.checked)SEL_IDS.add(this.dataset.cid);else SEL_IDS.delete(this.dataset.cid);updateSelBar();});});
     return;
   }
-  // Remember open cards
   const openCards = new Set();
   wrap.querySelectorAll('.inv-body.open').forEach(el => openCards.add(el.dataset.id));
-
   wrap.innerHTML = sl.map(r => {
     const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
     const evp = (ev !== null && r.total_cost) ? ev/r.total_cost : null;
@@ -1932,6 +1928,7 @@ async function delBatch(id) {
 
 // - SOLD -
 function renderSold() {
+  if(!g('sold-list')) return;
   // Populate year filter
   const soldAll = INV.filter(r => r.status === 'Sold');
   const yearSel = g('sold-year');
@@ -2025,6 +2022,7 @@ function evDecision(evp) {
 }
 
 function renderBL(){
+  if(!g('bl-list')) return;
   const el=g('bl-cnt');if(el)el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
   const wrap=g('bl-list');if(!wrap)return;
   if(!blF.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128202;</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div>';return;}
@@ -2695,6 +2693,7 @@ function populateFinYears() {
 }
 
 function renderFinancials() {
+  if(!g('fin-wrap')) return;
   populateFinYears();
   const yr = parseInt(g('fin-year')?.value || new Date().getFullYear());
   const sold = INV.filter(r => r.status === 'Sold' && r.date_sold && new Date(r.date_sold).getFullYear() === yr);
@@ -3878,8 +3877,8 @@ var SEL_MODE=false;
 var SEL_IDS=new Set();
 function toggleSelectMode(){SEL_MODE=!SEL_MODE;SEL_IDS.clear();const btn=g('btn-select-mode');if(btn){btn.style.borderColor=SEL_MODE?'var(--red)':'';btn.style.color=SEL_MODE?'var(--red)':'';}updateSelBar();renderInv();}
 function updateSelBar(){const bar=g('inv-select-bar');if(!bar)return;bar.classList.toggle('visible',SEL_MODE);const el=g('sel-count');if(el)el.textContent=SEL_IDS.size+' card'+(SEL_IDS.size!==1?'s':'')+' selected';}
-function selAll(){invF.forEach(r=>SEL_IDS.add(r.id));g('inv-list').querySelectorAll('.inv-check').forEach(cb=>cb.checked=true);updateSelBar();}
-function selNone(){SEL_IDS.clear();SEL_MODE=false;const btn=g('btn-select-mode');if(btn){btn.style.borderColor='';btn.style.color='';}g('inv-list').querySelectorAll('.inv-check').forEach(cb=>cb.checked=false);updateSelBar();renderInv();}
+function selAll(){invF.forEach(r=>SEL_IDS.add(r.id));((g('inv-list')||{querySelectorAll:function(){return [];}}).querySelectorAll('.inv-check')).forEach(cb=>cb.checked=true);updateSelBar();}
+function selNone(){SEL_IDS.clear();SEL_MODE=false;const btn=g('btn-select-mode');if(btn){btn.style.borderColor='';btn.style.color='';}((g('inv-list')||{querySelectorAll:function(){return [];}}).querySelectorAll('.inv-check')).forEach(cb=>cb.checked=false);updateSelBar();renderInv();}
 async function applyBulkChanges(){
   if(!SEL_IDS.size)return toast('No cards selected',true);
   const newStatus=g('bulk-stat-sel').value,newDisp=g('bulk-disp-sel').value,newBatch=g('bulk-batch-inp').value.trim();
