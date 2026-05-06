@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v65 -->
+<!-- v66 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -685,7 +685,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div class="ksub">Across all sports</div>
         </div>
         <div class="kcard" style="border-top-color:var(--amber);">
-          <div class="klbl">Avg SCC Score</div>
+          <div class="klbl">Avg IQ Rating</div>
           <div class="kval" style="color:var(--amber);" id="giq-avgscc">--</div>
           <div class="ksub">Of buy signals</div>
         </div>
@@ -4166,7 +4166,7 @@ var GRADEIQ_DATA = [], GRADEIQ_FILTERED = [];
 
 async function loadGradeIQ() {
   const { data, error } = await sb.from('ev_scanner')
-    .select('player, parallel, year, set_name, card_no, sport, ev_pct, ev_dollar, scc_score, raw_price, max_buy_40, max_buy_35, decision, actual_gem_rate, implied_gem_rate, psa10_price, psa9_price, net_psa10, net_psa9, sales_volume, scanned_at')
+    .select('player, parallel, year, set_name, card_no, sport, ev_pct, ev_dollar, scc_score, raw_price, max_buy_40, decision, psa10_price, psa9_price, scanned_at')
     .eq('decision', 'BUY')
     .order('scc_score', { ascending: false, nullsFirst: false });
   GRADEIQ_DATA = data || [];
@@ -4222,7 +4222,7 @@ function renderGradeIQ() {
           '</div>' +
           '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
             '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + '</span>' +
-            '<span style="font-size:11px;font-weight:700;color:' + sccColor + ';">SCC ' + (r.scc_score||'--') + '</span>' +
+            '<span style="font-size:11px;font-weight:700;color:' + sccColor + ';">IQ ' + (r.scc_score||'--') + '</span>' +
             '<span style="font-size:11px;font-weight:700;color:' + evColor + ';">EV ' + (r.ev_pct ? (r.ev_pct*100).toFixed(0)+'%' : '--') + '</span>' +
             '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">' + f$(r.raw_price) + '</strong></span>' +
             '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--green);">' + f$(r.max_buy_40) + '</strong></span>' +
@@ -4231,20 +4231,13 @@ function renderGradeIQ() {
       '</div>' +
       '<div id="' + cardId + '" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
-          giqCell('SCC Score', r.scc_score!=null?String(r.scc_score):'--', sccColor, true) +
+          giqCell('IQ Rating', r.scc_score!=null?String(r.scc_score):'--', sccColor, true) +
           giqCell('EV%', r.ev_pct ? (r.ev_pct*100).toFixed(1)+'%' : '--', evColor, true) +
           giqCell('EV$', r.ev_dollar!=null?f$(r.ev_dollar):'--', (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
-          giqCell('Gem Rate', r.actual_gem_rate!=null?(r.actual_gem_rate*100).toFixed(0)+'%':'--', 'var(--text)', true) +
-          giqCell('Implied Gem Rate', r.implied_gem_rate!=null?(r.implied_gem_rate*100).toFixed(0)+'%':'--', 'var(--text-muted)', false) +
           giqCell('Raw Price', r.raw_price!=null?f$(r.raw_price):'--', 'var(--text)', false) +
           giqCell('PSA 10 Price', r.psa10_price!=null?f$(r.psa10_price):'--', 'var(--text)', false) +
           giqCell('PSA 9 Price', r.psa9_price!=null?f$(r.psa9_price):'--', 'var(--text-muted)', false) +
-          giqCell('Net PSA 10', r.net_psa10!=null?f$(r.net_psa10):'--', 'var(--text)', false) +
-          giqCell('Net PSA 9', r.net_psa9!=null?f$(r.net_psa9):'--', 'var(--text-muted)', false) +
           giqCell('Max Buy @40%', r.max_buy_40!=null?f$(r.max_buy_40):'--', 'var(--green)', true) +
-          giqCell('Max Buy @35%', r.max_buy_35!=null?f$(r.max_buy_35):'--', 'var(--amber)', false) +
-          giqCell('Sales Volume', r.sales_volume!=null?String(r.sales_volume):'--', 'var(--text)', false) +
-          giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
         '</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
           '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + idx + '">+ Add to Inventory</button>' +
