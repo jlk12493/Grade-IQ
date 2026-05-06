@@ -4124,6 +4124,188 @@ function buildGIQCard(r, idx, now) {
   return html;
 }
 
+function toggleGIQCard(el) {
+  var id = el.dataset.giqid;
+  var body = document.getElementById(id);
+  var chev = document.getElementById('chev-' + id);
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+function giqCell(label, value, color, bold) {
+  if (!value || value === '--') return '';
+  return '<div>' +
+    '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
+    '<div style="font-size:' + (bold ? '18' : '14') + 'px;font-weight:' + (bold ? '800' : '600') + ';color:' + (color || 'var(--text)') + ';">' + value + '</div>' +
+    '</div>';
+}
+
+function showTrialBanner() {
+  if (!CU || CU.email === ADMIN) return;
+  sb.from('profiles').select('created_at').eq('id', CU.id).single().then(function(res) {
+    if (!res.data) return;
+    var created = new Date(res.data.created_at || CU.created_at);
+    var now = new Date();
+    var daysSince = Math.floor((now - created) / 86400000);
+    var daysLeft = 30 - daysSince;
+    var banner = g('giq-trial-banner');
+    var text = g('giq-trial-text');
+    if (banner && daysLeft > 0 && daysLeft < 30) {
+      banner.style.display = 'flex';
+      if (text) text.textContent = 'Free trial — Day ' + daysSince + ' of 30 · ' + daysLeft + ' days remaining';
+    }
+  });
+}
+
+function giqAddToInventory(idx) {
+  var r = GRADEIQ_FILTERED[idx];
+  if (!r) return toast('Card not found', true);
+  openQuickAdd();
+  setTimeout(function() {
+    if (r.player && g('qa-player')) g('qa-player').value = r.player;
+    if (r.year && g('qa-year')) g('qa-year').value = r.year;
+    if (r.sport && g('qa-sport')) g('qa-sport').value = r.sport;
+    if (r.set_name) {
+      var setClean = r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i, '');
+      var parts = setClean.split(' ');
+      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
+      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
+    }
+    if (r.parallel && g('qa-parallel')) g('qa-parallel').value = r.parallel;
+    if (r.card_no && g('qa-cno')) g('qa-cno').value = r.card_no;
+    if (r.psa10_price && g('qa-p10')) g('qa-p10').value = r.psa10_price;
+    if (r.psa9_price && g('qa-p9')) g('qa-p9').value = r.psa9_price;
+    if (g('qa-grade')) g('qa-grade').value = 30;
+    if (g('qa-disp')) g('qa-disp').value = 'Grade';
+    qaCalcCost(); qaCalcEV(); qaShowStep(1);
+    toast('Card pre-filled — add your purchase price!');
+  }, 250);
+}
+
+function filterScanner() {
+  var sport = ((document.getElementById('sc-sport')||{}).value||'');
+  var sort = ((document.getElementById('sc-sort')||{}).value||'scc_score');
+  var decision = ((document.getElementById('sc-decision-filter')||{}).value||'BUY');
+  var search = ((document.getElementById('sc-search')||{}).value||'').toLowerCase().trim();
+  SCANNER_FILTERED = SCANNER_DATA.filter(function(r) {
+    var ms = !sport || (r.sport||'') === sport;
+    var md = !decision || (r.decision||'') === decision;
+    var mq = !search || (r.player||'').toLowerCase().includes(search) || (r.set_name||'').toLowerCase().includes(search);
+    return ms && md && mq;
+  });
+  SCANNER_FILTERED.sort(function(a,b) {
+    if (sort === 'scc_score') return (b.scc_score||0)-(a.scc_score||0);
+    if (sort === 'ev_pct') return (b.ev_pct||0)-(a.ev_pct||0);
+    if (sort === 'ev_dollar') return (b.ev_dollar||0)-(a.ev_dollar||0);
+    return (a.raw_price||0)-(b.raw_price||0);
+  });
+  renderScanner();
+}
+
+var SETS_DATA = [];
+
+function buildSetsData() {
+  var sets = {};
+  var now = new Date();
+  for (var i = 0; i < SCANNER_DATA.length; i++) {
+    var r = SCANNER_DATA[i];
+    var key = r.set_name || 'Unknown';
+    if (!sets[key]) sets[key] = {name:key, sport:r.sport||'', total:0, buys:0, ev_sum:0, ev_count:0, last_scan:r.scanned_at||''};
+    sets[key].total++;
+    if (r.decision === 'BUY') sets[key].buys++;
+    if (r.ev_pct) { sets[key].ev_sum += r.ev_pct; sets[key].ev_count++; }
+    if (r.scanned_at && r.scanned_at > sets[key].last_scan) sets[key].last_scan = r.scanned_at;
+  }
+  SETS_DATA = Object.values(sets);
+  var scSets = document.getElementById('sc-sets-count');
+  if (scSets) scSets.textContent = SETS_DATA.length;
+  renderSetsTable();
+}
+
+function renderSetsTable() {
+  var el = document.getElementById('sets-overview-table');
+  if (!el || !SETS_DATA.length) return;
+  var search = ((document.getElementById('sets-search')||{}).value||'').toLowerCase();
+  var sport = ((document.getElementById('sets-sport-filter')||{}).value||'');
+  var sort = ((document.getElementById('sets-sort')||{}).value||'buys');
+  var now = new Date();
+
+  var rows = SETS_DATA.filter(function(s) {
+    return (!sport || s.sport === sport) && (!search || s.name.toLowerCase().includes(search));
+  });
+
+  rows.sort(function(a, b) {
+    if (sort === 'buys') return b.buys - a.buys;
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'scanned') return (b.last_scan||'').localeCompare(a.last_scan||'');
+    if (sort === 'ev') return (b.ev_count?b.ev_sum/b.ev_count:0)-(a.ev_count?a.ev_sum/a.ev_count:0);
+    if (sort === 'matched') return b.total-a.total;
+    return 0;
+  });
+
+  if (!rows.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:12px;text-align:center;">No sets found.</div>'; return; }
+
+  var html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+  html += '<thead><tr style="border-bottom:1px solid var(--border);">';
+  html += '<th style="text-align:left;padding:7px 10px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Set Name</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Sport</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Cards</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">BUYs</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Avg EV%</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Last Scanned</th>';
+  html += '<th style="text-align:center;padding:7px 8px;color:var(--text-muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Health</th>';
+  html += '</tr></thead><tbody>';
+
+  for (var i = 0; i < rows.length; i++) {
+    var s = rows[i];
+    var scanDate = s.last_scan ? new Date(s.last_scan) : null;
+    var daysSince = scanDate ? Math.floor((now - scanDate) / 86400000) : 999;
+    var health = daysSince <= 7 ? {label:'Fresh', color:'var(--green)'}
+      : daysSince <= 30 ? {label:'Good', color:'var(--amber)'}
+      : {label:'Stale', color:'#F87171'};
+    var avgEV = s.ev_count ? (s.ev_sum/s.ev_count*100).toFixed(0)+'%' : '--';
+    var setShort = s.name.replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var sportIcon = s.sport==='Baseball'?'&#9918;':s.sport==='Football'?'&#127944;':s.sport==='Basketball'?'&#127936;':'';
+    html += '<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="filterScannerBySet(' + JSON.stringify(s.name) + ')">';
+    html += '<td style="padding:8px 10px;color:var(--text);font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + setShort + '</td>';
+    html += '<td style="padding:8px;text-align:center;color:var(--text-muted);">' + sportIcon + '</td>';
+    html += '<td style="padding:8px;text-align:center;color:var(--text);">' + s.total + '</td>';
+    html += '<td style="padding:8px;text-align:center;font-weight:800;color:var(--green);">' + s.buys + '</td>';
+    html += '<td style="padding:8px;text-align:center;color:var(--amber);">' + avgEV + '</td>';
+    html += '<td style="padding:8px;text-align:center;color:var(--text-muted);font-size:11px;">' + (scanDate ? scanDate.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}) : '--') + '</td>';
+    html += '<td style="padding:8px;text-align:center;"><span style="font-size:10px;font-weight:700;color:' + health.color + ';">' + health.label + '</span></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+
+  var scSets = document.getElementById('sc-sets-count');
+  if (scSets) scSets.textContent = SETS_DATA.length;
+}
+
+function filterScannerBySet(setName) {
+  var searchEl = document.getElementById('sc-search');
+  if (searchEl) { searchEl.value = setName; filterScanner(); }
+  var list = document.getElementById('sc-list');
+  if (list) list.scrollIntoView({behavior:'smooth'});
+}
+
+async function rescanStale() {
+  if (!confirm('Queue all sets not scanned in the last 30 days for re-scan?')) return;
+  var now = new Date();
+  var staleSets = SETS_DATA.filter(function(s) {
+    if (!s.last_scan) return true;
+    return Math.floor((now - new Date(s.last_scan)) / 86400000) > 30;
+  });
+  toast('Found ' + staleSets.length + ' stale sets — triggering scanner...');
+  await runScanner();
+}
+
+loadTheme();
+initAuth();
+
 </script>
 </body>
 </html>
