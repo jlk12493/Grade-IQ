@@ -1481,7 +1481,7 @@ function goSec(name,btn) {
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='gradeiq') { loadGradeIQ(); showTrialBanner(); }
-  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
+  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(function(){filterScanner();buildSetsData();});}
   if (name==='help') renderHelp();
 }
 
@@ -4301,6 +4301,66 @@ async function rescanStale() {
   });
   toast('Found ' + staleSets.length + ' stale sets — triggering scanner...');
   await runScanner();
+}
+
+var SCANNER_DATA = [], SCANNER_FILTERED = [];
+
+async function loadScanner() {
+  var res = await sb.from('ev_scanner').select('player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,actual_gem_rate,implied_gem_rate,psa10_price,psa9_price,net_psa10,net_psa9,sales_volume,scanned_at,scp_id').order('scc_score',{ascending:false,nullsFirst:false});
+  SCANNER_DATA = res.data || [];
+  SCANNER_FILTERED = [...SCANNER_DATA];
+  var total = SCANNER_DATA.length;
+  var buys = SCANNER_DATA.filter(function(r){return r.decision==='BUY';}).length;
+  var avgEV = total ? (SCANNER_DATA.reduce(function(s,r){return s+(r.ev_pct||0);},0)/total*100).toFixed(1)+'%' : '--';
+  if(g('sc-total')) g('sc-total').textContent = total;
+  if(g('sc-buys')) g('sc-buys').textContent = buys;
+  if(g('sc-avgev')) g('sc-avgev').textContent = avgEV;
+  var lastScan = SCANNER_DATA.length ? SCANNER_DATA.reduce(function(a,b){return (a.scanned_at||'') > (b.scanned_at||'') ? a : b;}).scanned_at : null;
+  if(g('scanner-last-run')) g('scanner-last-run').textContent = lastScan ? new Date(lastScan).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Never';
+}
+
+function renderScanner() {
+  var list = g('sc-list');
+  if (!list) return;
+  var cnt = g('sc-cnt');
+  if (cnt) cnt.textContent = SCANNER_FILTERED.length + ' cards';
+  if (!SCANNER_FILTERED.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-title">No cards match filters</div></div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < SCANNER_FILTERED.length; i++) {
+    var r = SCANNER_FILTERED[i];
+    var setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var dec = r.decision||'PASS';
+    var decColor = dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'var(--text-muted)';
+    var sccColor = (r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
+    html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+    html += '<span style="font-size:10px;font-weight:700;background:'+decColor+';color:'+(dec==='BUY'?'#000':'var(--text)')+';padding:2px 7px;border-radius:20px;">'+dec+'</span>';
+    html += '<div style="flex:1;min-width:120px;"><div style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+(r.parallel?' · '+r.parallel:'')+'</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+setShort+' #'+(r.card_no||'')+'</div></div>';
+    html += '<div style="font-size:13px;font-weight:700;color:'+sccColor+';">IQ '+(r.scc_score||'--')+'</div>';
+    html += '<div style="text-align:right;"><div style="font-size:13px;font-weight:700;color:var(--green);">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);">Raw: '+f$(r.raw_price)+'</div></div>';
+    html += '<button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="openScannerEdit('+i+')">Edit</button>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+}
+
+async function runScanner() {
+  if (!CU || CU.email !== ADMIN) return toast('Access denied', true);
+  toast('Triggering scanner...');
+  try {
+    var res = await sb.from('scanner_queue').insert({batch:0, player_offset:0, status:'pending'});
+    if (res.error) toast('Trigger error: '+res.error.message, true);
+    else {
+      toast('Scanner queued! Results will update in ~2 minutes.');
+      setTimeout(async function(){ await loadScanner(); toast('Scanner results refreshed!'); }, 120000);
+    }
+  } catch(e) {
+    toast('Error: '+e.message, true);
+  }
 }
 
 loadTheme();
