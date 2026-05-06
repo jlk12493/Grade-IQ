@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v67 -->
+<!-- v68 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -3921,8 +3921,8 @@ async function loadGradeIQ() {
   filterGradeIQ();
 }
 
-var GIQ_BOOKMARKS = JSON.parse(localStorage.getItem('giq_bookmarks') || '{}');
-var GIQ_LAST_VISIT = parseInt(localStorage.getItem('giq_last_visit') || '0');
+var GIQ_BOOKMARKS = (function(){ try { return JSON.parse(localStorage.getItem('giq_bookmarks') || '{}'); } catch(e) { return {}; } })();
+var GIQ_LAST_VISIT = (function(){ try { return parseInt(localStorage.getItem('giq_last_visit') || '0'); } catch(e) { return 0; } })();
 var GIQ_SELECTED_SPORT = '';
 
 function setGIQSport(btn) {
