@@ -4211,7 +4211,7 @@ function renderGradeIQ(){
     var ibm=!!GIQ_BOOKMARKS[decodeURIComponent(bk)];
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
-    var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+ss+' '+(r.card_no?'#'+r.card_no:'')+' raw -psa -bgs -sgc -cgc');
+    var ebayQ=encodeURIComponent((r.player||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
     var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent((r.player||'')+(r.card_no?' '+r.card_no:''));
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
