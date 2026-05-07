@@ -538,7 +538,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 <!-- ═══ APP ═══ -->
 <div id="app-screen">
   <header class="hdr">
-    <div id="giq-trial-banner" style="display:none;background:rgba(245,158,11,.9);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;">
+    <div id="giq-trial-banner" style="display:none;background:rgba(245,158,11,.9);padding:8px 16px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;">
     <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:13px;">&#9201;</span><span id="giq-trial-text" style="font-size:13px;color:#000;font-weight:700;">Free trial active</span></div>
     <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" style="font-size:11px;font-weight:900;color:#fff;background:#000;padding:4px 12px;border-radius:4px;text-decoration:none;text-transform:uppercase;letter-spacing:.5px;">Upgrade Now</a>
   </div>
@@ -4141,7 +4141,7 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,decision,psa10_price,psa9_price,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
+  var res=await sb.from('ev_scanner').select('player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,decision,psa10_price,psa9_price,actual_gem_rate,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
@@ -4238,6 +4238,7 @@ function renderGradeIQ(){
     if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
     if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
+    if(r.actual_gem_rate!=null)html+=giqCell('Gem Rate',(r.actual_gem_rate*100).toFixed(1)+'%','var(--text)',false);
     if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
     html+='</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
