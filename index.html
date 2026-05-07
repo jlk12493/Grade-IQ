@@ -2351,7 +2351,7 @@ function filterBL(){
 }
 
 
-async async function addBL() {
+async function addBL() {
   const gem=nf('bl-gem'), p10=nf('bl-p10'), cost=nf('bl-cost');
   if (!gem||!p10||!cost) return toast('Gem Rate, PSA 10, and Your Cost are required',true);
   const blBrand = gv('bl-brand');
