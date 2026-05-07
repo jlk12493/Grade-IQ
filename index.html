@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v69 -->
+<!-- v70 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1810,10 +1810,10 @@ function renderDash() {
   // Sold KPIs
   const proc = sold.reduce((s,r) => s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0), 0);
   const prof = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0), 0);
-  g('s-cnt').textContent = sold.length;
-  g('s-proc').textContent = f$(proc);
-  g('s-prof').textContent = f$(prof);
-  g('s-avg').textContent = sold.length ? f$(prof/sold.length) : '--';
+  if(g('s-cnt')) g('s-cnt').textContent = sold.length;
+  if(g('s-proc')) g('s-proc').textContent = f$(proc);
+  if(g('s-prof')) g('s-prof').textContent = f$(prof);
+  if(g('s-avg')) g('s-avg').textContent = sold.length ? f$(prof/sold.length) : '--';
 
   // Chart subtitle
   const chartSub = g('chart-subtitle');
