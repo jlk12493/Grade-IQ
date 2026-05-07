@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v71 -->
+<!-- v72 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1198,403 +1198,77 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     <!-- ADMIN -->
     <div class="sec" id="sec-admin" style="min-height:100px;">
-      <!-- Set Registry -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleSetRegistry()">
-          <span style="font-size:14px;">&#128218;</span>
-          <strong style="font-size:13px;">Set Registry</strong>
-          <span style="font-size:11px;color:var(--text-muted);flex:1;">Map your import names to SCP set names</span>
-          <span id="registry-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
-          <span id="registry-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
-        </div>
-        <div id="registry-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <!-- Bulk import from set list CSV -->
-          <div style="margin-bottom:12px;margin-top:12px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-              <div class="ff"><label>Year</label><input class="fi" id="bulk-year" placeholder="e.g. 2018" style="width:100%;"></div>
-              <div class="ff"><label>Sport</label>
-                <select class="fi" id="bulk-sport" style="width:100%;">
-                  <option value="Baseball">Baseball</option>
-                  <option value="Football">Football</option>
-                  <option value="Basketball">Basketball</option>
-                </select>
-              </div>
-            </div>
-            <div id="bulk-dropzone" ondragover="bulkDragOver(event)" ondragleave="bulkDragLeave(event)" ondrop="bulkDrop(event)" onclick="g('bulk-csv').click()"
-              style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface-2);margin-bottom:10px;">
-              <div style="font-size:24px;margin-bottom:6px;">&#128218;</div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate Set List CSV here</div>
-              <div style="font-size:11px;color:var(--text-muted);">or click to browse — the summary CSV from gemrate.com</div>
-              <input type="file" id="bulk-csv" accept=".csv" style="display:none;" onchange="parseBulkSetList()">
-            </div>
-            <div id="bulk-preview" style="display:none;">
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Review detected SCP names — correct any that are wrong then click Register All:</div>
-              <div id="bulk-table" style="font-size:12px;margin-bottom:10px;max-height:300px;overflow-y:auto;"></div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <button class="btn-a" style="font-size:12px;padding:6px 14px;" onclick="registerAllSets()">&#10003; Register All</button>
-                <span id="bulk-status" style="font-size:12px;color:var(--text-muted);"></span>
-              </div>
-            </div>
-          </div>
 
-                    <div id="registry-list" style="font-size:12px;"></div>
+      <!-- IMPORT GEM RATES -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;padding:20px;">
+        <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;">&#128202; Import Gem Rates</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Download a CSV from gemrate.com and import below. Supports both set-based and player-based exports.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;" id="gr-manual-fields">
+          <div class="ff"><label>Set Name</label><input class="fi" id="gr-set-name" placeholder="e.g. 2025 Topps Chrome" style="width:100%;"></div>
+          <div class="ff"><label>Sport</label><select class="fi" id="gr-sport" style="width:100%;"><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option></select></div>
+        </div>
+        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()"
+          style="border:2px dashed var(--border);border-radius:8px;padding:30px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface-2);margin-bottom:14px;">
+          <div style="font-size:28px;margin-bottom:8px;">&#128202;</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Drop gemrate.com CSV here</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
+          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+        </div>
+        <div id="gr-preview" style="display:none;margin-bottom:12px;">
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;color:var(--text);">
+            <span id="gr-preview-text"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
+          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <span id="gr-count" style="font-size:12px;color:var(--text-muted);"></span>
+          <button class="btn-c" style="font-size:11px;padding:4px 10px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
         </div>
       </div>
 
-      <!-- Imported Sets -->
+      <!-- USER MANAGEMENT -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleImportedSets()">
-          <span style="font-size:14px;">&#128230;</span>
-          <strong style="font-size:13px;">Imported Sets</strong>
-          <span style="font-size:11px;color:var(--text-muted);flex:1;">Sets currently in gem_rates database</span>
-          <span id="imported-sets-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
-          <span id="imported-sets-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleAdminSection('admin-users-body','admin-users-chev')">
+          <span style="font-size:14px;">&#128101;</span>
+          <strong style="font-size:13px;">User Management</strong>
+          <span style="font-size:11px;color:var(--text-muted);flex:1;">Manage registered users</span>
+          <span id="admin-users-chev" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
-        <div id="imported-sets-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+        <div id="admin-users-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
           <div style="margin-top:12px;">
-            <input class="fi" id="imported-sets-search" placeholder="Search sets..." style="width:100%;margin-bottom:10px;" oninput="filterImportedSets(this.value)">
-            <div id="imported-sets-list" style="font-size:12px;max-height:300px;overflow-y:auto;"></div>
+            <div id="admin-activity-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
+            <div class="ulist" id="admin-users"></div>
           </div>
         </div>
       </div>
 
-      <!-- GemRate CSV Import -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
-          <span style="font-size:14px;">&#128202;</span>
-          <strong style="font-size:13px;">GemRate CSV Import</strong>
-          <span style="font-size:11px;color:var(--text-muted);flex:1;">Upload CSVs from gemrate.com to power the scanner</span>
-          <span id="gr-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
-          <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
-        </div>
-        <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <div style="margin-bottom:12px;margin-top:12px;">
-            <div class="ff">
-              <label>Select from Registry <span style="font-size:10px;color:var(--text-muted);font-weight:400;">or type a search hint</span></label>
-              <div style="position:relative;margin-bottom:8px;">
-              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Search registered sets</label>
-              <input class="fi" id="gr-registry-search" placeholder="Type to search e.g. Bowman Chrome..." style="width:100%;" autocomplete="off"
-                oninput="filterRegistryDropdown(this.value)"
-                onfocus="filterRegistryDropdown(this.value)"
-                onblur="setTimeout(()=>{const d=g('gr-registry-results');if(d)d.style.display='none';},200)">
-              <div id="gr-registry-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);"></div>
-            </div>
-            <div class="ff" style="margin-bottom:8px;">
-              <label style="font-size:11px;color:var(--text-muted);">Selected SCP Set Name <span style="color:var(--red);">*</span> <span style="font-weight:400;">— this is what gets saved</span></label>
-              <input class="fi" id="gr-confirmed-name" placeholder="Pick from search above, or type SCP name manually..." style="width:100%;border-color:var(--border);" oninput="grConfirmedNameChanged(this.value)">
-            </div>
-              <div style="display:flex;gap:6px;align-items:center;">
-              <input class="fi" id="gr-hint" placeholder="Or type hint e.g. 2018 Topps Chrome..." style="flex:1;">
-              <button class="btn-c" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="manualDetect()">&#128269; Detect</button>
-            </div>
-            </div>
-          </div>
-          <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
-            <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-            <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-            <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-          </div>
-          <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
-          <div id="gr-preview" style="display:none;margin-bottom:12px;">
-            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
-              <span id="gr-preview-text"></span>
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
-            <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
-          </div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-            <button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <span>Admin Panel — Only visible to you</span>
+      <!-- ADMIN ACTIONS -->
+      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span style="font-size:11px;color:var(--amber);font-weight:700;">Admin Only</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn-gen" style="background:var(--surface-3);border:1px solid var(--amber);color:var(--amber);font-size:11px;" onclick="bulkRegenerateIDs()">Regenerate All Card IDs</button>
-          <button class="btn-gen" style="background:var(--surface-3);border:1px solid #3B82F6;color:#3B82F6;font-size:11px;" onclick="showManualRegister()">+ Register User</button>
+          <button class="btn-c" style="font-size:11px;border-color:var(--amber);color:var(--amber);" onclick="bulkRegenerateIDs()">Regenerate Card IDs</button>
+          <button class="btn-c" style="font-size:11px;border-color:#3B82F6;color:#3B82F6;" onclick="showManualRegister()">+ Register User</button>
         </div>
       </div>
 
-      <!-- MANUAL REGISTER FORM -->
+      <!-- MANUAL REGISTER -->
       <div id="manual-reg-form" style="display:none;background:var(--surface);border:1px solid var(--border);border-top:2px solid #3B82F6;border-radius:var(--r);padding:16px;margin-bottom:16px;">
         <div style="font-size:11px;font-weight:700;color:#3B82F6;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Manually Register a User</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div class="ff"><label>Email</label><input type="email" id="mreg-email" placeholder="member@email.com" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
-          <div class="ff"><label>Password</label><input type="text" id="mreg-pw" placeholder="Temp password" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
-          <div class="ff"><label>Invite Code</label>
-            <select id="mreg-code" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
-              <option value="">Select available code...</option>
-            </select>
-          </div>
+          <div class="ff"><label>Temp Password</label><input type="text" id="mreg-pw" placeholder="TempPass123!" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
         </div>
-        <div class="amsg" id="mreg-msg"></div>
-        <div class="factions" style="margin-top:10px;">
-          <button class="btn-a" onclick="doManualRegister()">Register User</button>
-          <button class="btn-c" onclick="hideManualRegister()">Cancel</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-a" style="font-size:12px;" onclick="saveManualRegister()">Create Account</button>
+          <button class="btn-c" style="font-size:12px;" onclick="g('manual-reg-form').style.display='none'">Cancel</button>
         </div>
+        <div id="mreg-msg" style="font-size:12px;margin-top:8px;"></div>
       </div>
 
-      <div class="agrid">
-        <div class="panel">
-          <div class="ptitle">Invite Codes</div>
-          <div class="gen-wrap">
-            <input class="gen-inp" type="text" id="new-code" placeholder="SCC-CUSTOM-001">
-            <button class="btn-gen" onclick="genCode()">Add</button>
-            <button class="btn-gen" style="background:var(--surface-3);color:var(--text-muted);border:1px solid var(--border);" onclick="genBulk()">+10 Bulk</button>
-          </div>
-          <div class="ulist" id="admin-codes"></div>
-        </div>
-        <div class="panel">
-          <div class="ptitle">Registered Users</div>
-          <div id="admin-activity-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
-          <div class="ulist" id="admin-users"></div>
-        </div>
-      </div>
-    
-
-
-  </main>
-
-
-<!-- EDIT MODAL -->
-<div class="modal-bg" id="edit-modal">
-  <div class="modal" style="max-width:620px;">
-    <div class="modal-title">
-      Edit Card
-      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
     </div>
-    <input type="hidden" id="edit-id">
-    <div class="fgrid" style="margin-bottom:14px;">
-      <div class="ff"><label>Card ID</label><input type="text" id="e-cid"></div>
-      <div class="ff"><label>Player</label><input type="text" id="e-player"></div>
-      <div class="ff"><label>Year</label><input type="number" id="e-year"></div>
-      <div class="ff"><label>Set / Brand</label><input type="text" id="e-set"></div>
-      <div class="ff"><label>Card / Parallel</label><input type="text" id="e-par"></div>
-      <div class="ff"><label>Card #</label><input type="text" id="e-cno"></div>
-      <div class="ff"><label>Sport</label><select id="e-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
-      <div class="ff"><label>Date Acquired</label><input type="date" id="e-date"></div>
-      <div class="ff"><label>Source</label><input type="text" id="e-src"></div>
-      <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price" oninput="calcEditTotal()"></div>
-      <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship" oninput="calcEditTotal()"></div>
-      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade" oninput="calcEditTotal()"></div>
-      <div class="ff"><label>Total Cost</label><div id="e-total-preview" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:7px 9px;font-size:13px;font-weight:700;color:var(--green);">$0.00</div></div>
-      <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="e-gem"></div>
-      <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="e-p10"></div>
-      <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="e-p9"></div>
-      <div class="ff"><label>Disposition</label><select id="e-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
-      <div class="ff"><label>Status</label><select id="e-stat" onchange="toggleSoldFields()"><option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option><option value="Sold">Sold</option></select></div>
-      <div class="ff"><label>Batch ID</label><input type="text" id="e-batch"></div>
-    </div>
-    <div id="sold-fields" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:14px;">
-      <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sale Details</div>
-      <div class="fgrid" style="margin-bottom:0;">
-        <div class="ff"><label>Date Sold</label><input type="date" id="e-datesold"></div>
-        <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="e-saleprice" oninput="onSalePriceEntered()"></div>
-        <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()"></div>
-        <div class="ff"><label>Shipping Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()"></div>
-      </div>
-      <div id="sold-preview" style="margin-top:12px;display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PROCEEDS</div><div style="font-size:15px;font-weight:700;color:var(--text);" id="sp-proc">--</div></div>
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">REALIZED PROFIT</div><div style="font-size:15px;font-weight:700;" id="sp-prof">--</div></div>
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">ROI</div><div style="font-size:15px;font-weight:700;" id="sp-roi">--</div></div>
-        </div>
-      </div>
-    </div>
-    <div class="factions">
-      <button class="btn-a" onclick="saveEdit()">Save Changes</button>
-      <button class="btn-c" onclick="closeModal('edit-modal')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Scan modal removed -->
-
-<!-- QUICK ADD MODAL -->
-<div class="modal-bg" id="quickadd-modal">
-  <div class="modal" style="max-width:480px;width:100%;">
-    <div class="modal-title">
-      Quick Add Card
-      <button class="modal-close" onclick="closeModal('quickadd-modal')">x</button>
-    </div>
-
-    <!-- STEP INDICATOR -->
-    <div style="display:flex;gap:4px;margin-bottom:20px;">
-      <div id="qa-step-1-ind" style="flex:1;height:3px;border-radius:2px;background:var(--red);"></div>
-      <div id="qa-step-2-ind" style="flex:1;height:3px;border-radius:2px;background:var(--border);"></div>
-      <div id="qa-step-3-ind" style="flex:1;height:3px;border-radius:2px;background:var(--border);"></div>
-    </div>
-
-    <!-- STEP 1: Card Identity -->
-    <div id="qa-step-1">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 1 of 3 - Card Details</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff" style="grid-column:1/-1;"><label>Player Name *</label><input type="text" id="qa-player" placeholder="e.g. Shohei Ohtani" style="font-size:16px;padding:12px;" autocomplete="off"></div>
-        <div class="ff"><label>Year *</label><input type="number" id="qa-year" placeholder="2024" style="font-size:16px;padding:12px;"></div>
-        <div class="ff"><label>Sport *</label>
-          <select id="qa-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
-            <option value="">Select...</option>
-            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
-          </select>
-        </div>
-        <div class="ff"><label>Brand *</label>
-          <input type="text" id="qa-brand" placeholder="e.g. Topps" style="font-size:16px;padding:12px;" list="qa-brand-list" autocomplete="off">
-          <datalist id="qa-brand-list">
-            <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
-            <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
-          </datalist>
-        </div>
-        <div class="ff"><label>Set *</label>
-          <input type="text" id="qa-set" placeholder="e.g. Chrome" style="font-size:16px;padding:12px;" list="qa-set-list" autocomplete="off">
-          <datalist id="qa-set-list">
-            <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
-            <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
-            <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
-            <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
-          </datalist>
-        </div>
-        <div class="ff"><label>Parallel *</label>
-          <input type="text" id="qa-parallel" placeholder="e.g. Base" style="font-size:16px;padding:12px;" list="qa-par-list" autocomplete="off">
-          <datalist id="qa-par-list">
-            <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
-            <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
-            <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
-            <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
-            <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
-          </datalist>
-        </div>
-        <div class="ff"><label>Card # *</label><input type="text" id="qa-cno" placeholder="e.g. 264" style="font-size:16px;padding:12px;"></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">* Required fields</div>
-      <button class="btn-a" style="width:100%;padding:13px;font-size:13px;" onclick="qaNext(1)">Next: Purchase Info</button>
-    </div>
-
-    <div id="qa-step-2" style="display:none;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 2 of 3 - Purchase Details</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff" style="grid-column:1/-1;"><label>Date Acquired</label><input type="date" id="qa-date" style="font-size:16px;padding:12px;"></div>
-        <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="qa-price" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
-        <div class="ff"><label>Source</label>
-          <input type="text" id="qa-src" placeholder="e.g. eBay" style="font-size:16px;padding:12px;" list="qa-src-list" autocomplete="off">
-          <datalist id="qa-src-list"><option>eBay</option><option>Facebook</option><option>WhatNot</option><option>COMC</option><option>LCS</option><option>TikTok</option><option>Show</option><option>Trade</option></datalist>
-        </div>
-        <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="qa-ship" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
-        <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="qa-grade" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
-        <div class="ff"><label>Total Cost</label><div id="qa-total" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:12px;font-size:16px;font-weight:700;color:var(--green);">$0.00</div></div>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">* Required fields</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-c" style="flex:1;padding:13px;" onclick="qaBack(2)">Back</button>
-        <button class="btn-a" style="flex:2;padding:13px;font-size:13px;" onclick="qaNext(2)">Next: EV Data</button>
-      </div>
-    </div>
-
-    <!-- STEP 3: EV Data -->
-    <div id="qa-step-3" style="display:none;">
-      <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 3 of 3 - EV Data</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff" style="grid-column:1/-1;"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="qa-gem" placeholder="0.75" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
-        <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="qa-p10" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
-        <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="qa-p9" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
-        <div class="ff"><label>Disposition</label>
-          <select id="qa-disp" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
-            <option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option>
-          </select>
-        </div>
-        <div class="ff"><label>Status</label>
-          <select id="qa-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
-            <option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option>
-          </select>
-        </div>
-        <div class="ff"><label>Batch ID</label><input type="text" id="qa-batch" placeholder="Optional" style="font-size:16px;padding:12px;"></div>
-      </div>
-      <div id="qa-ev-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:12px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV$</div><div style="font-size:16px;font-weight:700;" id="qa-ev-dollar">--</div></div>
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV%</div><div style="font-size:16px;font-weight:700;" id="qa-ev-pct">--</div></div>
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">DECISION</div><div style="font-size:16px;font-weight:700;" id="qa-ev-dec">--</div></div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">EV fields are optional - fill in later</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-c" style="flex:1;padding:13px;" onclick="qaBack(3)">Back</button>
-        <button class="btn-a" style="flex:2;padding:13px;font-size:13px;" id="qa-save-btn" onclick="qaSave()">Save Card</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- IMPORT MODAL -->
-<div class="modal-bg" id="import-modal">
-  <div class="modal" style="max-width:600px;">
-    <div class="modal-title">
-      Import Spreadsheet
-      <button class="modal-close" onclick="closeModal('import-modal')">x</button>
-    </div>
-
-    <!-- STEP 1: Upload -->
-    <div id="imp-step-upload">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
-        Upload any spreadsheet with your card inventory. If your columns match our format they will import automatically. Otherwise you will get to map your columns manually.
-      </div>
-      <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()">
-        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" onchange="handleImport(this)">
-        <div style="font-size:28px;margin-bottom:8px;">&#128202;</div>
-        <div style="font-size:13px;color:var(--text-muted);">Tap to select your spreadsheet</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">.xlsx, .xls, .csv supported</div>
-      </div>
-      <div class="factions">
-        <button class="btn-c" onclick="closeModal('import-modal')">Cancel</button>
-      </div>
-    </div>
-
-    <!-- STEP 2: Column Mapping -->
-    <div id="imp-step-mapping" style="display:none;">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;line-height:1.6;">
-        We found <strong id="imp-col-count" style="color:var(--text);"></strong> columns in your spreadsheet. Match them to our fields below. Columns already matched are highlighted.
-      </div>
-      <div style="font-size:11px;color:var(--amber);margin-bottom:14px;" id="imp-auto-msg"></div>
-      <div style="max-height:340px;overflow-y:auto;margin-bottom:14px;">
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);">Your Column</th>
-              <th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);">Maps To</th>
-            </tr>
-          </thead>
-          <tbody id="imp-mapping-rows"></tbody>
-        </table>
-      </div>
-      <div class="import-preview" id="import-preview" style="display:none;margin-bottom:14px;"></div>
-      <div class="factions">
-        <button class="btn-a" id="btn-import-confirm" onclick="confirmImport()">Import Cards</button>
-        <button class="btn-c" onclick="impReset()">Back</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- ToS MODAL -->
-<div class="modal" id="tos-modal" style="display:none;max-width:560px;max-height:80vh;overflow-y:auto;">
-  <div class="bhdr"><strong style="font-size:14px;">Terms of Service</strong><button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="g('tos-modal').style.display='none'">Close</button></div>
-  <div style="font-size:12px;color:var(--text-muted);line-height:1.8;padding-top:12px;">
-    <p style="margin-bottom:10px;color:var(--text);font-weight:700;">GradeIQ Terms of Service</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">1. Proprietary Algorithm.</strong> The GradeIQ scoring system, IQ Rating methodology, EV calculations, and all underlying algorithms are the exclusive intellectual property of GradeIQ. Members may not reverse engineer, copy, reproduce, or create derivative works based on any GradeIQ methodology.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">2. No Redistribution.</strong> Buy Signals, IQ Ratings, and any data provided through the platform are for your personal investment use only. Redistribution, resale, or public sharing of GradeIQ data is strictly prohibited.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">3. No Competing Use.</strong> Members may not use knowledge gained from GradeIQ to build, operate, or contribute to a competing card investment platform or service.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">4. Investment Disclaimer.</strong> GradeIQ provides data and analysis for informational purposes only. Past performance does not guarantee future results. All investment decisions are your own responsibility.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">5. Account Access.</strong> Your account is personal and non-transferable. Sharing access credentials is prohibited and may result in immediate termination.</p>
-    <p style="margin-bottom:8px;"><strong style="color:var(--text);">6. Termination.</strong> GradeIQ reserves the right to terminate access for any violation of these terms without refund.</p>
-    <p style="color:var(--text-muted);font-size:11px;margin-top:12px;">Last updated: May 2026</p>
-  </div>
-</div>
 
 <!-- HELP PLAYER MODAL -->
 <div class="help-player-modal" id="help-player-modal">
@@ -1930,6 +1604,15 @@ async function doForgotPassword() {
 function toggleMobileNav() {
   const nav = g('mobile-nav');
   nav.classList.toggle('open');
+}
+
+function toggleAdminSection(bodyId, chevId) {
+  var body = document.getElementById(bodyId);
+  var chev = document.getElementById(chevId);
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
 function showManualRegister() {
@@ -4672,7 +4355,19 @@ function toggleGIQBookmark(key,btn){if(GIQ_BOOKMARKS[key]){delete GIQ_BOOKMARKS[
 
 function giqAddToInventory(idx){var r=GRADEIQ_FILTERED[idx];if(!r)return toast('Card not found',true);openQuickAdd();setTimeout(function(){if(r.player&&g('qa-player'))g('qa-player').value=r.player;if(r.year&&g('qa-year'))g('qa-year').value=r.year;if(r.sport&&g('qa-sport'))g('qa-sport').value=r.sport;if(r.set_name){var sc=r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'').split(' ');if(g('qa-brand'))g('qa-brand').value=sc[0]||'';if(g('qa-set'))g('qa-set').value=sc.slice(1).join(' ')||'';}if(r.parallel&&g('qa-parallel'))g('qa-parallel').value=r.parallel;if(r.card_no&&g('qa-cno'))g('qa-cno').value=r.card_no;if(r.psa10_price&&g('qa-p10'))g('qa-p10').value=r.psa10_price;if(r.psa9_price&&g('qa-p9'))g('qa-p9').value=r.psa9_price;if(g('qa-grade'))g('qa-grade').value=30;if(g('qa-disp'))g('qa-disp').value='Grade';qaCalcCost();qaCalcEV();qaShowStep(1);toast('Card pre-filled!');},250);}
 
-function showTrialBanner(){if(!CU||CU.email===ADMIN)return;sb.from('profiles').select('created_at').eq('id',CU.id).single().then(function(res){if(!res.data)return;var created=new Date(res.data.created_at||CU.created_at);var daysSince=Math.floor((new Date()-created)/86400000);var daysLeft=30-daysSince;var banner=g('giq-trial-banner');var text=g('giq-trial-text');if(banner&&daysLeft>0&&daysLeft<30){banner.style.display='flex';if(text)text.textContent='Free trial — Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}});}
+function showTrialBanner(){
+  if(!CU||CU.email===ADMIN) return;
+  sb.from('whop_members').select('joined_at').eq('email',CU.email).single().then(function(res){
+    if(!res.data||!res.data.joined_at) return;
+    var joined=new Date(res.data.joined_at);
+    var daysSince=Math.floor((new Date()-joined)/86400000);
+    if(daysSince>=30) return;
+    var daysLeft=30-daysSince;
+    var banner=g('giq-trial-banner');
+    var text=g('giq-trial-text');
+    if(banner){banner.style.display='flex';if(text)text.textContent='Free trial — Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}
+  });
+}
 
 
 function renderGradeIQ() {
