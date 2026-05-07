@@ -4338,9 +4338,12 @@ function renderGradeIQ(){
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
     if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
     if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
+    var mmQuery = encodeURIComponent((r.player||'') + (r.card_no ? ' '+r.card_no : ''));
+    var mmUrl = 'https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+mmQuery;
     html+='</div><div style="display:flex;gap:8px;flex-wrap:wrap;">';
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
+    html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
     html+='</div></div></div>';
   }
   list.innerHTML=html;
