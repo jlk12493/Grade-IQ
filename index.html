@@ -4200,86 +4200,57 @@ function giqAddToInventory(idx){var r=GRADEIQ_FILTERED[idx];if(!r)return toast('
 function showTrialBanner(){if(!CU||CU.email===ADMIN)return;sb.from('whop_members').select('joined_at').eq('email',CU.email).single().then(function(res){if(!res.data||!res.data.joined_at)return;var joined=new Date(res.data.joined_at);var daysSince=Math.floor((new Date()-joined)/86400000);if(daysSince>=30)return;var daysLeft=30-daysSince;var banner=g('giq-trial-banner');var text=g('giq-trial-text');if(banner){banner.style.display='flex';if(text)text.textContent='Free trial — Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}});}
 
 
-function renderGradeIQ() {
-  var buys = GRADEIQ_FILTERED;
-  var allBuys = GRADEIQ_DATA;
-  var sets = new Set(allBuys.map(function(r){return r.set_name;})).size;
-  var avgSCC = allBuys.length ? (allBuys.reduce(function(s,r){return s+(r.scc_score||0);},0)/allBuys.length).toFixed(1) : '--';
-  var topEV = allBuys.length ? Math.max.apply(null,allBuys.map(function(r){return r.ev_pct||0;})) : 0;
-  if(g('giq-count')) g('giq-count').textContent = buys.length;
-  if(g('giq-sets')) g('giq-sets').textContent = sets;
-  if(g('giq-avgscc')) g('giq-avgscc').textContent = avgSCC;
-  if(g('giq-topev')) g('giq-topev').textContent = (topEV*100).toFixed(0)+'%';
-  var list = g('giq-list');
-  if (!list) return;
-  if (!buys.length) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No buy signals yet</div><div style="font-size:12px;">Check back soon — scanner runs nightly</div></div>';
-    return;
+function renderGradeIQ(){
+  var list=g('giq-list');if(!list)return;
+  if(!GRADEIQ_FILTERED.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No signals match your filters</div><div style="font-size:12px;">Try adjusting the filters above</div></div>';return;}
+  var now=Date.now();var html='';
+  for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
+    var r=GRADEIQ_FILTERED[idx];
+    var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
+    var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    var cid='giq-card-'+idx;
+    var bk=encodeURIComponent((r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||''));
+    var ibm=!!GIQ_BOOKMARKS[decodeURIComponent(bk)];
+    var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
+    var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
+    var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+ss+' '+(r.card_no?'#'+r.card_no:'')+' raw -psa -bgs -sgc -cgc');
+    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_Sold=1&LH_Complete=1';
+    var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent((r.player||'')+(r.card_no?' '+r.card_no:''));
+    var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
+    html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
+    html+='<div style="min-width:36px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div><div style="font-size:15px;font-weight:800;color:'+sc+';line-height:1.2;">'+(r.scc_score||'--')+'</div></div>';
+    html+='<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>';
+    if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>';
+    if(pd)html+='<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+pd+'</span>';
+    if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable — verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
+    html+='</div><div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+'</div></div>';
+    html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
+    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div></div>';
+    html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;">&#128722;</a>';
+    html+='<button class="giq-bookmark'+(ibm?' saved':'')+'" data-bkey="'+bk+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(ibm?'★':'☆')+'</button>';
+    html+='<span id="chev-'+cid+'" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>';
+    html+='</div></div>';
+    html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
+    if(r.scc_score!=null)html+=giqCell('IQ Rating',String(r.scc_score),sc,true);
+    if(r.ev_pct)html+=giqCell('EV%',(r.ev_pct*100).toFixed(1)+'%',ec,true);
+    if(r.ev_dollar!=null)html+=giqCell('EV$',f$(r.ev_dollar),(r.ev_dollar||0)>=0?'var(--green)':'#F87171',true);
+    if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
+    if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
+    if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
+    if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+    html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
+    html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
+    html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
+    html+='</div></div></div>';
   }
-  list.innerHTML = buys.map(function(r, idx) {
-    var setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
-    var parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
-    var sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
-    var evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    var sportBadge = r.sport==='Football'?'&#127944;':r.sport==='Baseball'?'&#9918;':r.sport==='Basketball'?'&#127936;':'';
-    var scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
-    var cardId = 'giq-card-' + idx;
-    var enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">' +
-      '<div style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="' + cardId + '">' +
-        '<i id="chev-' + cardId + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;">&#9658;</i>' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
-            '<span style="font-size:14px;font-weight:800;color:var(--text);">' + (r.player||'--') + '</span>' +
-            '<span style="font-size:10px;font-weight:700;background:var(--green);color:#000;padding:2px 7px;border-radius:20px;">BUY</span>' +
-            (parallelDisplay ? '<span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;border:1px solid rgba(239,68,68,.3);">' + parallelDisplay + '</span>' : '') +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
-            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + '</span>' +
-            '<span style="font-size:11px;font-weight:700;color:' + sccColor + ';">SCC ' + (r.scc_score||'--') + '</span>' +
-            '<span style="font-size:11px;font-weight:700;color:' + evColor + ';">EV ' + (r.ev_pct ? (r.ev_pct*100).toFixed(0)+'%' : '--') + '</span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">' + f$(r.raw_price) + '</strong></span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--green);">' + f$(r.max_buy_40) + '</strong></span>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div id="' + cardId + '" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
-          giqCell('SCC Score', r.scc_score!=null?String(r.scc_score):'--', sccColor, true) +
-          giqCell('EV%', r.ev_pct ? (r.ev_pct*100).toFixed(1)+'%' : '--', evColor, true) +
-          giqCell('EV$', r.ev_dollar!=null?f$(r.ev_dollar):'--', (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
-          giqCell('Gem Rate', r.actual_gem_rate!=null?(r.actual_gem_rate*100).toFixed(0)+'%':'--', 'var(--text)', true) +
-          giqCell('Implied Gem Rate', r.implied_gem_rate!=null?(r.implied_gem_rate*100).toFixed(0)+'%':'--', 'var(--text-muted)', false) +
-          giqCell('Raw Price', r.raw_price!=null?f$(r.raw_price):'--', 'var(--text)', false) +
-          giqCell('PSA 10 Price', r.psa10_price!=null?f$(r.psa10_price):'--', 'var(--text)', false) +
-          giqCell('PSA 9 Price', r.psa9_price!=null?f$(r.psa9_price):'--', 'var(--text-muted)', false) +
-          giqCell('Net PSA 10', r.net_psa10!=null?f$(r.net_psa10):'--', 'var(--text)', false) +
-          giqCell('Net PSA 9', r.net_psa9!=null?f$(r.net_psa9):'--', 'var(--text-muted)', false) +
-          giqCell('Max Buy @40%', r.max_buy_40!=null?f$(r.max_buy_40):'--', 'var(--green)', true) +
-          giqCell('Max Buy @35%', r.max_buy_35!=null?f$(r.max_buy_35):'--', 'var(--amber)', false) +
-          giqCell('Sales Volume', r.sales_volume!=null?String(r.sales_volume):'--', 'var(--text)', false) +
-          giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
-        '</div>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + idx + '">+ Add to Inventory</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" data-giqebay="' + enc + '">&#128722; Find Raw on eBay</button>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  list.querySelectorAll('[data-giqadd]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      giqAddToInventory(parseInt(this.dataset.giqadd));
-    });
-  });
-  list.querySelectorAll('[data-giqebay]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      openGradeIQEbay(this.dataset.giqebay);
-    });
-  });
+  list.innerHTML=html;
+  list.querySelectorAll('[data-giqadd]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();giqAddToInventory(parseInt(this.dataset.giqadd));});});
+  try{localStorage.setItem('giq_last_visit',now.toString());}catch(e){}
 }
 
 function giqCell(label, value, color, bold) {
