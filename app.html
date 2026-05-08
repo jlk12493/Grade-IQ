@@ -4215,6 +4215,8 @@ function renderGradeIQ(){
     var ebayQ=encodeURIComponent((r.player||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
     var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent((r.player||'')+(r.card_no?' '+r.card_no:''));
+    var clQuery=(r.player||'')+(r.card_no?' '+r.card_no:'');
+    var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(clQuery);
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
     html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
     html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
@@ -4245,6 +4247,7 @@ function renderGradeIQ(){
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
     html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
+    html+='<a href="'+clUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128269; Verify on Card Ladder</a>';
     html+='</div></div></div>';
   }
   list.innerHTML=html;
@@ -4322,27 +4325,8 @@ var GR_PARSED_DATA = [];
 
 
 
-function grDragOver(e){
-  e.preventDefault();e.stopPropagation();
-  var dz=g('gr-dropzone');if(dz)dz.style.borderColor='var(--green)';
-}
-function grDragLeave(e){
-  e.preventDefault();e.stopPropagation();
-  var dz=g('gr-dropzone');if(dz)dz.style.borderColor='var(--border)';
-}
-function grDrop(e){
-  e.preventDefault();e.stopPropagation();
-  var dz=g('gr-dropzone');if(dz)dz.style.borderColor='var(--border)';
-  var files=e.dataTransfer&&e.dataTransfer.files;
-  if(!files||!files.length)return;
-  previewGemRateCSV(files[0]);
-}
-function grDropzoneClick(){
-  var input=g('gr-csv');if(input)input.click();
-}
-
-function previewGemRateCSV(fileArg){
-  var file=fileArg||(g('gr-csv')?g('gr-csv').files[0]:null);
+function previewGemRateCSV(){
+  var file=g('gr-csv')?g('gr-csv').files[0]:null;
   if(!file)return;
   var reader=new FileReader();
   reader.onload=function(e){
