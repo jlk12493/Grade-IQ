@@ -4335,19 +4335,14 @@ function grDrop(e){
   var dz=g('gr-dropzone');if(dz)dz.style.borderColor='var(--border)';
   var files=e.dataTransfer&&e.dataTransfer.files;
   if(!files||!files.length)return;
-  var input=g('gr-csv');if(!input)return;
-  // Assign dropped file to the hidden input and trigger preview
-  var dt=new DataTransfer();
-  dt.items.add(files[0]);
-  input.files=dt.files;
-  previewGemRateCSV();
+  previewGemRateCSV(files[0]);
 }
 function grDropzoneClick(){
   var input=g('gr-csv');if(input)input.click();
 }
 
-function previewGemRateCSV(){
-  var file=g('gr-csv')?g('gr-csv').files[0]:null;
+function previewGemRateCSV(fileArg){
+  var file=fileArg||(g('gr-csv')?g('gr-csv').files[0]:null);
   if(!file)return;
   var reader=new FileReader();
   reader.onload=function(e){
