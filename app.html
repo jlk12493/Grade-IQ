@@ -1263,8 +1263,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 const SURL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const ADMIN = 'jlk12493@gmail.com';
-const sb = supabase.createClient(SURL, SKEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-
+const sb = supabase.createClient(SURL, SKEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 let CU = null, INV = [], BATCHES = [], BL = [], invF = [], blF = [], invPg = 1;
 const PP = 25;
 let importRows = [];
