@@ -1593,8 +1593,7 @@ async function removeUser(userId, email) {
 async function doLogout() {
   await sb.auth.signOut();
   CU=null; INV=[]; BATCHES=[]; BL=[];
-  g('app-screen').style.display='none';
-  g('auth-screen').style.display='flex'; document.body.classList.remove('logged-in');
+  window.location.href = '/index.html';
 }
 
 function toggleTheme() {
