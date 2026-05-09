@@ -971,7 +971,10 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Scanner</h2>
           <div style="font-size:12px;color:var(--text-muted);">Auto-scanned opportunities ranked by EV%. Last run: <span id="scanner-last-run">Never</span></div>
         </div>
-        <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run Scanner Now</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run All Sets</button>
+          <button class="btn-s" style="border-color:var(--green);color:var(--green);" onclick="scanNewSets()" id="btn-scan-new">&#10133; Scan New Sets Only</button>
+        </div>
       </div>
 
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
@@ -4840,6 +4843,74 @@ async function runScanner(){
     toast('Refreshing scanner data...');
     await loadScanner();
   }
+}
+
+async function scanNewSets(){
+  if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
+  var btn=g('btn-scan-new');
+  if(btn){btn.disabled=true;btn.textContent='Scanning...';}
+  try{
+    // Get all set names from gem_rates
+    var allSetRows=[];var pg=0;
+    while(true){
+      var {data:chunk}=await sb.from('gem_rates').select('set_name').not('set_name','is',null).range(pg*1000,(pg+1)*1000-1);
+      if(!chunk||!chunk.length)break;
+      allSetRows=allSetRows.concat(chunk);
+      if(chunk.length<1000)break;
+      pg++;
+    }
+    var allSets=[...new Set(allSetRows.map(function(r){return r.set_name;}))].sort();
+
+    // Get all set names already in ev_scanner
+    var scannedRows=[];pg=0;
+    while(true){
+      var {data:chunk2}=await sb.from('ev_scanner').select('set_name').range(pg*1000,(pg+1)*1000-1);
+      if(!chunk2||!chunk2.length)break;
+      scannedRows=scannedRows.concat(chunk2);
+      if(chunk2.length<1000)break;
+      pg++;
+    }
+    var scannedSets=new Set(scannedRows.map(function(r){return r.set_name;}));
+
+    // Find new sets not yet scanned - match by checking if any scanned set_name contains the gem_rate set keywords
+    var newSets=allSets.filter(function(s){
+      // Strip sport prefix for comparison
+      var stripped=s.replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').toLowerCase();
+      for(var ss of scannedSets){
+        if(ss&&ss.toLowerCase().includes(stripped.split(' ')[0])) return false;
+      }
+      return true;
+    });
+
+    if(!newSets.length){
+      toast('No new sets found — everything has been scanned already!');
+      if(btn){btn.disabled=false;btn.textContent='\u2795 Scan New Sets Only';}
+      return;
+    }
+
+    // Find batch numbers for new sets
+    var firstNewBatch=allSets.indexOf(newSets[0]);
+    if(firstNewBatch===-1){
+      toast('Could not determine batch number for new sets',true);
+      if(btn){btn.disabled=false;btn.textContent='\u2795 Scan New Sets Only';}
+      return;
+    }
+
+    // Queue via direct Supabase insert (bypass trigger_ev_scanner which always starts at 0)
+    await sb.from('scanner_queue').delete().eq('status','pending');
+    await sb.from('scanner_queue').update({status:'abandoned'}).eq('status','running');
+    var {error}=await sb.from('scanner_queue').insert({batch:firstNewBatch,player_offset:0,status:'pending'});
+
+    if(error){
+      toast('Error queuing scan: '+error.message,true);
+    } else {
+      toast('Scanning '+newSets.length+' new sets starting at batch '+firstNewBatch+'. Check back in a few minutes!');
+      setTimeout(async function(){await loadScanner();toast('Scanner results refreshed!');},30000);
+    }
+  } catch(e){
+    toast('Error: '+e.message,true);
+  }
+  if(btn){btn.disabled=false;btn.textContent='\u2795 Scan New Sets Only';}
 }
 
 function toggleAdminSection(bodyId,chevId){var body=document.getElementById(bodyId);var chev=document.getElementById(chevId);if(!body)return;var isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'';if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';}
