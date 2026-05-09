@@ -669,6 +669,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <button class="giq-sport-btn" data-sport="Baseball" onclick="setGIQSport(this)">&#9918; Baseball</button>
         <button class="giq-sport-btn" data-sport="Football" onclick="setGIQSport(this)">&#127944; Football</button>
         <button class="giq-sport-btn" data-sport="Basketball" onclick="setGIQSport(this)">&#127936; Basketball</button>
+        <button class="giq-sport-btn" data-sport="TCG" onclick="setGIQSport(this)">&#127183; TCG</button>
       </div>
       <div style="margin-bottom:20px;">
         <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">&#11088; Top Picks Today</div>
@@ -733,7 +734,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
               </datalist>
             </div>
             <div class="ff"><label>Card # *</label><input type="text" id="f-cno" placeholder="264"></div>
-            <div class="ff"><label>Sport</label><select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
+            <div class="ff"><label>Sport</label><select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option></select></div>
             <div class="ff"><label>Date Acquired</label><input type="date" id="f-date"></div>
             <div class="ff"><label>Source</label><input type="text" id="f-src" placeholder="eBay"></div>
             <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="f-price" placeholder="19.99"></div>
@@ -780,7 +781,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:end;">
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sport</div>
-            <select class="fi" id="inv-sport" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
+            <select class="fi" id="inv-sport" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option></select>
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Year</div>
@@ -1001,6 +1002,9 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
               <option value="Baseball">Baseball</option>
               <option value="Football">Football</option>
               <option value="Basketball">Basketball</option>
+              <option value="Hockey">Hockey</option>
+              <option value="Soccer">Soccer</option>
+              <option value="TCG">TCG</option>
             </select>
           </div>
 
@@ -1059,7 +1063,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;">Sets Overview</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <input class="fi" type="text" id="sets-search" placeholder="Search sets..." oninput="renderSetsTable()" style="width:140px;">
-            <select class="fi" id="sets-sport-filter" onchange="renderSetsTable()" style="width:110px;"><option value="">All Sports</option><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option></select>
+            <select class="fi" id="sets-sport-filter" onchange="renderSetsTable()" style="width:110px;"><option value="">All Sports</option><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option><option value="Hockey">Hockey</option><option value="Soccer">Soccer</option><option value="TCG">TCG</option></select>
             <select class="fi" id="sets-sort" onchange="renderSetsTable()" style="width:150px;"><option value="buys">BUYs High&#8594;Low</option><option value="name">Set Name A&#8594;Z</option><option value="scanned">Last Scanned</option><option value="ev">Avg EV%</option></select>
           </div>
         </div>
@@ -1179,7 +1183,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Download a CSV from gemrate.com and import below. Supports both set-based and player-based exports.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;" id="gr-manual-fields">
           <div class="ff"><label>Set Name</label><input class="fi" id="gr-set-name" placeholder="e.g. 2025 Topps Chrome" style="width:100%;"></div>
-          <div class="ff"><label>Sport</label><select class="fi" id="gr-sport" style="width:100%;"><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option></select></div>
+          <div class="ff"><label>Sport</label><select class="fi" id="gr-sport" style="width:100%;"><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option><option value="Hockey">Hockey</option><option value="Soccer">Soccer</option><option value="TCG">TCG</option></select></div>
         </div>
         <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:30px;text-align:center;cursor:pointer;background:var(--surface-2);margin-bottom:14px;">
           <div style="font-size:28px;margin-bottom:8px;">&#128202;</div>
@@ -4406,7 +4410,7 @@ function previewGemRateCSV(fileArg){
         if(total<5){skipped++;continue;}
         // Handle multi-player - use first player
         if(player.includes('/'))player=player.split('/')[0].trim();
-        var sportMap={'baseball':'Baseball','football':'Football','basketball':'Basketball','hockey':'Hockey'};
+        var sportMap={'baseball':'Baseball','football':'Football','basketball':'Basketball','hockey':'Hockey','tcg':'TCG','pokemon':'TCG','trading cards':'TCG'};
         var sport=sportMap[cat.toLowerCase()]||cat;
         var fullSetName=sport+' Cards '+(year?year+' ':'')+setRaw;
         var parallelClean=(parallel&&parallel.toLowerCase()!=='base')?parallel:null;
@@ -4957,6 +4961,68 @@ function blCalc() {
 </script>
 
 <!-- MARK AS SOLD MODAL -->
+
+<!-- EDIT CARD MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-title">Edit Card<button class="modal-close" onclick="closeModal('edit-modal')">&#10005;</button></div>
+    <input type="hidden" id="edit-id">
+    <div class="fgrid" style="margin-bottom:14px;">
+      <div class="ff"><label>Card ID</label><input type="text" id="e-cid" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;font-family:monospace;"></div>
+      <div class="ff"><label>Player / Card Name</label><input type="text" id="e-player" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Year</label><input type="number" id="e-year" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Set</label><input type="text" id="e-set" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Parallel</label><input type="text" id="e-par" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Card #</label><input type="text" id="e-cno" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Sport</label>
+        <select id="e-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;">
+          <option value="">Select...</option>
+          <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option>
+        </select>
+      </div>
+      <div class="ff"><label>Date Acquired</label><input type="date" id="e-date" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Source</label><input type="text" id="e-src" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Total Cost</label><div id="e-total-preview" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-size:13px;font-weight:700;color:var(--green);">$0.00</div></div>
+      <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="e-gem" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="e-p10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="e-p9" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>PSA Grade</label><input type="number" id="e-psagrade" min="1" max="10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      <div class="ff"><label>Disposition</label>
+        <select id="e-disp" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;">
+          <option>Grade</option><option>Sell Raw</option><option>Hold</option>
+        </select>
+      </div>
+      <div class="ff"><label>Status</label>
+        <select id="e-stat" onchange="toggleSoldFields()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;">
+          <option>Awaiting Item</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option><option>Sold</option>
+        </select>
+      </div>
+      <div class="ff"><label>Batch ID</label><input type="text" id="e-batch" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+    </div>
+    <div id="sold-fields" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Sale Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div class="ff"><label>Date Sold</label><input type="date" id="e-datesold" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+        <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="e-saleprice" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+        <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+        <div class="ff"><label>Ship Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      </div>
+      <div id="sold-preview" style="display:none;background:var(--surface);border-radius:5px;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Net Proceeds</div><div style="font-size:14px;font-weight:700;color:var(--text);" id="sp-proc">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Profit</div><div style="font-size:14px;font-weight:700;" id="sp-prof">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">ROI</div><div style="font-size:14px;font-weight:700;" id="sp-roi">--</div></div>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" onclick="saveEdit()">Save Changes</button>
+      <button class="btn-c" onclick="closeModal('edit-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="sold-modal">
   <div class="modal" style="max-width:420px;">
     <div class="modal-title">
@@ -5167,7 +5233,7 @@ function blCalc() {
         <div class="ff"><label>Sport *</label>
           <select id="qa-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
             <option value="">Select...</option>
-            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
+            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option>
           </select>
         </div>
         <div class="ff"><label>Brand *</label>
@@ -5320,7 +5386,7 @@ function blCalc() {
         <div class="ff"><label>Sport *</label>
           <select id="qa-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
             <option value="">Select...</option>
-            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
+            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option>
           </select>
         </div>
         <div class="ff"><label>Brand *</label>
@@ -5473,7 +5539,7 @@ function blCalc() {
         <div class="ff"><label>Sport *</label>
           <select id="qa-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
             <option value="">Select...</option>
-            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
+            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option>
           </select>
         </div>
         <div class="ff"><label>Brand *</label>
@@ -5626,7 +5692,7 @@ function blCalc() {
         <div class="ff"><label>Sport *</label>
           <select id="qa-sport" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
             <option value="">Select...</option>
-            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
+            <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option><option>TCG</option>
           </select>
         </div>
         <div class="ff"><label>Brand *</label>
