@@ -4220,9 +4220,10 @@ function renderGradeIQ(){
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
     var ebayQ=encodeURIComponent((r.player||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
-    var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent((r.player||'')+(r.card_no?' '+r.card_no:''));
-    var clQuery=(r.player||'')+(r.card_no?' '+r.card_no:'');
-    var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(clQuery);
+    var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
+    var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(ss?' '+ss:'')+(r.card_no?' '+r.card_no:'')+(isBase?'':' '+r.parallel);
+    var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent(verifyQ);
+    var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(verifyQ);
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
     html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
     html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
