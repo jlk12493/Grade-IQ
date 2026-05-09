@@ -713,9 +713,12 @@ footer {
 }
 
 /* ── MOBILE ── */
+#mob-cta { display: none; }
+
 @media (max-width: 768px) {
   nav { padding: 16px 20px; }
   .nav-links { display: none; }
+  #mob-cta { display: inline-block !important; }
   .hero { padding: 100px 20px 60px; }
   .stat-bar { flex-direction: column; }
   .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
@@ -745,9 +748,9 @@ footer {
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">⚡ Updated nightly — Baseball · Football · Basketball</div>
+  <div class="hero-eyebrow">⚡ Updated nightly — Baseball · Football · Basketball · TCG</div>
   <h1>Grade smarter.<br>Return <em>stronger.</em></h1>
-  <p class="hero-sub">GradeIQ finds the highest expected-value grading opportunities in the sports card market. Stop guessing which cards to submit — let the data decide.</p>
+  <p class="hero-sub">GradeIQ finds the highest expected-value grading opportunities across sports cards and TCG. Stop guessing which cards to submit — let the data decide.</p>
   <div class="hero-actions">
     <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" class="btn-primary">
       Get Started Free →
@@ -770,8 +773,8 @@ footer {
       <div class="stat-label">Basketball</div>
     </div>
     <div class="stat-item">
-      <div class="stat-value" style="font-size:16px;padding-top:4px;">More<br>Coming</div>
-      <div class="stat-label">🔜</div>
+      <div class="stat-value">🃏</div>
+      <div class="stat-label">TCG</div>
     </div>
   </div>
 </div>
@@ -859,7 +862,7 @@ footer {
     <div class="feature-card">
       <span class="feature-icon">💎</span>
       <div class="feature-title">Gem Rate Intelligence</div>
-      <div class="feature-desc">Real PSA population data tells you the true probability of hitting a PSA 10 — not guesswork. We track thousands of sets across Baseball, Football, and Basketball.</div>
+      <div class="feature-desc">Real PSA population data tells you the true probability of hitting a PSA 10 — not guesswork. We track thousands of sets across Baseball, Football, Basketball, and TCG.</div>
       <span class="feature-tag">PSA Population Data</span>
     </div>
     <div class="feature-card">
