@@ -4184,7 +4184,7 @@ function renderTopPicks(){
   var el=g('giq-top-picks');if(!el)return;
   var top=GRADEIQ_FILTERED.slice(0,5);if(!top.length){el.innerHTML='';return;}
   el.innerHTML=top.map(function(r){
-    var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
     var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
     var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
@@ -4210,7 +4210,7 @@ function renderGradeIQ(){
   var now=Date.now();var html='';
   for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
     var r=GRADEIQ_FILTERED[idx];
-    var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
     var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
     var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
     var cid='giq-card-'+idx;
@@ -4221,7 +4221,9 @@ function renderGradeIQ(){
     var ebayQ=encodeURIComponent((r.player||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
-    var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(ss?' '+ss:'')+(r.card_no?' '+r.card_no:'')+(isBase?'':' '+r.parallel);
+    // Strip sport prefix and year from set name to avoid duplicates in search query
+    var setOnly=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
+    var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(setOnly?' '+setOnly:'')+(r.card_no?' #'+r.card_no:'')+(isBase?'':' '+r.parallel);
     var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent(verifyQ);
     var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(verifyQ);
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
