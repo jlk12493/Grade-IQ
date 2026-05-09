@@ -4147,7 +4147,7 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,decision,psa10_price,psa9_price,actual_gem_rate,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
+  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
@@ -4305,9 +4305,10 @@ async function saveGIQEdit(scpId,cid,idx){
   var maxBuy40=Math.max(0,(expectedReturn-GRADING_COST)/1.40);
   var maxBuy35=Math.max(0,(expectedReturn-GRADING_COST)/1.35);
   var decision=evPct>=0.40?'BUY':evPct>=0.35?'CAUTION':'PASS';
-  var btn=g('giq-edit-'+cid).querySelector('.btn-a');
-  if(btn){btn.textContent='Saving...';btn.disabled=true;}
-  var {error}=await sb.from('ev_scanner').update({
+  var editBox=g('giq-edit-'+cid);
+  var saveBtn=editBox?editBox.querySelector('.btn-a'):null;
+  if(saveBtn){saveBtn.textContent='Saving...';saveBtn.disabled=true;}
+  var updates={
     raw_price:Math.round(raw*100)/100,
     psa10_price:Math.round(p10*100)/100,
     psa9_price:p9>0?Math.round(p9*100)/100:null,
@@ -4319,10 +4320,15 @@ async function saveGIQEdit(scpId,cid,idx){
     max_buy_35:Math.round(maxBuy35*100)/100,
     decision,
     scanned_at:new Date().toISOString()
-  }).eq('scp_id',scpId);
-  if(error){toast('Save failed: '+error.message,true);if(btn){btn.textContent='\u2713 Save Prices';btn.disabled=false;}return;}
-  toast('\u2713 Prices updated — reloading buy signals...');
-  await loadGradeIQ();
+  };
+  var {error}=await sb.from('ev_scanner').update(updates).eq('scp_id',scpId);
+  if(error){toast('Save failed: '+error.message,true);if(saveBtn){saveBtn.textContent='✓ Save Prices';saveBtn.disabled=false;}return;}
+  Object.assign(r,updates);
+  var fi=GRADEIQ_FILTERED.findIndex(function(x){return x.scp_id===scpId;});
+  if(fi>-1)Object.assign(GRADEIQ_FILTERED[fi],updates);
+  toast('✓ Prices saved!');
+  toggleGIQEdit(cid);
+  filterGradeIQ();
 }
 
 function giqCell(label, value, color, bold) {
