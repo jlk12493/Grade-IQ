@@ -4147,7 +4147,7 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
+  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
@@ -4284,6 +4284,20 @@ function toggleGIQEdit(cid){
   el.style.display=el.style.display==='none'?'':'none';
 }
 
+function calcSCCScoreJS(evPct,salesVolume,actualGemRate,impliedGemRate,totalPop,momentum){
+  var evScore=Math.min(evPct/2.0,1.0)*40;
+  var volScore=salesVolume>0?Math.min(Math.log10(salesVolume)/Math.log10(2000),1.0)*30:0;
+  var edgeScore=0;
+  if(impliedGemRate>0&&totalPop>=20){
+    var edgeRatio=Math.min(actualGemRate/impliedGemRate,3.0)/3.0;
+    var popWeight=Math.min(totalPop/500,1.0);
+    edgeScore=edgeRatio*popWeight*20;
+  }
+  var momentumScore=0;
+  if(momentum!==null&&momentum>0)momentumScore=Math.min(momentum/100,1.0)*10;
+  return Math.min(100,Math.round((evScore+volScore+edgeScore+momentumScore)*10)/10);
+}
+
 async function saveGIQEdit(scpId,cid,idx){
   if(!CU||CU.email!==ADMIN)return;
   var raw=parseFloat(g('gedit-raw-'+cid).value)||0;
@@ -4308,6 +4322,13 @@ async function saveGIQEdit(scpId,cid,idx){
   var editBox=g('giq-edit-'+cid);
   var saveBtn=editBox?editBox.querySelector('.btn-a'):null;
   if(saveBtn){saveBtn.textContent='Saving...';saveBtn.disabled=true;}
+  // Recalculate SCC score with new prices
+  var impliedGR=gemRate;
+  if(p9>0&&p9<p10){
+    var d=n10-n9;if(d>0){var imp=(totalCost-n9)/d;if(imp>0.005&&imp<0.995)impliedGR=Math.round(imp*1000)/1000;}
+  }
+  var momentum=(r.gem_rate_month&&r.gem_rate_month>0&&gemRate>0)?((r.gem_rate_month-gemRate)/gemRate)*100:null;
+  var newSCC=calcSCCScoreJS(evPct,r.sales_volume||0,gemRate,impliedGR,r.total||0,momentum);
   var updates={
     raw_price:Math.round(raw*100)/100,
     psa10_price:Math.round(p10*100)/100,
@@ -4319,6 +4340,7 @@ async function saveGIQEdit(scpId,cid,idx){
     max_buy_40:Math.round(maxBuy40*100)/100,
     max_buy_35:Math.round(maxBuy35*100)/100,
     decision,
+    scc_score:newSCC,
     scanned_at:new Date().toISOString()
   };
   var {error}=await sb.from('ev_scanner').update(updates).eq('scp_id',scpId);
