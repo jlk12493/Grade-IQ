@@ -1231,7 +1231,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div class="ff"><label>Temp Password</label><input type="text" id="mreg-pw" placeholder="TempPass123!" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn-a" style="font-size:12px;" onclick="saveManualRegister()">Create Account</button>
+          <button class="btn-a" style="font-size:12px;" onclick="doManualRegister()">Create Account</button>
           <button class="btn-c" style="font-size:12px;" onclick="g('manual-reg-form').style.display='none'">Cancel</button>
         </div>
         <div id="mreg-msg" style="font-size:12px;margin-top:8px;"></div>
@@ -1540,16 +1540,13 @@ function hideManualRegister() {
 async function doManualRegister() {
   const email = g('mreg-email').value.trim();
   const pw = g('mreg-pw').value.trim();
-  const code = g('mreg-code').value;
   if (!email || !pw) return showAdminMsg('Email and password are required');
-  if (!code) return showAdminMsg('Please select an invite code');
   if (pw.length < 6) return showAdminMsg('Password must be at least 6 characters');
   showAdminMsg('Creating account...', false);
   const {data, error} = await sb.auth.signUp({email, password:pw});
   if (error) return showAdminMsg(error.message);
-  const uid = data.user.id;
-  await sb.from('profiles').upsert({id:uid, email});
-  await sb.from('invite_codes').update({used:true, used_by:uid}).eq('code', code);
+  const uid = data.user?.id;
+  if (uid) await sb.from('profiles').upsert({id:uid, email});
   showAdminMsg('Account created for ' + email + '! Share password: ' + pw, false);
   g('mreg-email').value = '';
   g('mreg-pw').value = '';
