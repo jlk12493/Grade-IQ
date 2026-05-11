@@ -22,7 +22,7 @@ body.light-mode{
   --green:#2D6000;
 }
 
-/* Light mode — force ALL text dark */
+/* Light mode - force ALL text dark */
 body.light-mode,
 body.light-mode *:not(.btn-a):not(.btn-p):not(.auth-tab.active):not(.ntab.active):not(.pbtn.active):not(.bdg):not(.bulk-btn) {
   color: #1A1A1A;
@@ -573,7 +573,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       <div class="huser">
         <span class="uemail" id="u-email"></span>
         <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">&#9790; Dark</button>
-        <button class="btn-out" onclick="doLogout()">Sign Out</button>
+        <button class="btn-out" onclick="openTutorial()" title="How to use GradeIQ" style="margin-right:4px;">?</button><button class="btn-out" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
   </header>
@@ -912,7 +912,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             </div>
           </div>
           <div id="bl-details" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
-            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional — needed to generate Card ID)</div>
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional - needed to generate Card ID)</div>
             <div class="fgrid">
               <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani" autocomplete="off"></div>
               <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
@@ -1165,7 +1165,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       <div class="panel" style="margin-top:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
           <div class="ptitle" style="margin-bottom:0;">Cash Flow Dashboard</div>
-          <div style="font-size:11px;color:var(--text-muted);">Live view — updates as you adjust settings below</div>
+          <div style="font-size:11px;color:var(--text-muted);">Live view - updates as you adjust settings below</div>
         </div>
         <div id="cashflow-dashboard"></div>
       </div>
@@ -1285,7 +1285,7 @@ function switchTab(t) {
   document.getElementById('tab-register').style.display = t==='register'?'':'none';
 }
 
-// ══════════ WHOP OAUTH ══════════
+// ---------- WHOP OAUTH ----------
 const WHOP_CLIENT_ID = 'app_b7NsSma2GNnjhN';
 const WHOP_SECRET = 'apik_1ZcBLWHbJHLEH_A2033232_C_a7f7955aeaf3c465a897782fa409ac76baa367370782c32dfb8c877d2d2642';
 const WHOP_EXP_ID = 'exp_U0aGTG8Sis05pg';
@@ -1359,7 +1359,7 @@ async function handleWhopCallback() {
     console.log('Worker result:', JSON.stringify(result));
 
     if (result.error) {
-      msg('re-msg', 'Whop error: ' + result.error + (result.detail ? ' — ' + JSON.stringify(result.detail) : ''), 'error');
+      msg('re-msg', 'Whop error: ' + result.error + (result.detail ? ' - ' + JSON.stringify(result.detail) : ''), 'error');
       switchTab('register');
       return true;
     }
@@ -1413,7 +1413,7 @@ async function handleWhopCallback() {
 
     CU = authData.user;
     await loadApp();
-    toast('Welcome! Account created via Whop — you are all set!');
+    toast('Welcome! Account created via Whop - you are all set!');
     return true;
 
   } catch(err) {
@@ -1706,6 +1706,7 @@ async function loadApp() {
   g('app-screen').style.display='block';
   showTrialBanner(); document.body.classList.add('logged-in');
   migrateCardIDs();
+  await checkAndShowTutorial();
 }
 
 // - NAV -
@@ -1987,7 +1988,7 @@ async function addCard() {
   renderAll(); toast('Card added! ID: '+cardID);
   // Auto-log to EV Buy Log if comps were entered
   if (c.gem_rate && c.psa10 && c.total_cost) {
-    if (confirm('Comps detected — log this card to EV Buy Log automatically?')) {
+    if (confirm('Comps detected - log this card to EV Buy Log automatically?')) {
       const entry = {user_id:CU.id, date_ran:new Date().toISOString().split('T')[0], player:c.player, year:c.year, set_name:c.set_name, card_no:c.card_no, source:c.source, gem_rate:c.gem_rate, psa10:c.psa10, psa9:c.psa9, total_cost:c.total_cost, notes:'Auto-logged from inventory'};
       sb.from('ev_log').insert(entry).select().single().then(function(res){ 
         if(res.data){ BL.unshift(res.data); blF=[...BL]; renderBL(); toast('Logged to EV Buy Log!'); }
@@ -2042,7 +2043,7 @@ async function addBatch() {
       }
       toast('Batch added! Grading cost updated to ' + f$(perCard) + '/card for ' + cards.length + ' cards.');
     } else {
-      toast('Batch added! No inventory cards linked yet — add cards with this Batch ID to auto-split the cost.');
+      toast('Batch added! No inventory cards linked yet - add cards with this Batch ID to auto-split the cost.');
     }
   } else {
     toast('Batch added!');
@@ -2408,7 +2409,7 @@ function markBLPurchased(id){
     if(entry.psa9)g('qa-p9').value=entry.psa9;
     if(entry.total_cost)g('qa-price').value=entry.total_cost;
     qaCalcCost();qaCalcEV();qaShowStep(1);
-    toast('Card details pre-filled — verify and save!');
+    toast('Card details pre-filled - verify and save!');
   },250);
 }
 
@@ -2497,7 +2498,7 @@ async function qaSave() {
   if (!year) { g('qa-year').style.borderColor='var(--green)'; toast('Year is required',true); return; }
   if (!brand) { g('qa-brand').style.borderColor='var(--green)'; toast('Brand is required',true); return; }
   if (!setName) { g('qa-set').style.borderColor='var(--green)'; toast('Set is required',true); return; }
-  if (!parallel) { g('qa-parallel').style.borderColor='var(--green)'; toast('Parallel is required — use "Base" if no parallel',true); return; }
+  if (!parallel) { g('qa-parallel').style.borderColor='var(--green)'; toast('Parallel is required - use "Base" if no parallel',true); return; }
   if (!cardNo) { g('qa-cno').style.borderColor='var(--green)'; toast('Card # is required',true); return; }
   g('qa-save-btn').disabled=true; g('qa-save-btn').textContent='Saving...';
   const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
@@ -2688,7 +2689,7 @@ async function confirmImport() {
     };
   });
 
-  if (!importRows.length) { toast('No valid cards found — make sure Player is mapped', true); return; }
+  if (!importRows.length) { toast('No valid cards found - make sure Player is mapped', true); return; }
 
   g('btn-import-confirm').disabled = true;
   g('btn-import-confirm').textContent = 'Importing...';
@@ -2859,7 +2860,7 @@ function showSaleSummary(card, evPct, reinvest, takehome, taxReserve) {
   const evColor = evPct >= 101 ? 'var(--green)' : evPct >= 61 ? 'var(--amber)' : 'var(--text)';
   const tierLabel = getReinvestTierLabel(card.ev_pct_returned);
   const modeNote = USER_SETTINGS.reinvest_mode === 'flat' ? 'Flat ' + USER_SETTINGS.reinvest_flat_pct + '%' :
-                   USER_SETTINGS.reinvest_mode === 'manual' ? 'Manual mode — set your own split' : tierLabel;
+                   USER_SETTINGS.reinvest_mode === 'manual' ? 'Manual mode - set your own split' : tierLabel;
   const taxPct = USER_SETTINGS.tax_reserve_pct || 0;
   modal.innerHTML = '<div class="modal" style="max-width:420px;">' +
     '<div class="modal-title">Sale Summary <button class="modal-close" onclick="closeSaleSummary()">✕</button></div>' +
@@ -2989,12 +2990,12 @@ function renderCashFlowDashboard(sold, yr) {
   const reinvestMode = USER_SETTINGS.reinvest_mode || 'ev_based';
   const flatPct = (USER_SETTINGS.reinvest_flat_pct || 65) / 100;
 
-  // Core profit numbers — calculate from actual sale fields
+  // Core profit numbers - calculate from actual sale fields
   const totalProfit = sold.reduce((s,r) => s+((r.sale_price||0)-(r.fees||0)-(r.ship_out||0)-(r.price||0)-(r.ship||0)-(r.grading||0)), 0);
   const taxJar = Math.round(totalProfit * taxPct * 100) / 100;
   const afterTax = totalProfit - taxJar;
 
-  // Reinvest split — applied to after-tax profit
+  // Reinvest split - applied to after-tax profit
   // For EV-based, use average EV% returned across sold cards with data
   let reinvestPct = flatPct;
   if (reinvestMode === 'ev_based') {
@@ -3013,7 +3014,7 @@ function renderCashFlowDashboard(sold, yr) {
   const suggestedReinvest = reinvestPct !== null ? Math.round(afterTax * reinvestPct * 100) / 100 : null;
   const suggestedTakeHome = reinvestPct !== null ? Math.round(afterTax * (1 - reinvestPct) * 100) / 100 : null;
 
-  // Capital deployed — cards bought this year (all inventory purchases in yr)
+  // Capital deployed - cards bought this year (all inventory purchases in yr)
   const deployed = INV.filter(r => {
     const d = r.date_acquired || r.created_at;
     return d && new Date(d).getFullYear() === yr && r.status !== 'Sold';
@@ -3021,7 +3022,7 @@ function renderCashFlowDashboard(sold, yr) {
 
   const availableToDeploy = suggestedReinvest !== null ? Math.max(0, suggestedReinvest - deployed) : null;
 
-  // Flow diagram: Profit → Tax Jar | After-Tax → Reinvest | Take Home
+  // Flow diagram: Profit - Tax Jar | After-Tax - Reinvest | Take Home
   const flowBar = totalProfit > 0 ? [
     { label: 'Tax Jar', val: taxJar, pct: taxPct * 100, color: '#F87171' },
     { label: 'Reinvest', val: suggestedReinvest || afterTax, pct: reinvestPct !== null ? reinvestPct * (1-taxPct) * 100 : (1-taxPct)*100, color: 'var(--green)' },
@@ -3031,15 +3032,15 @@ function renderCashFlowDashboard(sold, yr) {
   const modeLabel = reinvestMode === 'ev_based' ? 'EV-Based Tiers' : reinvestMode === 'flat' ? 'Flat ' + (USER_SETTINGS.reinvest_flat_pct||65) + '%' : 'Manual';
 
   el.innerHTML =
-    // ── FOUR KPI CARDS ──
+    // -- FOUR KPI CARDS --
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">' +
       kpiCard('Total Profit', f$(totalProfit), 'This year', 'var(--green)') +
-      kpiCard('🔴 Tax Jar', f$(taxJar), taxPct*100 + '% — set this aside', '#F87171') +
+      kpiCard('🔴 Tax Jar', f$(taxJar), taxPct*100 + '% - set this aside', '#F87171') +
       kpiCard('🟢 Suggested Reinvest', suggestedReinvest !== null ? f$(suggestedReinvest) : 'Manual', 'Of after-tax profit', '#22C55E') +
       kpiCard('🔵 Suggested Take Home', suggestedTakeHome !== null ? f$(suggestedTakeHome) : 'Manual', 'Of after-tax profit', '#3B82F6') +
     '</div>' +
 
-    // ── FLOW BAR ──
+    // -- FLOW BAR --
     (totalProfit > 0 ?
     '<div style="margin-bottom:20px;">' +
       '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Where Your Profit Goes</div>' +
@@ -3051,9 +3052,9 @@ function renderCashFlowDashboard(sold, yr) {
       '</div>' +
     '</div>' : '') +
 
-    // ── CAPITAL DEPLOYMENT ──
+    // -- CAPITAL DEPLOYMENT --
     '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;">' +
-      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Capital Deployment — ' + yr + '</div>' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Capital Deployment - ' + yr + '</div>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
         '<div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Suggested Reinvest</div><div style="font-size:18px;font-weight:800;color:#22C55E;">' + (suggestedReinvest !== null ? f$(suggestedReinvest) : '--') + '</div></div>' +
         '<div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Cards Bought This Year</div><div style="font-size:18px;font-weight:800;color:var(--amber);">' + f$(deployed) + '</div></div>' +
@@ -3065,7 +3066,7 @@ function renderCashFlowDashboard(sold, yr) {
       '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + (suggestedReinvest > 0 ? Math.min(Math.round(deployed/suggestedReinvest*100),100) + '% of reinvest pool deployed' : 'No sales yet this year') + '</div>' +
     '</div>' +
 
-    // ── SETTINGS ──
+    // -- SETTINGS --
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">' +
 
       // Tax Rate
@@ -3094,7 +3095,7 @@ function renderCashFlowDashboard(sold, yr) {
         '<div style="font-size:10px;color:var(--text-muted);">' +
           (reinvestMode==='ev_based' ? 'Split based on avg EV% performance: 50/50 → 80/20 as EV improves.' :
            reinvestMode==='flat' ? 'Same split on every sale regardless of performance.' :
-           'No recommendation — you decide what to do with after-tax profit.') +
+           'No recommendation - you decide what to do with after-tax profit.') +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -3570,7 +3571,7 @@ function openBatchGradeEntry(batchId) {
 
   modal.innerHTML =
     '<div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto;">' +
-    '<div class="modal-title">Grade Entry — Batch #' + batchId +
+    '<div class="modal-title">Grade Entry - Batch #' + batchId +
       '<button class="modal-close" id="ge-close-btn">x</button></div>' +
     '<div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">' +
       'Enter the grade received for each card. Projected profit calculates live. Update comps if market has moved.' +
@@ -3768,7 +3769,7 @@ function renderProfitChart() {
 
 
 const HELP_VIDEOS=[
-  {num:1,title:'Getting Started',desc:'A full tour of the tool — every tab explained and what to expect on your first visit.',loom:'ab03cf3c5e1c475abba03ec398a726be'},
+  {num:1,title:'Getting Started',desc:'A full tour of the tool - every tab explained and what to expect on your first visit.',loom:'ab03cf3c5e1c475abba03ec398a726be'},
   {num:2,title:'Importing & Adding Cards',desc:'Import your existing spreadsheet (any format) and add new cards one at a time with Quick Add.',loom:'120a032a3cac47fa910180d579b785c5'},
   {num:3,title:'Managing Your Inventory',desc:'Filter, search, expand cards for full details, edit info, and navigate a large collection.',loom:'7294b9e171d24885b47d9ddf779586e3'},
   {num:4,title:'Submission Tracking',desc:'Create batches, auto-split costs, and bulk update all cards when your submission returns.',loom:'701bcf4920e54cdbaf8bd2d06db4a01c'},
@@ -4023,7 +4024,7 @@ async function saveEditBL(){
 }
 
 
-// ── MOBILE NAV ──
+// -- MOBILE NAV --
 function mobGoSec(name){
   goSec(name,null);
   ['dashboard','gradeiq','inventory','buylog','more'].forEach(function(t){
@@ -4077,7 +4078,7 @@ function mobEVToLog(){
     toast('EV data copied to log!');
   },300);
 }
-// ── SWIPE TO SELL ──
+// -- SWIPE TO SELL --
 (function(){
   var startX=0,startY=0,activeEl=null;
   document.addEventListener('touchstart',function(e){
@@ -4144,7 +4145,7 @@ async function copyCard(id){
   if(res.error)return toast('Error: '+res.error.message,true);
   INV.unshift(res.data);renderAll();toast('Card copied! New ID: '+newID);
 }
-// ── GRADEIQ PUBLIC BUY SIGNALS ──
+// -- GRADEIQ PUBLIC BUY SIGNALS --
 var GRADEIQ_DATA = [], GRADEIQ_FILTERED = [];
 
 var GIQ_SELECTED_SPORT='';
@@ -4206,7 +4207,7 @@ function renderTopPicks(){
 
 function toggleGIQBookmark(key,btn){if(GIQ_BOOKMARKS[key]){delete GIQ_BOOKMARKS[key];btn.classList.remove('saved');btn.textContent='☆';}else{GIQ_BOOKMARKS[key]=Date.now();btn.classList.add('saved');btn.textContent='★';}try{localStorage.setItem('giq_bookmarks',JSON.stringify(GIQ_BOOKMARKS));}catch(e){}}
 
-function showTrialBanner(){if(!CU||CU.email===ADMIN)return;sb.from('whop_members').select('joined_at').eq('email',CU.email).single().then(function(res){if(!res.data||!res.data.joined_at)return;var joined=new Date(res.data.joined_at);var daysSince=Math.floor((new Date()-joined)/86400000);if(daysSince>=30)return;var daysLeft=30-daysSince;var banner=g('giq-trial-banner');var text=g('giq-trial-text');if(banner){banner.style.display='flex';if(text)text.textContent='Free trial — Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}});}
+function showTrialBanner(){if(!CU||CU.email===ADMIN)return;sb.from('whop_members').select('joined_at').eq('email',CU.email).single().then(function(res){if(!res.data||!res.data.joined_at)return;var joined=new Date(res.data.joined_at);var daysSince=Math.floor((new Date()-joined)/86400000);if(daysSince>=30)return;var daysLeft=30-daysSince;var banner=g('giq-trial-banner');var text=g('giq-trial-text');if(banner){banner.style.display='flex';if(text)text.textContent='Free trial - Day '+daysSince+' of 30 · '+daysLeft+' days remaining';}});}
 
 
 function renderGradeIQ(){
@@ -4245,7 +4246,7 @@ function renderGradeIQ(){
     html+='<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>';
     if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>';
     if(pd)html+='<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+pd+'</span>';
-    if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable — verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
+    if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
     html+='</div><div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+'</div></div>';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
     html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div></div>';
@@ -4408,7 +4409,7 @@ function giqAddToInventory(idx) {
     if (g('qa-grade')) g('qa-grade').value = 30.00;
     if (g('qa-disp')) g('qa-disp').value = 'Grade';
     qaCalcCost(); qaCalcEV(); qaShowStep(1);
-    toast('Card pre-filled from GradeIQ — add your purchase price!');
+    toast('Card pre-filled from GradeIQ - add your purchase price!');
   }, 250);
 }
 
@@ -4433,7 +4434,7 @@ async function loadScanner(){
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();buildSetsData();
 }
-// ── GEMRATE CSV IMPORT ──
+// -- GEMRATE CSV IMPORT --
 var GR_PARSED_DATA = [];
 
 
@@ -4628,7 +4629,7 @@ async function loadGemRateCount(){
   if(g('gr-count'))g('gr-count').textContent=(count||0)+' gem rates loaded';
 }
 
-// ── SCANNER PLAYER TAGS ──
+// -- SCANNER PLAYER TAGS --
 var SC_SELECTED_PLAYERS = [];
 
 function scPlayerInput(){
@@ -4705,7 +4706,7 @@ function resetScannerFilters(){
   if(g('sc-sort')) g('sc-sort').value='scc_score';
   if(g('sc-vol-min')) g('sc-vol-min').value='0';
   if(g('sc-vol-max')) g('sc-vol-max').value='500';
-  if(g('sc-vol-label')) g('sc-vol-label').textContent='0 – Any';
+  if(g('sc-vol-label')) g('sc-vol-label').textContent='0 - Any';
   filterScanner();
 }
 
@@ -4747,7 +4748,7 @@ function updateVolSlider(){
   const minV=parseInt((g('sc-vol-min')||{value:'0'}).value)||0;
   const maxV=parseInt((g('sc-vol-max')||{value:'500'}).value)||500;
   const maxLabel=maxV>=500?'Any':maxV;
-  if(g('sc-vol-label'))g('sc-vol-label').textContent=minV+' – '+maxLabel;
+  if(g('sc-vol-label'))g('sc-vol-label').textContent=minV+' - '+maxLabel;
   filterScanner();
 }
 
@@ -4990,7 +4991,7 @@ async function scanNewSets(){
     });
 
     if(!newSets.length){
-      toast('No new sets found — everything has been scanned already!');
+      toast('No new sets found - everything has been scanned already!');
       if(btn){btn.disabled=false;btn.textContent='\u2795 Scan New Sets Only';}
       return;
     }
@@ -5028,6 +5029,145 @@ function toggleSetsOverview(){
   body.style.display=open?'':'none';
   if(chev)chev.innerHTML=open?'&#9660;':'&#9654;';
   if(open)renderSetsTable();
+}
+
+
+// -- TUTORIAL --------------------------------------------------------------
+var TOUR_TABS = [
+  {
+    emoji: '&#9889;',
+    emojiColor: '#1a2a1a',
+    title: 'Buy Signals - your daily edge',
+    body: 'The algorithm scans thousands of cards every night and surfaces the ones where the math says BUY. Each card shows an IQ Rating, EV%, Max Buy Price, and one-click verification links to Card Ladder and Market Movers.',
+    tip: '<strong>IQ Rating</strong> combines EV%, sales volume, gem rate edge, and momentum into a single score out of 100. The higher the score, the stronger the opportunity.',
+    navTo: 'gradeiq'
+  },
+  {
+    emoji: '&#128202;',
+    emojiColor: '#1a1a2a',
+    title: 'Dashboard - your portfolio at a glance',
+    body: 'See your total invested, projected PSA 10 value, unrealized profit, and active submission count all in one place. The dashboard updates in real time as you add and update cards.',
+    tip: '<strong>Projected value</strong> is calculated from your current PSA 10 comps and gem rates, reflecting what your graded cards should return, not just what you paid.',
+    navTo: 'dashboard'
+  },
+  {
+    emoji: '&#128230;',
+    emojiColor: '#2a1a1a',
+    title: 'Inventory - track every card',
+    body: 'Add raw cards, mark them as Submitted, Graded, Listed, or Sold. Every status change flows through to your dashboard and financials automatically. Use the Quick Add button to log a buy signal card in seconds.',
+    tip: '<strong>Disposition</strong> lets you flag each card as Grade, Sell Raw, or Hold so you always know the plan before the PSA label arrives.',
+    navTo: 'inventory'
+  },
+  {
+    emoji: '&#128236;',
+    emojiColor: '#1a2a2a',
+    title: 'Submissions - manage your PSA batches',
+    body: 'Create a batch, assign cards to it, and track the whole submission from drop-off to return. Every card in your inventory can be tied to a batch ID so nothing falls through the cracks.',
+    tip: '<strong>Batch tracking</strong> lets you see exactly which cards are in each PSA submission and when they were sent. Useful when running multiple batches at once.',
+    navTo: 'submissions'
+  },
+  {
+    emoji: '&#128064;',
+    emojiColor: '#2a2a1a',
+    title: 'EV Buy Log - your decision history',
+    body: 'Every time you act on a buy signal, log it here. The EV Buy Log tracks which cards you bought, what the data said at the time, and how the decision played out, building your personal track record over time.',
+    tip: '<strong>Over time</strong>, your buy log becomes your proof of process. See which card types and sets have the highest hit rate for your strategy.',
+    navTo: 'buylog'
+  },
+  {
+    emoji: '&#128176;',
+    emojiColor: '#1a1a1a',
+    title: 'Financials - run this like a business',
+    body: 'Full P&L by year, business expense tracking, and a cash flow dashboard that tells you how to split your profits: how much to set aside for taxes, how much to reinvest, and how much to take home.',
+    tip: '<strong>The cash flow dashboard</strong> adjusts your reinvest suggestion based on your actual EV% returns. The better you perform, the more it suggests putting back in.',
+    navTo: 'financials'
+  }
+];
+
+var TOUR_CUR = 0;
+
+function renderTourTab() {
+  var t = TOUR_TABS[TOUR_CUR];
+  var area = g('tour-content-area');
+  area.innerHTML =
+    '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;">' +
+      '<div style="width:42px;height:42px;border-radius:10px;background:'+t.emojiColor+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">' + t.emoji + '</div>' +
+      '<div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">' + t.title + '</div>' +
+        '<p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0;">' + t.body + '</p>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:var(--surface-2);border-radius:6px;padding:10px 14px;border-left:3px solid var(--green);font-size:12px;color:var(--text-muted);line-height:1.5;">' +
+      t.tip +
+    '</div>';
+
+  // Update tabs
+  document.querySelectorAll('.tour-tab-btn').forEach(function(btn, i) {
+    if (i === TOUR_CUR) {
+      btn.style.borderBottomColor = 'var(--green)';
+      btn.style.color = 'var(--text)';
+      btn.style.fontWeight = '700';
+    } else {
+      btn.style.borderBottomColor = 'transparent';
+      btn.style.color = 'var(--text-muted)';
+      btn.style.fontWeight = '400';
+    }
+  });
+
+  // Update dots
+  var dots = g('tour-dots-row');
+  dots.innerHTML = TOUR_TABS.map(function(_, i) {
+    return '<div style="width:' + (i === TOUR_CUR ? '20' : '6') + 'px;height:6px;border-radius:3px;background:' + (i === TOUR_CUR ? 'var(--green)' : 'var(--border)') + ';transition:width .2s;"></div>';
+  }).join('');
+
+  // Update buttons
+  var prevBtn = g('tour-btn-prev');
+  var nextBtn = g('tour-btn-next');
+  prevBtn.disabled = TOUR_CUR === 0;
+  prevBtn.style.opacity = TOUR_CUR === 0 ? '0.35' : '1';
+  if (TOUR_CUR === TOUR_TABS.length - 1) {
+    nextBtn.innerHTML = 'Get started &#10003;';
+  } else {
+    nextBtn.innerHTML = 'Next &#8594;';
+  }
+}
+
+function setTourTab(i) { TOUR_CUR = i; renderTourTab(); }
+function tourNext() {
+  if (TOUR_CUR < TOUR_TABS.length - 1) {
+    TOUR_CUR++;
+    renderTourTab();
+  } else {
+    closeTutorial();
+  }
+}
+function tourPrev() { if (TOUR_CUR > 0) { TOUR_CUR--; renderTourTab(); } }
+
+function openTutorial() {
+  TOUR_CUR = 0;
+  var modal = g('tutorial-modal');
+  modal.style.display = 'flex';
+  renderTourTab();
+}
+
+async function closeTutorial() {
+  g('tutorial-modal').style.display = 'none';
+  // Mark as seen in user_settings
+  if (CU) {
+    USER_SETTINGS.tutorial_seen = true;
+    await sb.from('user_settings').upsert({
+      id: CU.id,
+      tutorial_seen: true
+    }, { onConflict: 'id' });
+  }
+}
+
+async function checkAndShowTutorial() {
+  if (!CU) return;
+  // Show if tutorial_seen is not set
+  if (!USER_SETTINGS.tutorial_seen) {
+    setTimeout(openTutorial, 800);
+  }
 }
 
 function toggleAdminSection(bodyId,chevId){var body=document.getElementById(bodyId);var chev=document.getElementById(chevId);if(!body)return;var isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'';if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';}
@@ -5073,7 +5213,7 @@ function renderSetsTable(){
 loadTheme();
 initAuth();
 
-// ══════════ REINVESTMENT LOGIC ══════════
+// ---------- REINVESTMENT LOGIC ----------
 let USER_SETTINGS = { reinvest_mode: 'ev_based', reinvest_flat_pct: 65, tax_reserve_pct: 25 };
 
 async function loadUserSettings() {
@@ -5116,10 +5256,10 @@ function calcEVReturned(card) {
 
 function getReinvestTierLabel(evPct) {
   const p = evPct * 100;
-  if (p >= 151) return '151%+ — Max Reinvest';
-  if (p >= 101) return '101–150% — Strong';
-  if (p >= 61)  return '61–100% — Solid';
-  return '40–60% — Threshold';
+  if (p >= 151) return '151%+ - Max Reinvest';
+  if (p >= 101) return '101-150% - Strong';
+  if (p >= 61)  return '61-100% - Solid';
+  return '40-60% - Threshold';
 }
 
 function blCalc() {
@@ -5511,6 +5651,48 @@ function blCalc() {
   </div>
 </div>
 
+
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
+        </div>
+        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
+        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
+        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
+        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
+        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
+        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
+        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
+
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
+      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
+      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
@@ -5664,6 +5846,48 @@ function blCalc() {
   </div>
 </div>
 
+
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
+        </div>
+        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
+        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
+        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
+        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
+        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
+        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
+        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
+
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
+      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
+      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
@@ -5817,6 +6041,48 @@ function blCalc() {
   </div>
 </div>
 
+
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
+        </div>
+        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
+        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
+        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
+        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
+        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
+        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
+        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
+
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
+      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
+      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
@@ -5970,5 +6236,47 @@ function blCalc() {
   </div>
 </div>
 
+
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
+        </div>
+        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
+        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
+        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
+        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
+        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
+        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
+        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
+
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
+      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
+      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
