@@ -421,8 +421,9 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .mob-ev-stat div{font-size:18px;font-weight:700;color:var(--text);}
 /* ── MOBILE MEDIA QUERIES ── */
 @media(max-width:768px){
-  body.logged-in .mob-tabbar{display:block;}
-body.logged-in #app-footer{display:block!important;}
+  #app-footer{display:none;}
+body.logged-in .mob-tabbar{display:block;}
+body.logged-in #app-footer{display:block;}
   #quickadd-modal.open{padding:0;}
   #quickadd-modal .modal{width:100% !important;max-width:100% !important;min-height:100vh;border-radius:0;margin:0;overflow-y:auto;}
   .hnav{display:none;}
@@ -5578,7 +5579,7 @@ function blCalc() {
 
 
 <!-- APP FOOTER -->
-<footer id="app-footer" style="display:none;background:var(--surface);border-top:1px solid var(--border);margin-top:40px;">
+<footer id="app-footer" style="background:var(--surface);border-top:1px solid var(--border);margin-top:40px;">
   <div style="max-width:1200px;margin:0 auto;padding:40px 24px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:32px;">
     <div>
       <div style="font-size:11px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">Community</div>
