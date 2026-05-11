@@ -2923,7 +2923,9 @@ function populateFinYears() {
   ])].sort((a,b) => b-a);
   const sel = g('fin-year');
   if (!sel) return;
-  const cur = sel.value || String(new Date().getFullYear());
+  // Default to most recent year with actual sold data, not current year
+  const mostRecentSoldYear = sold.length ? String(Math.max(...sold.map(r => new Date(r.date_sold).getFullYear()))) : String(new Date().getFullYear());
+  const cur = sel.value || mostRecentSoldYear;
   sel.innerHTML = years.map(y => '<option value="'+y+'" '+(String(y)===cur?'selected':'')+'>'+y+'</option>').join('');
 }
 
@@ -2960,14 +2962,14 @@ function renderFinancials() {
           '<td style="font-size:11px;"><div style="font-weight:600;color:var(--text);">'+(r.player||'--')+'</div><div style="color:var(--text-muted);font-size:10px;">'+(r.year||'')+' '+(r.set_name||'')+'</div></td>' +
           '<td style="font-family:Courier New,monospace;font-size:11px;">'+f$(basis)+'</td>' +
           '<td style="font-family:Courier New,monospace;font-size:11px;">'+f$(proc)+'</td>' +
-          '<td style="font-family:Courier New,monospace;font-size:11px;font-weight:700;color:'+(gl>=0?'var(--green)':'#F87171')+';">'+(gl>=0?'+':'')+f$(gl)+'</td>' +
+          '<td style="font-family:Courier New,monospace;font-size:11px;font-weight:700;color:'+(gl>=0?'#22C55E':'#F87171')+';">'+(gl>=0?'+':'')+f$(gl)+'</td>' +
         '</tr>';
       }).join('') +
       '<tr style="border-top:2px solid var(--border);font-weight:700;">' +
         '<td style="font-size:11px;color:var(--text);">TOTAL ('+sold.length+' cards)</td>' +
         '<td style="font-family:Courier New,monospace;font-size:11px;">'+f$(totCOGS)+'</td>' +
         '<td style="font-family:Courier New,monospace;font-size:11px;">'+f$(totProc)+'</td>' +
-        '<td style="font-family:Courier New,monospace;font-size:11px;font-weight:700;color:'+(totGL>=0?'var(--green)':'#F87171')+';">'+(totGL>=0?'+':'')+f$(totGL)+'</td>' +
+        '<td style="font-family:Courier New,monospace;font-size:11px;font-weight:700;color:'+(totGL>=0?'#22C55E':'#F87171')+';">'+(totGL>=0?'+':'')+f$(totGL)+'</td>' +
       '</tr>';
     }
   }
@@ -2987,8 +2989,8 @@ function renderCashFlowDashboard(sold, yr) {
   const reinvestMode = USER_SETTINGS.reinvest_mode || 'ev_based';
   const flatPct = (USER_SETTINGS.reinvest_flat_pct || 65) / 100;
 
-  // Core profit numbers
-  const totalProfit = sold.reduce((s,r) => s+(r.realized_profit||0), 0);
+  // Core profit numbers — calculate from actual sale fields
+  const totalProfit = sold.reduce((s,r) => s+((r.sale_price||0)-(r.fees||0)-(r.ship_out||0)-(r.price||0)-(r.ship||0)-(r.grading||0)), 0);
   const taxJar = Math.round(totalProfit * taxPct * 100) / 100;
   const afterTax = totalProfit - taxJar;
 
@@ -2996,9 +2998,12 @@ function renderCashFlowDashboard(sold, yr) {
   // For EV-based, use average EV% returned across sold cards with data
   let reinvestPct = flatPct;
   if (reinvestMode === 'ev_based') {
-    const withEV = sold.filter(r => r.ev_pct_returned != null);
+    const withEV = sold.filter(r => r.total_cost > 0);
     if (withEV.length) {
-      const avgEV = withEV.reduce((s,r) => s+(r.ev_pct_returned||0), 0) / withEV.length;
+      const avgEV = withEV.reduce((s,r) => {
+        const profit=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0)-(r.price||0)-(r.ship||0)-(r.grading||0);
+        return s+(r.total_cost>0?profit/r.total_cost:0);
+      }, 0) / withEV.length;
       reinvestPct = avgEV >= 1.51 ? 0.80 : avgEV >= 1.01 ? 0.75 : avgEV >= 0.61 ? 0.65 : 0.50;
     } else { reinvestPct = 0.65; }
   } else if (reinvestMode === 'manual') {
