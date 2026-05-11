@@ -4222,8 +4222,15 @@ function renderGradeIQ(){
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
-    var setOnly=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(setOnly?' '+setOnly:'')+(r.card_no?' #'+r.card_no:'')+(isBase?'':' '+r.parallel);
+    // Build clean set name: strip sport prefix, year, and manufacturer brand
+    var setOnly=(r.set_name||'')
+      .replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'')
+      .replace(/^\d{4}\s+/,'')
+      .replace(/^(Panini|Topps|Bowman|Upper Deck|Leaf|Donruss|Fleer|Score|SP|Pokemon|One Piece|Disney)\s+/i,'')
+      .trim();
+    // Strip "Prizm" suffix from parallel (throws off searches)
+    var parallelClean=isBase?'':(r.parallel||'').replace(/\s*Prizm$/i,'').trim();
+    var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(setOnly?' '+setOnly:'')+(r.card_no?' #'+r.card_no:'')+(parallelClean?' '+parallelClean:'');
     var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent(verifyQ);
     var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(verifyQ);
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
