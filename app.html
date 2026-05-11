@@ -1292,6 +1292,48 @@ body.logged-in #app-footer{display:block;}
 
 
 
+<!-- TUTORIAL MODAL -->
+<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
+    
+    <!-- Header -->
+    <div style="padding:20px 24px 0;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
+          </div>
+          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
+        </div>
+        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
+        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
+        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
+        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
+        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
+        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
+        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
+
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
+      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
+      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
+      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
+    </div>
+  </div>
+</div>
+
 <div id="tos-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:560px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;">
   <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;"><strong style="font-size:14px;color:var(--text);">Terms of Service</strong><button onclick="closeToS()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);">&times;</button></div>
@@ -5198,13 +5240,7 @@ function tourPrev() { if (TOUR_CUR > 0) { TOUR_CUR--; renderTourTab(); } }
 
 function openTutorial() {
   TOUR_CUR = 0;
-  // Find the tutorial modal that is NOT inside a quickadd duplicate
-  var all = document.querySelectorAll('#tutorial-modal');
-  var modal = null;
-  for (var i = 0; i < all.length; i++) {
-    if (!all[i].closest('.modal-bg')) { modal = all[i]; break; }
-  }
-  if (!modal) modal = all[0];
+  var modal = document.querySelectorAll('#tutorial-modal')[0];
   if (!modal) return;
   TOUR_MODAL_EL = modal;
   modal.style.display = 'flex';
@@ -5825,47 +5861,7 @@ function blCalc() {
 
 
 
-<!-- TUTORIAL MODAL -->
-<div id="tutorial-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:580px;overflow:hidden;position:relative;">
-    
-    <!-- Header -->
-    <div style="padding:20px 24px 0;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div style="width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#000"/><rect x="6.5" y="6" width="3" height="8" rx="1" fill="#000"/><rect x="11" y="2" width="3" height="12" rx="1" fill="#000"/></svg>
-            </div>
-            <span style="font-size:15px;font-weight:700;color:var(--text);">Welcome to GradeIQ</span>
-          </div>
-          <p style="font-size:12px;color:var(--text-muted);margin:0;">Your data-driven grading platform. Here&rsquo;s a quick tour.</p>
-        </div>
-        <button onclick="closeTutorial()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);font-size:18px;line-height:1;" title="Close">&times;</button>
-      </div>
 
-      <!-- Tabs -->
-      <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;" id="tour-tab-bar">
-        <button class="tour-tab-btn active" data-tab="0" onclick="setTourTab(0)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid var(--green);background:none;cursor:pointer;color:var(--text);font-weight:700;white-space:nowrap;">Buy Signals</button>
-        <button class="tour-tab-btn" data-tab="1" onclick="setTourTab(1)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Dashboard</button>
-        <button class="tour-tab-btn" data-tab="2" onclick="setTourTab(2)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Inventory</button>
-        <button class="tour-tab-btn" data-tab="3" onclick="setTourTab(3)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Submissions</button>
-        <button class="tour-tab-btn" data-tab="4" onclick="setTourTab(4)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">EV Buy Log</button>
-        <button class="tour-tab-btn" data-tab="5" onclick="setTourTab(5)" style="font-size:11px;padding:8px 12px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:var(--text-muted);white-space:nowrap;">Financials</button>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div style="padding:24px;min-height:200px;" id="tour-content-area"></div>
-
-    <!-- Footer -->
-    <div style="padding:0 24px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:14px;">
-      <button onclick="tourPrev()" id="tour-btn-prev" style="font-size:12px;padding:7px 16px;opacity:0.35;" disabled>&#8592; Back</button>
-      <div style="display:flex;gap:5px;align-items:center;" id="tour-dots-row"></div>
-      <button onclick="tourNext()" id="tour-btn-next" style="font-size:12px;padding:7px 20px;background:var(--green);border:1px solid var(--green);border-radius:5px;cursor:pointer;font-weight:700;color:#000;">Next &#8594;</button>
-    </div>
-  </div>
-</div>
 
 
 </body>
