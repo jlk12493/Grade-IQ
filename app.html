@@ -422,6 +422,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 /* ── MOBILE MEDIA QUERIES ── */
 @media(max-width:768px){
   body.logged-in .mob-tabbar{display:block;}
+body.logged-in #app-footer{display:block!important;}
   #quickadd-modal.open{padding:0;}
   #quickadd-modal .modal{width:100% !important;max-width:100% !important;min-height:100vh;border-radius:0;margin:0;overflow-y:auto;}
   .hnav{display:none;}
@@ -1599,7 +1600,7 @@ async function removeUser(userId, email) {
 async function doLogout() {
   await sb.auth.signOut();
   CU=null; INV=[]; BATCHES=[]; BL=[];
-  var af=g('app-footer');if(af)af.style.display='none';window.location.href='/index.html';
+  window.location.href='/index.html';
 }
 
 function toggleTheme() {
@@ -1708,7 +1709,6 @@ async function loadApp() {
   renderAll();renderHelp();
   g('app-screen').style.display='block';
   showTrialBanner(); document.body.classList.add('logged-in');
-  var af=g('app-footer');if(af)af.style.display='block';
   migrateCardIDs();
   await checkAndShowTutorial();
 }
