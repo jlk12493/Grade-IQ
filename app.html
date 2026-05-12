@@ -4,6 +4,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#a3e635">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GradeIQ">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>GradeIQ | Card Investment Platform</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1392,7 +1398,7 @@ function switchTab(t) {
 const WHOP_CLIENT_ID = 'app_b7NsSma2GNnjhN';
 const WHOP_SECRET = 'apik_1ZcBLWHbJHLEH_A2033232_C_a7f7955aeaf3c465a897782fa409ac76baa367370782c32dfb8c877d2d2642';
 const WHOP_EXP_ID = 'exp_U0aGTG8Sis05pg';
-const WHOP_REDIRECT_URI = 'https://sports-card-counters.jlk12493.workers.dev/';
+const WHOP_REDIRECT_URI = 'https://gradeiq.co/';
 
 function generateVerifier() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -5683,6 +5689,10 @@ function blCalc() {
     <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')"><span class="mob-icon">&#128202;</span><span>Dashboard</span></button>
     <button class="mob-tab" id="mobt-gradeiq" onclick="mobGoSec('gradeiq')" style="color:var(--green);"><span class="mob-icon">&#9889;</span><span>GradeIQ</span></button>
     <button class="mob-tab-plus" onclick="openQuickAdd()"><div class="mob-plus-btn">+</div><span>Add Card</span></button>
+    <button id="pwa-install-btn" onclick="triggerPWAInstall()" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:6px 10px;color:var(--green);font-size:10px;font-weight:600;letter-spacing:.5px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M7 11l5 5 5-5"/><path d="M3 19h18"/></svg>
+      Install
+    </button>
     <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')"><span class="mob-icon">&#128230;</span><span>Inventory</span></button>
     <button class="mob-tab" id="mobt-more" onclick="openMobMore()"><span class="mob-icon">&#9776;</span><span>More</span></button>
   </div>
@@ -5870,6 +5880,67 @@ function blCalc() {
 
 
 
+
+
+
+<!-- SERVICE WORKER + PWA INSTALL -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+// ── iOS PWA INSTALL BANNER ──
+(function() {
+  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isInStandalone = window.navigator.standalone === true;
+  var dismissed = sessionStorage.getItem('iosBannerDismissed');
+  if (isIos && !isInStandalone && !dismissed) {
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var banner = document.getElementById('ios-install-banner');
+        if (banner) {
+          banner.style.display = 'block';
+          banner.querySelector('button').addEventListener('click', function() {
+            sessionStorage.setItem('iosBannerDismissed', '1');
+          });
+        }
+      }, 3000);
+    });
+  }
+})();
+
+var deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  var btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'flex';
+});
+window.addEventListener('appinstalled', function() {
+  var btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+  deferredInstallPrompt = null;
+});
+function triggerPWAInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(function() { deferredInstallPrompt = null; });
+  }
+}
+</script>
+
+<!-- iOS PWA INSTALL BANNER -->
+<div id="ios-install-banner" style="display:none;position:fixed;bottom:80px;left:16px;right:16px;background:var(--surface);border:1px solid var(--green);border-radius:12px;padding:14px 16px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.5);">
+  <button onclick="document.getElementById('ios-install-banner').style.display='none'" style="position:absolute;top:10px;right:12px;background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;">&times;</button>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="/icon-192.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Install GradeIQ</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">Tap <svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> <strong>Share</strong> then <strong>"Add to Home Screen"</strong></div>
+    </div>
+  </div>
+</div>
 
 
 </body>
