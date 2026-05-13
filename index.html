@@ -827,8 +827,8 @@ footer {
     <a href="#features">Features</a>
     <a href="#how-it-works">How It Works</a>
     <a href="#pricing">Pricing</a>
-    <div class="nav-dropdown" onmouseenter="this.classList.add('open')" onmouseleave="this.classList.remove('open')">
-      <a href="#" onclick="return false;" class="nav-dropdown-trigger">Education ▾</a>
+    <div class="nav-dropdown" id="edu-dropdown">
+      <a href="#" onclick="toggleEduDropdown(event)" class="nav-dropdown-trigger">Education ▾</a>
       <div class="nav-dropdown-menu">
         <a href="/blog.html">Expert Articles</a>
         <a href="/videos.html">Expert Videos</a>
@@ -1168,6 +1168,17 @@ document.getElementById('tos-link').addEventListener('click', function(e) {
 
 document.getElementById('tos-modal').addEventListener('click', function(e) {
   if(e.target === this) this.style.display = 'none';
+});
+</script>
+<script>
+function toggleEduDropdown(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('edu-dropdown').classList.toggle('open');
+}
+document.addEventListener('click', function() {
+  var d = document.getElementById('edu-dropdown');
+  if (d) d.classList.remove('open');
 });
 </script>
 </body>
