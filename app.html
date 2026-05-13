@@ -2076,6 +2076,15 @@ function renderInv() {
 
   g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
     Array.from({length:pgs}, (_,i) => '<button class="pbtn ' + (i+1===invPg?'active':'') + '" onclick="invPage(' + (i+1) + ')">' + (i+1) + '</button>').join('');
+
+  // Attach copy and checkbox listeners after render
+  wrap.querySelectorAll('[data-copyid]').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();copyCard(this.dataset.copyid);});
+  });
+  wrap.querySelectorAll('.inv-check').forEach(function(cb){
+    cb.checked=SEL_IDS.has(cb.dataset.cid);
+    cb.addEventListener('click',function(e){e.stopPropagation();if(this.checked)SEL_IDS.add(this.dataset.cid);else SEL_IDS.delete(this.dataset.cid);updateSelBar();});
+  });
 }
 
 function isStaleComps(r) {
@@ -2878,15 +2887,33 @@ async function confirmImport() {
 
 // - EDIT CARD -
 function highlightInvCard(id) {
-  // Expand the card in inventory and scroll to it
-  const card = document.querySelector('[data-id="' + id + '"]');
-  if (card) {
-    const body = document.querySelector('.inv-body[data-id="' + id + '"]');
-    if (body && !body.classList.contains('open')) card.click();
-    card.closest('[style*="border-radius"]').scrollIntoView({behavior:'smooth', block:'center'});
-    card.closest('[style*="border-radius"]').style.borderColor = 'var(--green)';
-    setTimeout(function(){ card.closest('[style*="border-radius"]').style.borderColor = ''; }, 2000);
+  // Find which page this card is on and navigate to it
+  const cardIdx = invF.findIndex(function(r){ return r.id === id; });
+  if (cardIdx < 0) {
+    // Card may be filtered out - reset filters first
+    invF = INV.slice();
+    renderInv();
+    setTimeout(function(){ highlightInvCard(id); }, 100);
+    return;
   }
+  const targetPage = Math.ceil((cardIdx + 1) / PP);
+  if (targetPage !== invPg) {
+    invPg = targetPage;
+    renderInv();
+  }
+  setTimeout(function() {
+    const header = document.querySelector('[data-id="' + id + '"]');
+    if (header) {
+      const body = document.querySelector('.inv-body[data-id="' + id + '"]');
+      if (body && !body.classList.contains('open')) header.click();
+      const card = header.closest('div[style*="border-radius"]');
+      if (card) {
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        card.style.borderColor = 'var(--green)';
+        setTimeout(function(){ card.style.borderColor = ''; }, 2000);
+      }
+    }
+  }, 50);
 }
 
 function checkComps(player, setName, parallel, cardNo, dest) {
