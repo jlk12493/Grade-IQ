@@ -1007,8 +1007,8 @@ footer {
     <a href="/index.html#features">Features</a>
     <a href="/index.html#how-it-works">How It Works</a>
     <a href="/index.html#pricing">Pricing</a>
-    <div class="nav-dropdown" onmouseenter="this.classList.add('open')" onmouseleave="this.classList.remove('open')">
-      <a href="#" onclick="return false;" class="nav-dropdown-trigger">Education ▾</a>
+    <div class="nav-dropdown" id="edu-dropdown">
+      <a href="#" onclick="toggleEduDropdown(event)" class="nav-dropdown-trigger">Education ▾</a>
       <div class="nav-dropdown-menu">
         <a href="/blog.html">Expert Articles</a>
         <a href="/videos.html">Expert Videos</a>
@@ -1119,6 +1119,17 @@ function render() {
 }
 
 render();
+</script>
+<script>
+function toggleEduDropdown(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('edu-dropdown').classList.toggle('open');
+}
+document.addEventListener('click', function() {
+  var d = document.getElementById('edu-dropdown');
+  if (d) d.classList.remove('open');
+});
 </script>
 </body>
 </html>
