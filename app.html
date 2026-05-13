@@ -2028,8 +2028,8 @@ function renderInv() {
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '">Copy</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2840,13 +2840,13 @@ async function confirmImport() {
 
 
 // - EDIT CARD -
-function checkComps(player, setName, parallel, dest) {
-  const q = [player, setName, parallel].filter(Boolean).join(' ');
+function checkComps(player, setName, parallel, cardNo, dest) {
+  const q = [player, setName, cardNo ? '#'+cardNo : '', parallel].filter(Boolean).join(' ');
   const encoded = encodeURIComponent(q);
   if (dest === 'mm') {
-    window.open('https://www.marketmovers.io/cards?q=' + encoded, '_blank');
+    window.open('https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss=' + encoded + '&ustab=salesHistory', '_blank');
   } else {
-    window.open('https://www.cardladder.com/search?q=' + encoded, '_blank');
+    window.open('https://app.cardladder.com/sales-history?sort=date&direction=desc&q=' + encoded, '_blank');
   }
 }
 
