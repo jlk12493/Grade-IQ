@@ -1277,6 +1277,10 @@ body.logged-in #app-footer{display:block;}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
         TikTok
       </a>
+      <a href="https://www.instagram.com/grade.iq" target="_blank" style="display:flex;align-items:center;gap:7px;color:var(--text-muted);text-decoration:none;font-size:13px;margin-bottom:10px;transition:color .15s;" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text-muted)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        Instagram
+      </a>
     </div>
     <div>
       <div style="font-size:10px;font-weight:700;color:var(--text);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);">Resources</div>
@@ -1345,6 +1349,45 @@ body.logged-in #app-footer{display:block;}
 
 
 
+
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="import-modal">
+  <div class="modal" style="max-width:600px;width:100%;">
+    <div class="modal-title">📂 Import Spreadsheet
+      <button class="modal-close" onclick="closeModal('import-modal')">x</button>
+    </div>
+    <!-- STEP 1: Upload -->
+    <div id="imp-step-upload">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Upload any spreadsheet (.xlsx, .csv) with your inventory. GradeIQ will auto-detect your columns and let you map them.</p>
+      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--border);border-radius:8px;padding:32px;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:32px;">📄</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);">Click to choose file</div>
+        <div style="font-size:11px;color:var(--text-muted);">.xlsx or .csv — any format</div>
+        <input type="file" id="import-file" accept=".xlsx,.csv,.xls" style="display:none;" onchange="handleImport(this)">
+      </label>
+      <div style="margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center;" id="imp-col-count"></div>
+    </div>
+    <!-- STEP 2: Mapping -->
+    <div id="imp-step-mapping" style="display:none;">
+      <div id="imp-auto-msg" style="font-size:12px;margin-bottom:12px;padding:8px 12px;background:var(--surface-2);border-radius:6px;"></div>
+      <div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr>
+            <th style="padding:8px 10px;font-size:11px;color:var(--text-muted);text-align:left;background:var(--surface);border-bottom:1px solid var(--border);">Your Column</th>
+            <th style="padding:8px 10px;font-size:11px;color:var(--text-muted);text-align:left;background:var(--surface);border-bottom:1px solid var(--border);">Maps To</th>
+          </tr></thead>
+          <tbody id="imp-mapping-rows"></tbody>
+        </table>
+      </div>
+      <div id="import-preview" style="display:none;margin-top:10px;font-size:12px;color:var(--text-muted);"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn-s" style="font-size:12px;" onclick="impReset()">← Back</button>
+        <button class="btn-a" style="font-size:12px;flex:1;" onclick="confirmImport()">Import Cards →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <div id="tos-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:16px;">
@@ -1957,8 +2000,6 @@ function renderInv() {
     wrap.innerHTML = '<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div>';
     g('inv-pag').innerHTML = '';
 
-  g('inv-list').querySelectorAll('[data-copyid]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();copyCard(this.dataset.copyid);});});
-  g('inv-list').querySelectorAll('.inv-check').forEach(function(cb){cb.checked=SEL_IDS.has(cb.dataset.cid);cb.addEventListener('click',function(e){e.stopPropagation();if(this.checked)SEL_IDS.add(this.dataset.cid);else SEL_IDS.delete(this.dataset.cid);updateSelBar();});});
     return;
   }
   // Remember open cards
@@ -1971,7 +2012,7 @@ function renderInv() {
     const net10 = r.psa10 ? r.psa10 * 0.865 : null;
     const net9 = r.psa9 ? r.psa9 * 0.865 : null;
     const isOpen = openCards.has(r.id);
-    const evColor = evp !== null ? (evp >= 1 ? 'var(--green)' : evp >= 0.4 ? 'var(--amber)' : '#F87171') : 'var(--text-muted)';
+    const evColor = evp !== null ? (evp > 0 ? 'var(--green)' : '#F87171') : 'var(--text-muted)';
     const evBarW = evp !== null ? Math.min(Math.max(evp*100, 0), 200)/2 : 0;
 
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">' +
@@ -1984,7 +2025,7 @@ function renderInv() {
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
             sBdg(r.status) + dBdg(r.disposition) +
@@ -2024,6 +2065,8 @@ function renderInv() {
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '">Copy</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2033,6 +2076,15 @@ function renderInv() {
 
   g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
     Array.from({length:pgs}, (_,i) => '<button class="pbtn ' + (i+1===invPg?'active':'') + '" onclick="invPage(' + (i+1) + ')">' + (i+1) + '</button>').join('');
+
+  // Attach copy and checkbox listeners after render
+  wrap.querySelectorAll('[data-copyid]').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();copyCard(this.dataset.copyid);});
+  });
+  wrap.querySelectorAll('.inv-check').forEach(function(cb){
+    cb.checked=SEL_IDS.has(cb.dataset.cid);
+    cb.addEventListener('click',function(e){e.stopPropagation();if(this.checked)SEL_IDS.add(this.dataset.cid);else SEL_IDS.delete(this.dataset.cid);updateSelBar();});
+  });
 }
 
 function isStaleComps(r) {
@@ -2185,7 +2237,7 @@ function renderBatches() {
     '</select>';
     const cardRows = cards.map(function(r){
       return '<tr>' +
-        '<td class="mo" style="font-size:10px;color:#555;">' + (r.card_id||'--') + '</td>' +
+        '<td class="mo" style="font-size:10px;">' + (r.card_id ? '<a href="#" onclick="goSec(\'inventory\',null);setTimeout(function(){highlightInvCard(\''+r.id+'\')},300);return false;" style="color:var(--text);text-decoration:none;font-weight:600;border-bottom:1px solid var(--border);transition:color .15s;" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text)\'">' + r.card_id + '</a>' : '--') + '</td>' +
         '<td class="pl">' + (r.player||'--') + '</td>' +
         '<td>' + (r.set_name||'--') + '</td>' +
         '<td>' + (r.parallel||'--') + '</td>' +
@@ -2209,6 +2261,18 @@ function renderBatches() {
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + cards.length + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + f$(fees) + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:var(--text);">' + (b.submit_date||'TBD') + '</div></div>' +
+            (function(){
+              const evCards = cards.filter(function(r){ return r.gem_rate && r.psa10 && r.total_cost; });
+              if (!evCards.length) return '';
+              const evVals = evCards.map(function(r){ return calcEV(r); });
+              const evpVals = evCards.map(function(r){ return calcEV(r)/r.total_cost; });
+              const avgEV = evVals.reduce(function(a,b){return a+b;},0)/evVals.length;
+              const avgEVP = evpVals.reduce(function(a,b){return a+b;},0)/evpVals.length;
+              const evColor = avgEVP > 0 ? 'var(--green)' : '#F87171';
+              return '<div style="border-left:1px solid var(--border);padding-left:14px;"><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Avg EV$</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEV>=0?'+':'') + f$(avgEV) + '</div></div>' +
+                     '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Avg EV%</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEVP*100).toFixed(0) + '%</div></div>' +
+                     '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Proj Profit</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEV>=0?'+':'') + f$(avgEV * cards.length) + '</div></div>';
+            })() +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
@@ -2822,6 +2886,46 @@ async function confirmImport() {
 
 
 // - EDIT CARD -
+function highlightInvCard(id) {
+  // Find which page this card is on and navigate to it
+  const cardIdx = invF.findIndex(function(r){ return r.id === id; });
+  if (cardIdx < 0) {
+    // Card may be filtered out - reset filters first
+    invF = INV.slice();
+    renderInv();
+    setTimeout(function(){ highlightInvCard(id); }, 100);
+    return;
+  }
+  const targetPage = Math.ceil((cardIdx + 1) / PP);
+  if (targetPage !== invPg) {
+    invPg = targetPage;
+    renderInv();
+  }
+  setTimeout(function() {
+    const header = document.querySelector('[data-id="' + id + '"]');
+    if (header) {
+      const body = document.querySelector('.inv-body[data-id="' + id + '"]');
+      if (body && !body.classList.contains('open')) header.click();
+      const card = header.closest('div[style*="border-radius"]');
+      if (card) {
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        card.style.borderColor = 'var(--green)';
+        setTimeout(function(){ card.style.borderColor = ''; }, 2000);
+      }
+    }
+  }, 50);
+}
+
+function checkComps(player, setName, parallel, cardNo, dest) {
+  const q = [player, setName, cardNo ? '#'+cardNo : '', parallel].filter(Boolean).join(' ');
+  const encoded = encodeURIComponent(q);
+  if (dest === 'mm') {
+    window.open('https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss=' + encoded + '&ustab=salesHistory', '_blank');
+  } else {
+    window.open('https://app.cardladder.com/sales-history?sort=date&direction=desc&q=' + encoded, '_blank');
+  }
+}
+
 function openEdit(id) {
   const r = INV.find(c => c.id === id);
   if (!r) return;
