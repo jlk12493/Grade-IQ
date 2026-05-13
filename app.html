@@ -1988,7 +1988,7 @@ function renderInv() {
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
             sBdg(r.status) + dBdg(r.disposition) +
@@ -2028,8 +2028,8 @@ function renderInv() {
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '">Copy</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.year||'') + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.year||'') + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2840,8 +2840,8 @@ async function confirmImport() {
 
 
 // - EDIT CARD -
-function checkComps(player, year, setName, parallel, dest) {
-  const q = [player, year, setName, parallel].filter(Boolean).join(' ');
+function checkComps(player, setName, parallel, dest) {
+  const q = [player, setName, parallel].filter(Boolean).join(' ');
   const encoded = encodeURIComponent(q);
   if (dest === 'mm') {
     window.open('https://www.marketmovers.io/cards?q=' + encoded, '_blank');
