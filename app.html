@@ -2028,6 +2028,8 @@ function renderInv() {
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '">Copy</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.year||'') + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.year||'') + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2213,6 +2215,18 @@ function renderBatches() {
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + cards.length + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + f$(fees) + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:var(--text);">' + (b.submit_date||'TBD') + '</div></div>' +
+            (function(){
+              const evCards = cards.filter(function(r){ return r.gem_rate && r.psa10 && r.total_cost; });
+              if (!evCards.length) return '';
+              const evVals = evCards.map(function(r){ return calcEV(r); });
+              const evpVals = evCards.map(function(r){ return calcEV(r)/r.total_cost; });
+              const avgEV = evVals.reduce(function(a,b){return a+b;},0)/evVals.length;
+              const avgEVP = evpVals.reduce(function(a,b){return a+b;},0)/evpVals.length;
+              const evColor = avgEVP >= 1 ? 'var(--green)' : avgEVP >= 0.4 ? 'var(--amber)' : '#F87171';
+              return '<div style="border-left:1px solid var(--border);padding-left:14px;"><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Avg EV$</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEV>=0?'+':'') + f$(avgEV) + '</div></div>' +
+                     '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Avg EV%</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEVP*100).toFixed(0) + '%</div></div>' +
+                     '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Proj Profit</div><div style="font-size:12px;font-weight:700;color:' + evColor + ';">' + (avgEV>=0?'+':'') + f$(avgEV * cards.length) + '</div></div>';
+            })() +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
@@ -2826,6 +2840,16 @@ async function confirmImport() {
 
 
 // - EDIT CARD -
+function checkComps(player, year, setName, parallel, dest) {
+  const q = [player, year, setName, parallel].filter(Boolean).join(' ');
+  const encoded = encodeURIComponent(q);
+  if (dest === 'mm') {
+    window.open('https://www.marketmovers.io/cards?q=' + encoded, '_blank');
+  } else {
+    window.open('https://www.cardladder.com/search?q=' + encoded, '_blank');
+  }
+}
+
 function openEdit(id) {
   const r = INV.find(c => c.id === id);
   if (!r) return;
