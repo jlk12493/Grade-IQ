@@ -1181,5 +1181,14 @@ document.addEventListener('click', function() {
   if (d) d.classList.remove('open');
 });
 </script>
+<script>
+// Redirect Supabase recovery/magic links to app.html
+(function() {
+  const hash = window.location.hash;
+  if (hash && (hash.includes('type=recovery') || hash.includes('type=magiclink') || hash.includes('access_token'))) {
+    window.location.replace('/app.html' + hash);
+  }
+})();
+</script>
 </body>
 </html>
