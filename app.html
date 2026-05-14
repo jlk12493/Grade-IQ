@@ -4381,7 +4381,13 @@ var GRADING_TIERS = [];
 
 async function loadGradingTiers() {
   var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost_per_card', {ascending: true});
-  GRADING_TIERS = res.data || [];
+  // Deduplicate by tier_name in case of duplicate rows
+  var seen = {};
+  GRADING_TIERS = (res.data || []).filter(function(t) {
+    if (seen[t.tier_name]) return false;
+    seen[t.tier_name] = true;
+    return true;
+  });
 }
 
 var GIQ_SELECTED_SPORT='';
@@ -4521,7 +4527,7 @@ function renderGradeIQ(){
       var bestTierIdx = -1;
       var tierResults = GRADING_TIERS.map(function(t) {
         var ev = calcEVForTier(r, t.cost_per_card);
-        var ann = calcAnnualizedReturn(ev.evPct, t.turnaround_days_avg);
+        var days = t.turnaround_business_days_avg || 0; var ann = calcAnnualizedReturn(ev.evPct, days);
         if (ann !== null && ann > bestAnnualized) { bestAnnualized = ann; bestTierIdx = t.id; }
         return { tier: t, ev: ev, ann: ann };
       });
@@ -4539,7 +4545,7 @@ function renderGradeIQ(){
         html += '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';font-weight:600;">' + f$(tr.ev.evDollar) + '</td>';
         html += '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';">' + (tr.ev.evPct * 100).toFixed(1) + '%</td>';
         html += '<td style="padding:6px 10px;text-align:right;color:' + annColor + ';font-weight:' + (isBest ? '700' : '400') + ';">' + annDisplay + '</td>';
-        html += '<td style="padding:6px 10px;text-align:center;color:var(--text-muted);">' + tr.tier.turnaround_days_avg + '</td>';
+        var daysDisplay = tr.tier.turnaround_business_days_avg || '--'; html += '<td style="padding:6px 10px;text-align:center;color:var(--text-muted);">' + daysDisplay + '</td>';
         html += '</tr>';
       });
 
