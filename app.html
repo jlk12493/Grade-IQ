@@ -3640,8 +3640,9 @@ function fmtDate(d) {
 function calcEVForTier(r, gradingCost) {
   var n10 = r.psa10_price * 0.865;
   var n9 = (r.psa9_price || 0) * 0.865;
+  var gemRate = r.actual_gem_rate || r.gem_rate || 0.5;
   var totalCost = (r.raw_price || 0) + gradingCost;
-  var evDollar = r.actual_gem_rate * n10 + (1 - r.actual_gem_rate) * n9 - totalCost;
+  var evDollar = gemRate * n10 + (1 - gemRate) * n9 - totalCost;
   var evPct = totalCost > 0 ? evDollar / totalCost : 0;
   return { evDollar: evDollar, evPct: evPct, totalCost: totalCost };
 }
@@ -4497,7 +4498,7 @@ function renderGradeIQ(){
     if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
     html+='</div>';
     // ── TIER COMPARISON TABLE ──
-    if (GRADING_TIERS.length && r.psa10_price && r.actual_gem_rate) {
+    if (GRADING_TIERS.length && r.psa10_price) {
       html += '<div style="margin-bottom:12px;">';
       html += '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">PSA Tier Comparison</div>';
       html += '<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;">';
