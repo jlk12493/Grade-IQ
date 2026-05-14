@@ -4460,7 +4460,28 @@ function renderGradeIQ(){
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
     var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
-    var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    // Calculate best tier EV for header display
+    var headerEV = null, headerMaxBuy = null, headerTierName = null;
+    if (GRADING_TIERS.length && r.psa10_price) {
+      var bestAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = t.turnaround_business_days_avg || 0;
+        var ann = calcAnnualizedReturn(ev.evPct, days);
+        var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
+        if (viable && ann !== null && ann > bestAnn) {
+          bestAnn = ann;
+          headerEV = ev;
+          headerTierName = t.tier_name;
+          headerMaxBuy = (ev.totalCost > 0) ? ev.totalCost / 0.40 - ev.totalCost + (r.raw_price || 0) : null;
+        }
+      });
+    }
+    // Fall back to stored values if no best tier found
+    var displayEVPct = headerEV ? headerEV.evPct : (r.ev_pct || 0);
+    var displayMaxBuy = headerMaxBuy !== null ? headerMaxBuy : r.max_buy_40;
+    var displayTierLabel = headerTierName ? ' <span style="font-size:9px;color:var(--text-muted);">@ ' + headerTierName + '</span>' : '';
+    var ec = displayEVPct >= 1 ? 'var(--green)' : displayEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     var cid='giq-card-'+idx;
     var bk=encodeURIComponent((r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||''));
     var ibm=!!GIQ_BOOKMARKS[decodeURIComponent(bk)];
@@ -4491,7 +4512,7 @@ function renderGradeIQ(){
     if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
     html+='</div><div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+'</div></div>';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
-    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div></div>';
+    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'%':'--')+displayTierLabel+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div></div>';
     html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;">&#128722;</a>';
     html+='<button class="giq-bookmark'+(ibm?' saved':'')+'" data-bkey="'+bk+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(ibm?'★':'☆')+'</button>';
     if(CU&&CU.email===ADMIN)html+='<button onclick="event.stopPropagation();toggleGIQEdit(\''+cid+'\')" title="Edit prices" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px;color:var(--text-muted);transition:color .2s;" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#9998;</button>';
