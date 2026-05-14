@@ -4467,7 +4467,7 @@ function renderGradeIQ(){
       GRADING_TIERS.forEach(function(t) {
         var ev = calcEVForTier(r, t.cost_per_card);
         var days = t.turnaround_business_days_avg || 0;
-        var ann = calcAnnualizedReturn(ev.evPct, days);
+        var ann = calcAnnualizedReturn(ev.evPct, days * 1.4);
         var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
         if (viable && ann !== null && ann > bestAnn) {
           bestAnn = ann;
@@ -4548,7 +4548,7 @@ function renderGradeIQ(){
       var bestTierIdx = -1;
       var tierResults = GRADING_TIERS.map(function(t) {
         var ev = calcEVForTier(r, t.cost_per_card);
-        var days = t.turnaround_business_days_avg || 0; var ann = calcAnnualizedReturn(ev.evPct, days);
+        var days = (t.turnaround_business_days_avg || 0) * 1.4; var ann = calcAnnualizedReturn(ev.evPct, days);
         var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
         if (viable && ann !== null && ann > bestAnnualized) { bestAnnualized = ann; bestTierIdx = t.id; }
         return { tier: t, ev: ev, ann: ann, viable: viable };
