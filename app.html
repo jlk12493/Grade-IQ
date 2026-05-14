@@ -1865,7 +1865,12 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
-  if (name==='gradeiq') { loadGradingTiers(); loadGradeIQ(); showTrialBanner(); }
+  if (name==='gradeiq') { 
+    loadGradingTiers().then(function() { 
+      loadGradeIQ(); 
+    }); 
+    showTrialBanner(); 
+  }
   if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
 }
