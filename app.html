@@ -1865,7 +1865,12 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
-  if (name==='gradeiq') { loadGradeIQ(); showTrialBanner(); }
+  if (name==='gradeiq') { 
+    loadGradingTiers().then(function() { 
+      loadGradeIQ(); 
+    }); 
+    showTrialBanner(); 
+  }
   if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
 }
@@ -3637,6 +3642,22 @@ function fmtDate(d) {
   return date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
 }
 
+function calcEVForTier(r, gradingCost) {
+  var n10 = r.psa10_price * 0.865;
+  var n9 = (r.psa9_price || 0) * 0.865;
+  var gemRate = r.actual_gem_rate || r.gem_rate || 0.5;
+  var totalCost = (r.raw_price || 0) + gradingCost;
+  var evDollar = gemRate * n10 + (1 - gemRate) * n9 - totalCost;
+  var evPct = totalCost > 0 ? evDollar / totalCost : 0;
+  return { evDollar: evDollar, evPct: evPct, totalCost: totalCost };
+}
+
+function calcAnnualizedReturn(evPct, turnaroundDays) {
+  if (turnaroundDays <= 0 || evPct <= 0) return null;
+  var cyclesPerYear = 365 / turnaroundDays;
+  return Math.pow(1 + evPct, cyclesPerYear) - 1;
+}
+
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
 function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
@@ -4356,6 +4377,18 @@ async function copyCard(id){
 }
 // -- GRADEIQ PUBLIC BUY SIGNALS --
 var GRADEIQ_DATA = [], GRADEIQ_FILTERED = [];
+var GRADING_TIERS = [];
+
+async function loadGradingTiers() {
+  var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost_per_card', {ascending: true});
+  // Deduplicate by tier_name in case of duplicate rows
+  var seen = {};
+  GRADING_TIERS = (res.data || []).filter(function(t) {
+    if (seen[t.tier_name]) return false;
+    seen[t.tier_name] = true;
+    return true;
+  });
+}
 
 var GIQ_SELECTED_SPORT='';
 var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bookmarks')||'{}');}catch(e){return{};}})();
@@ -4427,7 +4460,28 @@ function renderGradeIQ(){
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
     var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
-    var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    // Calculate best tier EV for header display
+    var headerEV = null, headerMaxBuy = null, headerTierName = null;
+    if (GRADING_TIERS.length && r.psa10_price) {
+      var bestAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = t.turnaround_business_days_avg || 0;
+        var ann = calcAnnualizedReturn(ev.evPct, days);
+        var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
+        if (viable && ann !== null && ann > bestAnn) {
+          bestAnn = ann;
+          headerEV = ev;
+          headerTierName = t.tier_name;
+          headerMaxBuy = (ev.totalCost > 0) ? ev.totalCost / 0.40 - ev.totalCost + (r.raw_price || 0) : null;
+        }
+      });
+    }
+    // Fall back to stored values if no best tier found
+    var displayEVPct = headerEV ? headerEV.evPct : (r.ev_pct || 0);
+    var displayMaxBuy = headerMaxBuy !== null ? headerMaxBuy : r.max_buy_40;
+    var displayTierLabel = headerTierName ? ' <span style="font-size:9px;color:var(--text-muted);">@ ' + headerTierName + '</span>' : '';
+    var ec = displayEVPct >= 1 ? 'var(--green)' : displayEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     var cid='giq-card-'+idx;
     var bk=encodeURIComponent((r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||''));
     var ibm=!!GIQ_BOOKMARKS[decodeURIComponent(bk)];
@@ -4458,7 +4512,7 @@ function renderGradeIQ(){
     if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
     html+='</div><div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+'</div></div>';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
-    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></div></div>';
+    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'%':'--')+displayTierLabel+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div></div>';
     html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;">&#128722;</a>';
     html+='<button class="giq-bookmark'+(ibm?' saved':'')+'" data-bkey="'+bk+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(ibm?'★':'☆')+'</button>';
     if(CU&&CU.email===ADMIN)html+='<button onclick="event.stopPropagation();toggleGIQEdit(\''+cid+'\')" title="Edit prices" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px;color:var(--text-muted);transition:color .2s;" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#9998;</button>';
@@ -4475,6 +4529,51 @@ function renderGradeIQ(){
     if(r.actual_gem_rate!=null)html+=giqCell('Gem Rate',(r.actual_gem_rate*100).toFixed(1)+'%','var(--text)',false);
     if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
     html+='</div>';
+    // ── TIER COMPARISON TABLE ──
+    if (GRADING_TIERS.length && r.psa10_price) {
+      html += '<div style="margin-bottom:12px;">';
+      html += '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">PSA Tier Comparison</div>';
+      html += '<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;">';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+      html += '<thead><tr style="background:var(--surface-2);">';
+      html += '<th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Tier</th>';
+      html += '<th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Cost</th>';
+      html += '<th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV$</th>';
+      html += '<th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV%</th>';
+      html += '<th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Annualized</th>';
+      html += '<th style="padding:6px 10px;text-align:center;color:var(--text-muted);font-weight:600;">Days</th>';
+      html += '</tr></thead><tbody>';
+
+      var bestAnnualized = -Infinity;
+      var bestTierIdx = -1;
+      var tierResults = GRADING_TIERS.map(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = t.turnaround_business_days_avg || 0; var ann = calcAnnualizedReturn(ev.evPct, days);
+        var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
+        if (viable && ann !== null && ann > bestAnnualized) { bestAnnualized = ann; bestTierIdx = t.id; }
+        return { tier: t, ev: ev, ann: ann, viable: viable };
+      });
+
+      tierResults.forEach(function(tr) {
+        var viable = tr.ev.evDollar > 0;
+        var isBest = tr.tier.id === bestTierIdx;
+        var rowBg = isBest ? 'background:rgba(163,230,53,0.08);' : '';
+        var evColor = tr.ev.evDollar > 0 ? 'var(--green)' : '#F87171';
+        var annDisplay = tr.ann !== null ? (tr.ann * 100).toFixed(0) + '%' : '--';
+        var annColor = tr.ann !== null && tr.ann > 0 ? 'var(--green)' : '#F87171';
+        html += '<tr style="border-top:1px solid var(--border);' + rowBg + '">';
+        html += '<td style="padding:6px 10px;color:var(--text);font-weight:' + (isBest ? '700' : '400') + ';">' + tr.tier.tier_name + (isBest ? ' <span style="font-size:9px;background:var(--green);color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">BEST</span>' : '') + '</td>';
+        html += '<td style="padding:6px 10px;text-align:right;color:var(--text-muted);">$' + tr.tier.cost_per_card + '</td>';
+        html += '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';font-weight:600;">' + f$(tr.ev.evDollar) + '</td>';
+        html += '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';">' + (tr.ev.evPct * 100).toFixed(1) + '%</td>';
+        html += '<td style="padding:6px 10px;text-align:right;color:' + annColor + ';font-weight:' + (isBest ? '700' : '400') + ';">' + annDisplay + '</td>';
+        var daysDisplay = tr.tier.turnaround_business_days_avg || '--'; html += '<td style="padding:6px 10px;text-align:center;color:var(--text-muted);">' + daysDisplay + '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div></div>';
+    }
+
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
