@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+(function(){
+  var h = window.location.hash;
+  if(h && h.indexOf('type=recovery') !== -1){
+    window.location.replace('/app.html' + h);
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GradeIQ — Smarter Grades. Stronger Returns.</title>
@@ -1180,15 +1188,6 @@ document.addEventListener('click', function() {
   var d = document.getElementById('edu-dropdown');
   if (d) d.classList.remove('open');
 });
-</script>
-<script>
-// Redirect Supabase recovery/magic links to app.html
-(function() {
-  const hash = window.location.hash;
-  if (hash && (hash.includes('type=recovery') || hash.includes('type=magiclink') || hash.includes('access_token'))) {
-    window.location.replace('/app.html' + hash);
-  }
-})();
 </script>
 </body>
 </html>
