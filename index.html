@@ -12,7 +12,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GradeIQ — Smarter Grades. Stronger Returns.</title>
-<meta name="description" content="GradeIQ finds the highest +EV grading opportunities in the sports card market. Stop guessing. Start grading with an edge.">
+<meta name="description" content="GradeIQ finds the highest +EV grading opportunities in the sports card and TCG market. Stop guessing. Start grading with an edge.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -104,32 +104,7 @@ nav {
 
 .nav-cta:hover { opacity: 0.85; }
 
-.nav-dropdown { position: relative; display: inline-block; }
-.nav-dropdown-trigger { cursor: pointer; }
-.nav-dropdown-menu {
-  display: none;
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  min-width: 160px;
-  overflow: hidden;
-  z-index: 999;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.nav-dropdown.open .nav-dropdown-menu { display: block; }
-.nav-dropdown-menu a {
-  display: block;
-  padding: 10px 16px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: background .15s, color .15s;
-}
-.nav-dropdown-menu a:hover { background: var(--surface-2); color: var(--text); }
+
 
 .nav-signin {
   color: var(--text-secondary) !important;
@@ -835,13 +810,7 @@ footer {
     <a href="#features">Features</a>
     <a href="#how-it-works">How It Works</a>
     <a href="#pricing">Pricing</a>
-    <div class="nav-dropdown" id="edu-dropdown">
-      <a href="#" onclick="toggleEduDropdown(event)" class="nav-dropdown-trigger">Education ▾</a>
-      <div class="nav-dropdown-menu">
-        <a href="/blog.html">Expert Articles</a>
-        <a href="/videos.html">Expert Videos</a>
-      </div>
-    </div>
+
     <a href="https://discord.gg/VvC9bMaM5c" target="_blank">Discord</a>
     <a href="/app.html" class="nav-signin">Sign In</a>
     <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" class="nav-cta">Get Access →</a>
@@ -851,9 +820,9 @@ footer {
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-eyebrow">⚡ Updated nightly — Baseball · Football · Basketball</div>
+  <div class="hero-eyebrow">⚡ Updated nightly — Baseball · Football · Basketball · TCG</div>
   <h1>Grade smarter.<br>Return <em>stronger.</em></h1>
-  <p class="hero-sub">GradeIQ finds the highest expected-value grading opportunities in the sports card market. Stop guessing which cards to submit — let the data decide.</p>
+  <p class="hero-sub">GradeIQ finds the highest expected-value grading opportunities in the sports card and TCG market. Stop guessing which cards to submit — let the data decide.</p>
   <div class="hero-actions">
     <a href="https://whop.com/checkout/plan_9sCCSYErzxWuE" target="_blank" class="btn-primary">
       Get Started Free →
@@ -874,6 +843,10 @@ footer {
     <div class="stat-item">
       <div class="stat-value">🏀</div>
       <div class="stat-label">Basketball</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">🃏</div>
+      <div class="stat-label">TCG</div>
     </div>
     <div class="stat-item">
       <div class="stat-value" style="font-size:16px;padding-top:4px;">More<br>Coming</div>
@@ -1178,16 +1151,6 @@ document.getElementById('tos-modal').addEventListener('click', function(e) {
   if(e.target === this) this.style.display = 'none';
 });
 </script>
-<script>
-function toggleEduDropdown(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  document.getElementById('edu-dropdown').classList.toggle('open');
-}
-document.addEventListener('click', function() {
-  var d = document.getElementById('edu-dropdown');
-  if (d) d.classList.remove('open');
-});
-</script>
+
 </body>
 </html>
