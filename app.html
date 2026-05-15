@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <!-- v73 -->
 <html lang="en">
 <head>
@@ -686,10 +686,11 @@ body.logged-in #app-footer{display:block;}
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;"><option value="scc_score">IQ Rating High&#8594;Low</option><option value="ev_pct">EV% High&#8594;Low</option><option value="raw_price">Raw Price Low&#8594;High</option>
+          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;"><option value="scc_score">IQ Rating High&#8594;Low</option><option value="ev_pct">EV% High&#8594;Low</option><option value="annualized">Annualized Return High&#8594;Low</option><option value="raw_price">Raw Price Low&#8594;High</option>
             <option value="gem_rate">Gem Rate High&#8594;Low</option></select>
           <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">All Cards</option><option value="base">Base Only</option><option value="parallel">Parallels Only</option></select>
           <select class="fi" id="giq-price-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">Any Price</option><option value="5">Under $5</option><option value="20">$5 - $20</option><option value="50">$20 - $50</option><option value="999">$50+</option></select>
+          <select class="fi" id="giq-tier-filter" onchange="filterGradeIQ()" style="min-width:140px;"><option value="">Any Tier</option><option value="Value Bulk">Value Bulk</option><option value="Value">Value</option><option value="Value Plus">Value Plus</option><option value="Value Max">Value Max</option><option value="Regular">Regular</option><option value="Express">Express</option><option value="Super Express">Super Express</option><option value="Walk-Through">Walk-Through</option></select>
           <input class="fi" type="text" id="giq-search" placeholder="Search player..." oninput="filterGradeIQ()" style="flex:1;min-width:120px;">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap;"><input type="checkbox" id="giq-iq70" onchange="filterGradeIQ()" checked style="accent-color:var(--green);"> IQ 70+ only</label>
         </div>
@@ -2068,6 +2069,7 @@ function renderInv() {
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '">Copy</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#60A5FA;color:#60A5FA;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'mm\')" >&#128269; Market Movers</button>' +
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#a78bfa;color:#a78bfa;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'cl\')" >&#128269; Card Ladder</button>' +
+          (CU&&CU.email===ADMIN?'<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:#f97316;color:#f97316;" onclick="checkComps(\'' + r.player + '\',\'' + (r.set_name||'') + '\',\'' + (r.parallel||'') + '\',\'' + (r.card_no||'') + '\',\'scp\')" >&#128269; SCP</button>':'') +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2922,6 +2924,8 @@ function checkComps(player, setName, parallel, cardNo, dest) {
   const encoded = encodeURIComponent(q);
   if (dest === 'mm') {
     window.open('https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss=' + encoded + '&ustab=salesHistory', '_blank');
+  } else if (dest === 'scp') {
+    window.open('https://www.sportscardspro.com/search-products?type=prices&q=' + encoded + '&go=Go', '_blank');
   } else {
     window.open('https://app.cardladder.com/sales-history?sort=date&direction=desc&q=' + encoded, '_blank');
   }
@@ -4410,16 +4414,44 @@ function filterGradeIQ(){
   var pr=(g('giq-price-filter')||{value:''}).value;
   var search=((g('giq-search')||{value:''}).value||'').toLowerCase().trim();
   var iq70=g('giq-iq70')?g('giq-iq70').checked:false;
+  var tf=(g('giq-tier-filter')||{value:''}).value;
   GRADEIQ_FILTERED=GRADEIQ_DATA.filter(function(r){
     if(GIQ_SELECTED_SPORT&&(r.sport||'')!==GIQ_SELECTED_SPORT)return false;
     if(iq70&&(r.scc_score||0)<70)return false;
     if(pf==='base'&&r.parallel)return false;
     if(pf==='parallel'&&!r.parallel)return false;
     if(pr){var p=r.raw_price||0;if(pr==='5'&&p>=5)return false;if(pr==='20'&&(p<5||p>=20))return false;if(pr==='50'&&(p<20||p>=50))return false;if(pr==='999'&&p<50)return false;}
+    if(tf&&GRADING_TIERS.length){
+      var bestTier=null,bestAnn=-Infinity;
+      GRADING_TIERS.forEach(function(t){
+        var ev=calcEVForTier(r,t.cost_per_card);
+        var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
+        if(ev.evDollar>0&&ev.evPct>=0.40&&ann>bestAnn){bestAnn=ann;bestTier=t.tier_name;}
+      });
+      if(bestTier!==tf)return false;
+    }
     if(search&&!(r.player||'').toLowerCase().includes(search)&&!(r.set_name||'').toLowerCase().includes(search))return false;
     return true;
   });
-  GRADEIQ_FILTERED.sort(function(a,b){if(sort==='scc_score')return(b.scc_score||0)-(a.scc_score||0);if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);return(a.raw_price||0)-(b.raw_price||0);});
+  GRADEIQ_FILTERED.sort(function(a,b){
+    if(sort==='scc_score')return(b.scc_score||0)-(a.scc_score||0);
+    if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);
+    if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);
+    if(sort==='annualized'){
+      var getAnn=function(r){
+        if(!GRADING_TIERS.length||!r.psa10_price)return -Infinity;
+        var best=-Infinity;
+        GRADING_TIERS.forEach(function(t){
+          var ev=calcEVForTier(r,t.cost_per_card);
+          var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
+          if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>best)best=ann;
+        });
+        return best;
+      };
+      return getAnn(b)-getAnn(a);
+    }
+    return(a.raw_price||0)-(b.raw_price||0);
+  });
   if(g('giq-showing'))g('giq-showing').textContent=GRADEIQ_FILTERED.length;
   if(g('giq-total'))g('giq-total').textContent=GRADEIQ_DATA.length;
   var now=Date.now();
@@ -4433,7 +4465,26 @@ function renderTopPicks(){
   var top=GRADEIQ_FILTERED.slice(0,5);if(!top.length){el.innerHTML='';return;}
   el.innerHTML=top.map(function(r){
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
+    // Calculate live IQ score using best tier
+    var liveIQ = r.scc_score || 0;
+    if (GRADING_TIERS.length && r.psa10_price) {
+      var bestEVPct = 0, bestAnnReturn = null, bestAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = (t.turnaround_business_days_avg || 0) * 1.4;
+        var ann = calcAnnualizedReturn(ev.evPct, days);
+        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > bestAnn) {
+          bestAnn = ann;
+          bestEVPct = ev.evPct;
+          bestAnnReturn = ann;
+        }
+      });
+      if (bestEVPct > 0) {
+        var impliedGR = r.psa9_price > 0 ? (r.psa9_price / (r.psa10_price || 1)) : 0;
+        liveIQ = calcSCCScoreJS(bestEVPct, r.sales_volume||0, r.actual_gem_rate||0, impliedGR, r.total||0, null, bestAnnReturn);
+      }
+    }
+    var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
       +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+(r.scc_score||'--')+'</div>'
@@ -4459,7 +4510,26 @@ function renderGradeIQ(){
   for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    var sc=(r.scc_score||0)>=80?'var(--green)':(r.scc_score||0)>=60?'var(--amber)':'var(--text-muted)';
+    // Calculate live IQ score using best tier
+    var liveIQ = r.scc_score || 0;
+    if (GRADING_TIERS.length && r.psa10_price) {
+      var bestEVPct = 0, bestAnnReturn = null, bestAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = (t.turnaround_business_days_avg || 0) * 1.4;
+        var ann = calcAnnualizedReturn(ev.evPct, days);
+        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > bestAnn) {
+          bestAnn = ann;
+          bestEVPct = ev.evPct;
+          bestAnnReturn = ann;
+        }
+      });
+      if (bestEVPct > 0) {
+        var impliedGR = r.psa9_price > 0 ? (r.psa9_price / (r.psa10_price || 1)) : 0;
+        liveIQ = calcSCCScoreJS(bestEVPct, r.sales_volume||0, r.actual_gem_rate||0, impliedGR, r.total||0, null, bestAnnReturn);
+      }
+    }
+    var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     // Calculate best tier EV for header display
     var headerEV = null, headerMaxBuy = null, headerTierName = null;
     if (GRADING_TIERS.length && r.psa10_price) {
@@ -4487,7 +4557,7 @@ function renderGradeIQ(){
     var ibm=!!GIQ_BOOKMARKS[decodeURIComponent(bk)];
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
-    var ebayQ=encodeURIComponent((r.player||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
+    var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
     var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
@@ -4505,7 +4575,7 @@ function renderGradeIQ(){
     var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
     html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
     html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
-    html+='<div style="min-width:36px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div><div style="font-size:15px;font-weight:800;color:'+sc+';line-height:1.2;">'+(r.scc_score||'--')+'</div></div>';
+    html+='<div style="min-width:36px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div><div style="font-size:15px;font-weight:800;color:'+sc+';line-height:1.2;">'+Math.round(liveIQ||0)+'</div></div>';
     html+='<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>';
     if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>';
     if(pd)html+='<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+pd+'</span>';
@@ -4520,8 +4590,8 @@ function renderGradeIQ(){
     html+='</div></div>';
     html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
-    if(r.scc_score!=null)html+=giqCell('IQ Rating',String(r.scc_score),sc,true);
-    if(r.ev_pct)html+=giqCell('EV%',(r.ev_pct*100).toFixed(1)+'%',ec,true);
+    if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
+    if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
     if(r.ev_dollar!=null)html+=giqCell('EV$',f$(r.ev_dollar),(r.ev_dollar||0)>=0?'var(--green)':'#F87171',true);
     if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
@@ -4579,6 +4649,10 @@ function renderGradeIQ(){
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
     html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
     html+='<a href="'+clUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128269; Verify on Card Ladder</a>';
+    if(CU&&CU.email===ADMIN){
+      var scpQ=encodeURIComponent([r.player,r.year,r.set_name,r.card_no?'#'+r.card_no:''].filter(Boolean).join(' '));
+      html+='<a href="https://www.sportscardspro.com/search-products?type=prices&q='+scpQ+'&go=Go" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; SCP</a>';
+    }
     html+='</div>';
     if(CU&&CU.email===ADMIN){
       html+='<div id="giq-edit-'+cid+'" style="display:none;margin-top:12px;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px;">';
@@ -4608,18 +4682,27 @@ function toggleGIQEdit(cid){
   el.style.display=el.style.display==='none'?'':'none';
 }
 
-function calcSCCScoreJS(evPct,salesVolume,actualGemRate,impliedGemRate,totalPop,momentum){
-  var evScore=Math.min(evPct/2.0,1.0)*40;
-  var volScore=salesVolume>0?Math.min(Math.log10(salesVolume)/Math.log10(2000),1.0)*30:0;
+function calcSCCScoreJS(evPct,salesVolume,actualGemRate,impliedGemRate,totalPop,momentum,annualizedReturn){
+  // EV score — 35pts, caps at 100% EV%
+  var evScore=Math.min(evPct/1.0,1.0)*35;
+  // Volume score — 25pts, caps at 500 sales
+  var volScore=salesVolume>0?Math.min(Math.log10(salesVolume)/Math.log10(500),1.0)*25:0;
+  // Edge score (gem rate vs implied) — 20pts
   var edgeScore=0;
   if(impliedGemRate>0&&totalPop>=20){
     var edgeRatio=Math.min(actualGemRate/impliedGemRate,3.0)/3.0;
     var popWeight=Math.min(totalPop/500,1.0);
     edgeScore=edgeRatio*popWeight*20;
   }
+  // Annualized return score — 15pts, caps at 200% annualized
+  var annScore=0;
+  if(annualizedReturn!==null&&annualizedReturn>0){
+    annScore=Math.min(annualizedReturn/2.0,1.0)*15;
+  }
+  // Momentum score — 5pts
   var momentumScore=0;
-  if(momentum!==null&&momentum>0)momentumScore=Math.min(momentum/100,1.0)*10;
-  return Math.min(100,Math.round((evScore+volScore+edgeScore+momentumScore)*10)/10);
+  if(momentum!==null&&momentum>0)momentumScore=Math.min(momentum/100,1.0)*5;
+  return Math.min(100,Math.round((evScore+volScore+edgeScore+annScore+momentumScore)*10)/10);
 }
 
 async function saveGIQEdit(scpId,cid,idx){
