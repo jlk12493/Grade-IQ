@@ -4590,8 +4590,8 @@ function renderGradeIQ(){
     html+='</div></div>';
     html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
-    if(r.scc_score!=null)html+=giqCell('IQ Rating',String(r.scc_score),sc,true);
-    if(r.ev_pct)html+=giqCell('EV%',(r.ev_pct*100).toFixed(1)+'%',ec,true);
+    if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
+    if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
     if(r.ev_dollar!=null)html+=giqCell('EV$',f$(r.ev_dollar),(r.ev_dollar||0)>=0?'var(--green)':'#F87171',true);
     if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
@@ -4679,10 +4679,10 @@ function toggleGIQEdit(cid){
 }
 
 function calcSCCScoreJS(evPct,salesVolume,actualGemRate,impliedGemRate,totalPop,momentum,annualizedReturn){
-  // EV score based on best tier EV% — 35pts
-  var evScore=Math.min(evPct/2.0,1.0)*35;
-  // Volume score — 25pts
-  var volScore=salesVolume>0?Math.min(Math.log10(salesVolume)/Math.log10(2000),1.0)*25:0;
+  // EV score — 35pts, caps at 100% EV%
+  var evScore=Math.min(evPct/1.0,1.0)*35;
+  // Volume score — 25pts, caps at 500 sales
+  var volScore=salesVolume>0?Math.min(Math.log10(salesVolume)/Math.log10(500),1.0)*25:0;
   // Edge score (gem rate vs implied) — 20pts
   var edgeScore=0;
   if(impliedGemRate>0&&totalPop>=20){
@@ -4690,10 +4690,10 @@ function calcSCCScoreJS(evPct,salesVolume,actualGemRate,impliedGemRate,totalPop,
     var popWeight=Math.min(totalPop/500,1.0);
     edgeScore=edgeRatio*popWeight*20;
   }
-  // Annualized return score — 15pts (caps at 500% annualized)
+  // Annualized return score — 15pts, caps at 200% annualized
   var annScore=0;
   if(annualizedReturn!==null&&annualizedReturn>0){
-    annScore=Math.min(annualizedReturn/5.0,1.0)*15;
+    annScore=Math.min(annualizedReturn/2.0,1.0)*15;
   }
   // Momentum score — 5pts
   var momentumScore=0;
