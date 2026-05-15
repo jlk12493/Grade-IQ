@@ -1,0 +1,30 @@
+name: GradeIQ Nightly Pipeline
+
+on:
+  schedule:
+    # Runs at 2:00 AM UTC every night
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run GradeIQ Scheduler
+        run: |
+          response=$(curl -s -o response.txt -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"mode": "full"}' \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/scheduler")
+          
+          echo "HTTP Status: $response"
+          echo "Response:"
+          cat response.txt
+          
+          if [ "$response" != "200" ]; then
+            echo "Pipeline failed with status $response"
+            exit 1
+          fi
