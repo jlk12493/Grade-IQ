@@ -686,7 +686,7 @@ body.logged-in #app-footer{display:block;}
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;"><option value="scc_score">IQ Rating High&#8594;Low</option><option value="ev_pct">EV% High&#8594;Low</option><option value="raw_price">Raw Price Low&#8594;High</option>
+          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;"><option value="scc_score">IQ Rating High&#8594;Low</option><option value="ev_pct">EV% High&#8594;Low</option><option value="annualized">Annualized Return High&#8594;Low</option><option value="raw_price">Raw Price Low&#8594;High</option>
             <option value="gem_rate">Gem Rate High&#8594;Low</option></select>
           <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">All Cards</option><option value="base">Base Only</option><option value="parallel">Parallels Only</option></select>
           <select class="fi" id="giq-price-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">Any Price</option><option value="5">Under $5</option><option value="20">$5 - $20</option><option value="50">$20 - $50</option><option value="999">$50+</option></select>
@@ -4430,7 +4430,25 @@ function filterGradeIQ(){
     if(search&&!(r.player||'').toLowerCase().includes(search)&&!(r.set_name||'').toLowerCase().includes(search))return false;
     return true;
   });
-  GRADEIQ_FILTERED.sort(function(a,b){if(sort==='scc_score')return(b.scc_score||0)-(a.scc_score||0);if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);return(a.raw_price||0)-(b.raw_price||0);});
+  GRADEIQ_FILTERED.sort(function(a,b){
+    if(sort==='scc_score')return(b.scc_score||0)-(a.scc_score||0);
+    if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);
+    if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);
+    if(sort==='annualized'){
+      var getAnn=function(r){
+        if(!GRADING_TIERS.length||!r.psa10_price)return -Infinity;
+        var best=-Infinity;
+        GRADING_TIERS.forEach(function(t){
+          var ev=calcEVForTier(r,t.cost_per_card);
+          var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
+          if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>best)best=ann;
+        });
+        return best;
+      };
+      return getAnn(b)-getAnn(a);
+    }
+    return(a.raw_price||0)-(b.raw_price||0);
+  });
   if(g('giq-showing'))g('giq-showing').textContent=GRADEIQ_FILTERED.length;
   if(g('giq-total'))g('giq-total').textContent=GRADEIQ_DATA.length;
   var now=Date.now();
