@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <!-- v73 -->
 <html lang="en">
 <head>
@@ -690,6 +690,7 @@ body.logged-in #app-footer{display:block;}
             <option value="gem_rate">Gem Rate High&#8594;Low</option></select>
           <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">All Cards</option><option value="base">Base Only</option><option value="parallel">Parallels Only</option></select>
           <select class="fi" id="giq-price-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">Any Price</option><option value="5">Under $5</option><option value="20">$5 - $20</option><option value="50">$20 - $50</option><option value="999">$50+</option></select>
+          <select class="fi" id="giq-tier-filter" onchange="filterGradeIQ()" style="min-width:140px;"><option value="">Any Tier</option><option value="Value Bulk">Value Bulk</option><option value="Value">Value</option><option value="Value Plus">Value Plus</option><option value="Value Max">Value Max</option><option value="Regular">Regular</option><option value="Express">Express</option><option value="Super Express">Super Express</option><option value="Walk-Through">Walk-Through</option></select>
           <input class="fi" type="text" id="giq-search" placeholder="Search player..." oninput="filterGradeIQ()" style="flex:1;min-width:120px;">
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap;"><input type="checkbox" id="giq-iq70" onchange="filterGradeIQ()" checked style="accent-color:var(--green);"> IQ 70+ only</label>
         </div>
@@ -4410,12 +4411,22 @@ function filterGradeIQ(){
   var pr=(g('giq-price-filter')||{value:''}).value;
   var search=((g('giq-search')||{value:''}).value||'').toLowerCase().trim();
   var iq70=g('giq-iq70')?g('giq-iq70').checked:false;
+  var tf=(g('giq-tier-filter')||{value:''}).value;
   GRADEIQ_FILTERED=GRADEIQ_DATA.filter(function(r){
     if(GIQ_SELECTED_SPORT&&(r.sport||'')!==GIQ_SELECTED_SPORT)return false;
     if(iq70&&(r.scc_score||0)<70)return false;
     if(pf==='base'&&r.parallel)return false;
     if(pf==='parallel'&&!r.parallel)return false;
     if(pr){var p=r.raw_price||0;if(pr==='5'&&p>=5)return false;if(pr==='20'&&(p<5||p>=20))return false;if(pr==='50'&&(p<20||p>=50))return false;if(pr==='999'&&p<50)return false;}
+    if(tf&&GRADING_TIERS.length){
+      var bestTier=null,bestAnn=-Infinity;
+      GRADING_TIERS.forEach(function(t){
+        var ev=calcEVForTier(r,t.cost_per_card);
+        var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
+        if(ev.evDollar>0&&ev.evPct>=0.40&&ann>bestAnn){bestAnn=ann;bestTier=t.tier_name;}
+      });
+      if(bestTier!==tf)return false;
+    }
     if(search&&!(r.player||'').toLowerCase().includes(search)&&!(r.set_name||'').toLowerCase().includes(search))return false;
     return true;
   });
