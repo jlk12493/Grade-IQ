@@ -1079,15 +1079,33 @@ footer {
 // ── ADD ARTICLES HERE ──
 // Duplicate the example object below for each new article.
 const ARTICLES = [
-  // {
-  //   title: "We analyzed 500 PSA submissions — here's what the gem rates actually look like",
-  //   excerpt: "After tracking 500 raw-to-grade submissions, the data tells a very different story than most collectors assume.",
-  //   tag: "data", tagLabel: "Data & Analysis",
-  //   date: "May 2026", readTime: "6 min read",
-  //   icon: "📊",
-  //   url: "/articles/gem-rate-analysis.html",
-  //   featured: true
-  // },
+  {
+    title: "PSA Value Bulk Is a Capital Trap Right Now",
+    excerpt: "EV tells you if a card is worth grading. Annualized return tells you the best way to grade it. Here's why that distinction matters more than ever.",
+    tag: "strategy", tagLabel: "Strategy",
+    date: "May 2026", readTime: "5 min read",
+    stat: "7–8", statLabel: "MONTHS LOCKED UP", statDesc: "Capital velocity",
+    url: "/articles/value-bulk-capital-trap.html",
+    featured: true
+  },
+  {
+    title: "Gem Rate Is the Most Important Number in Raw-to-Grade Investing",
+    excerpt: "Without gem rate, you're guessing. With it, you're running math. Here's how it feeds into EV and where the real edges are.",
+    tag: "education", tagLabel: "Education",
+    date: "May 2026", readTime: "5 min read",
+    stat: "65%", statLabel: "PSA 10 PROBABILITY", statDesc: "Gem rate",
+    url: "/articles/gem-rate-explained.html",
+    featured: false
+  },
+  {
+    title: "The 3 Biggest Mistakes Raw-to-Grade Investors Make",
+    excerpt: "The same mistakes come up over and over. Here's what they are and how to avoid them.",
+    tag: "strategy", tagLabel: "Strategy",
+    date: "May 2026", readTime: "4 min read",
+    stat: "#3", statLabel: "MOST COSTLY ERRORS", statDesc: "Investor mistakes",
+    url: "/articles/3-biggest-mistakes.html",
+    featured: false
+  },
 ];
 
 let activeFilter = 'all';
@@ -1108,7 +1126,7 @@ function render() {
   }
   grid.innerHTML = filtered.map((p, i) => `
     <a href="${p.url}" class="edu-card${p.featured && i === 0 ? ' featured' : ''}">
-      <div class="card-thumb"><div class="card-thumb-icon">${p.icon}</div><div class="card-thumb-accent"></div></div>
+      <div class="card-thumb" style="background:#0d0d0d;flex-direction:column;gap:4px;"><div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#444;">${p.statDesc}</div><div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:#a3e635;line-height:1;">${p.stat}</div><div style="font-size:10px;font-weight:700;color:#444;letter-spacing:1px;text-transform:uppercase;">${p.statLabel}</div><div class="card-thumb-accent"></div></div>
       <div class="card-body">
         <div class="card-meta"><span class="card-tag">${p.tagLabel}</span><span class="card-date">${p.date}</span><span class="card-read">${p.readTime}</span></div>
         <div class="card-title">${p.title}</div>
