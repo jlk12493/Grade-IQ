@@ -744,7 +744,7 @@ body.logged-in #app-footer{display:block;}
             <div class="ff"><label>Source</label><input type="text" id="f-src" placeholder="eBay"></div>
             <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="f-price" placeholder="19.99"></div>
             <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="f-ship" placeholder="2.50"></div>
-            <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="f-grade" placeholder="27.25"></div>
+
             <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="f-gem" placeholder="0.75"></div>
             <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="f-p10" placeholder="150.00"></div>
             <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="f-p9" placeholder="50.00"></div>
@@ -2027,11 +2027,30 @@ function renderInv() {
   wrap.querySelectorAll('.inv-body.open').forEach(el => openCards.add(el.dataset.id));
 
   wrap.innerHTML = sl.map(r => {
-    const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
-    const evp = (ev !== null && r.total_cost) ? ev/r.total_cost : null;
     const net10 = r.psa10 ? r.psa10 * 0.865 : null;
     const net9 = r.psa9 ? r.psa9 * 0.865 : null;
     const isOpen = openCards.has(r.id);
+    // Calculate best tier EV for header display
+    var bestInvEV = null, bestInvEVP = null, bestInvTierName = null, bestInvMaxBuy = null;
+    if (GRADING_TIERS.length && r.psa10 && r.gem_rate) {
+      var bestInvAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var n10 = r.psa10 * 0.865, n9 = (r.psa9 || 0) * 0.865;
+        var totalCost = (r.price || 0) + t.cost_per_card;
+        var evD = r.gem_rate * n10 + (1 - r.gem_rate) * n9 - totalCost;
+        var evPct = totalCost > 0 ? evD / totalCost : 0;
+        var days = (t.turnaround_business_days_avg || 0) * 1.4;
+        var ann = (evD > 0 && evPct >= 0.40 && days > 0) ? Math.pow(1 + evPct, 365/days) - 1 : null;
+        if (ann !== null && ann > bestInvAnn) {
+          bestInvAnn = ann; bestInvEV = evD; bestInvEVP = evPct;
+          bestInvTierName = t.tier_name;
+          bestInvMaxBuy = totalCost / 0.40 - t.cost_per_card;
+        }
+      });
+    }
+    // Fall back to stored values
+    const ev = bestInvEV !== null ? bestInvEV : ((r.gem_rate && r.psa10) ? calcEV(r) : null);
+    const evp = bestInvEVP !== null ? bestInvEVP : (ev !== null && r.total_cost ? ev/r.total_cost : null);
     const evColor = evp !== null ? (evp > 0 ? 'var(--green)' : '#F87171') : 'var(--text-muted)';
     const evBarW = evp !== null ? Math.min(Math.max(evp*100, 0), 200)/2 : 0;
 
@@ -2071,7 +2090,6 @@ function renderInv() {
           (r.psa_grade!=null ? detailCell('PSA Grade', 'PSA ' + r.psa_grade, r.psa_grade===10?'var(--green)':r.psa_grade>=8?'var(--yellow)':'#F87171') : '') +
           detailCell('Purchase Price', r.price!=null?f$(r.price):null) +
           detailCell('Ship / Tax', r.ship!=null?f$(r.ship):null) +
-          detailCell('Grading Cost', r.grading!=null?f$(r.grading):null) +
           detailCell('Total Cost', r.total_cost!=null?f$(r.total_cost):null) +
           detailCell('Gem Rate', r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):null) +
           detailCell('Gross PSA 10', r.psa10!=null?f$(r.psa10):null) +
@@ -2190,7 +2208,7 @@ async function addCard() {
     card_id:cardID,player,year,
     set_name:fullSetName,parallel,card_no:cardNo,
     sport:gv('f-sport'),date_acquired:gv('f-date'),source:gv('f-src'),
-    price:nf('f-price'),ship:nf('f-ship'),grading:nf('f-grade'),
+    price:nf('f-price'),ship:nf('f-ship'),grading:0,
     gem_rate:nf('f-gem'),psa10:nf('f-p10'),psa9:nf('f-p9'),
     disposition:gv('f-disp'),status:gv('f-stat'),batch_id:gv('f-batch')
   };
@@ -5901,7 +5919,7 @@ function blCalc() {
       <div class="ff"><label>Source</label><input type="text" id="e-src" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
       <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
       <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
-      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade" oninput="calcEditTotal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
+      
       <div class="ff"><label>Total Cost</label><div id="e-total-preview" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:8px 10px;font-size:13px;font-weight:700;color:var(--green);">$0.00</div></div>
       <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="e-gem" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
       <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="e-p10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
