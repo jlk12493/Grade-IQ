@@ -1864,6 +1864,7 @@ function goSec(name,btn) {
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
   g('sec-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name==='inventory') { if(!GRADING_TIERS.length) loadGradingTiers(); }
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='gradeiq') { 
