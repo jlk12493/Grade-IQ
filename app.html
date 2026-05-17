@@ -1864,6 +1864,7 @@ function goSec(name,btn) {
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
   g('sec-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
+  if (name==='inventory') { if(!GRADING_TIERS.length) loadGradingTiers().then(function(){ renderInv(); }); }
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='gradeiq') { 
@@ -2063,6 +2064,39 @@ function renderInv() {
           (ev!==null ? detailCell('EV$', f$(ev), ev>=0?'var(--green)':'#F87171') : '') +
           (evp!==null ? detailCell('EV%', (evp*100).toFixed(1)+'%', evColor) : '') +
         '</div>' +
+        (r.psa10 && r.gem_rate && GRADING_TIERS.length ? (function(){
+          var html = '<div style="margin:12px 0;"><div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">PSA TIER COMPARISON</div>';
+          html += '<div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:var(--surface-2);"><th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Tier</th><th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Cost</th><th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV$</th><th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV%</th><th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Annualized</th><th style="padding:6px 10px;text-align:center;color:var(--text-muted);font-weight:600;">Days</th></tr></thead><tbody>';
+          var bestAnn = -Infinity, bestTierId = -1;
+          var tierResults = GRADING_TIERS.map(function(t){
+            var gemRate = r.gem_rate || 0.5;
+            var n10 = r.psa10 * 0.865;
+            var n9 = (r.psa9 || 0) * 0.865;
+            var totalCost = (r.cost || 0) + t.cost_per_card;
+            var evD = gemRate * n10 + (1 - gemRate) * n9 - totalCost;
+            var evPct = totalCost > 0 ? evD / totalCost : 0;
+            var days = (t.turnaround_business_days_avg || 0) * 1.4;
+            var ann = (evD > 0 && evPct >= 0.40 && days > 0) ? Math.pow(1 + evPct, 365/days) - 1 : null;
+            if(ann !== null && ann > bestAnn){ bestAnn = ann; bestTierId = t.id; }
+            return {tier:t, evD:evD, evPct:evPct, ann:ann};
+          });
+          tierResults.forEach(function(tr){
+            var isBest = tr.tier.id === bestTierId;
+            var evColor = tr.evD > 0 ? 'var(--green)' : '#F87171';
+            var annDisplay = tr.ann !== null ? (tr.ann*100).toFixed(0)+'%' : '--';
+            var rowBg = isBest ? 'background:rgba(163,230,53,0.08);' : '';
+            html += '<tr style="border-top:1px solid var(--border);'+rowBg+'">';
+            html += '<td style="padding:6px 10px;color:var(--text);font-weight:'+(isBest?'700':'400')+';">' + tr.tier.tier_name + (isBest?' <span style="font-size:9px;background:var(--green);color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">BEST</span>':'') + '</td>';
+            html += '<td style="padding:6px 10px;text-align:right;color:var(--text-muted);">$' + tr.tier.cost_per_card + '</td>';
+            html += '<td style="padding:6px 10px;text-align:right;color:'+evColor+';font-weight:600;">' + f$(tr.evD) + '</td>';
+            html += '<td style="padding:6px 10px;text-align:right;color:'+evColor+';">' + (tr.evPct*100).toFixed(1) + '%</td>';
+            html += '<td style="padding:6px 10px;text-align:right;color:'+(tr.ann!==null&&tr.ann>0?'var(--green)':'var(--text-muted)')+';font-weight:'+(isBest?'700':'400')+';">' + annDisplay + '</td>';
+            html += '<td style="padding:6px 10px;text-align:center;color:var(--text-muted);">' + (tr.tier.turnaround_business_days_avg||'--') + '</td>';
+            html += '</tr>';
+          });
+          html += '</tbody></table></div></div>';
+          return html;
+        })() : '') +
         (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
