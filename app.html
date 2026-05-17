@@ -916,6 +916,22 @@ body.logged-in #app-footer{display:block;}
               <div style="font-size:11px;color:var(--text-muted);">Max Buy @ 35%: <strong style="color:var(--text);" id="c-maxbuy35">--</strong></div>
             </div>
           </div>
+          <div id="bl-tier-table" style="display:none;margin-bottom:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">PSA TIER COMPARISON</div>
+            <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                <thead><tr style="background:var(--surface-2);">
+                  <th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:600;">Tier</th>
+                  <th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Cost</th>
+                  <th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV$</th>
+                  <th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">EV%</th>
+                  <th style="padding:6px 10px;text-align:right;color:var(--text-muted);font-weight:600;">Annualized</th>
+                  <th style="padding:6px 10px;text-align:center;color:var(--text-muted);font-weight:600;">Days</th>
+                </tr></thead>
+                <tbody id="bl-tier-rows"></tbody>
+              </table>
+            </div>
+          </div>
           <div id="bl-details" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
             <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional - needed to generate Card ID)</div>
             <div class="fgrid">
@@ -1865,6 +1881,7 @@ function goSec(name,btn) {
   g('sec-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
   if (name==='inventory') { if(!GRADING_TIERS.length) loadGradingTiers().then(function(){ renderInv(); }); }
+  if (name==='buylog') { if(!GRADING_TIERS.length) loadGradingTiers(); }
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='gradeiq') { 
@@ -5823,6 +5840,40 @@ function blCalc() {
   g('c-dec').style.background=decColor;
   const mb=g('c-maxbuy'); if(mb) mb.textContent=f$(maxBuy40);
   const mb35=g('c-maxbuy35'); if(mb35) mb35.textContent=f$(maxBuy35);
+
+  // Render tier comparison table
+  if (GRADING_TIERS.length) {
+    var tierTable = g('bl-tier-table');
+    var tierRows = g('bl-tier-rows');
+    if (tierTable && tierRows) {
+      tierTable.style.display = 'block';
+      var bestAnn = -Infinity, bestTierId = -1;
+      var tierResults = GRADING_TIERS.map(function(t) {
+        var rawCost = cost;
+        var totalCost = rawCost + t.cost_per_card;
+        var evD = gem * n10 + (1 - gem) * n9 - totalCost;
+        var evPct = totalCost > 0 ? evD / totalCost : 0;
+        var days = (t.turnaround_business_days_avg || 0) * 1.4;
+        var ann = (evD > 0 && evPct >= 0.40 && days > 0) ? Math.pow(1 + evPct, 365/days) - 1 : null;
+        if (ann !== null && ann > bestAnn) { bestAnn = ann; bestTierId = t.id; }
+        return { tier: t, evD: evD, evPct: evPct, ann: ann };
+      });
+      tierRows.innerHTML = tierResults.map(function(tr) {
+        var isBest = tr.tier.id === bestTierId;
+        var evColor = tr.evD > 0 ? 'var(--green)' : '#F87171';
+        var annDisplay = tr.ann !== null ? (tr.ann * 100).toFixed(0) + '%' : '--';
+        var rowBg = isBest ? 'background:rgba(163,230,53,0.08);' : '';
+        return '<tr style="border-top:1px solid var(--border);' + rowBg + '">' +
+          '<td style="padding:6px 10px;color:var(--text);font-weight:' + (isBest?'700':'400') + ';">' + tr.tier.tier_name + (isBest ? ' <span style="font-size:9px;background:var(--green);color:#000;padding:1px 4px;border-radius:3px;font-weight:700;">BEST</span>' : '') + '</td>' +
+          '<td style="padding:6px 10px;text-align:right;color:var(--text-muted);">$' + tr.tier.cost_per_card + '</td>' +
+          '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';font-weight:600;">' + f$(tr.evD) + '</td>' +
+          '<td style="padding:6px 10px;text-align:right;color:' + evColor + ';">' + (tr.evPct * 100).toFixed(1) + '%</td>' +
+          '<td style="padding:6px 10px;text-align:right;color:' + (tr.ann !== null && tr.ann > 0 ? 'var(--green)' : 'var(--text-muted)') + ';font-weight:' + (isBest?'700':'400') + ';">' + annDisplay + '</td>' +
+          '<td style="padding:6px 10px;text-align:center;color:var(--text-muted);">' + (tr.tier.turnaround_business_days_avg || '--') + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+  }
 }
 </script>
 
