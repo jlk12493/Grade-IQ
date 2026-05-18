@@ -3721,7 +3721,8 @@ function calcEVForTier(r, gradingCost) {
   var totalCost = (r.raw_price || 0) + gradingCost;
   var evDollar = gemRate * n10 + (1 - gemRate) * n9 - totalCost;
   var evPct = totalCost > 0 ? evDollar / totalCost : 0;
-  return { evDollar: evDollar, evPct: evPct, totalCost: totalCost };
+  var expectedReturn = gemRate * n10 + (1 - gemRate) * n9;
+  return { evDollar: evDollar, evPct: evPct, expectedReturn: expectedReturn, totalCost: totalCost };
 }
 
 function calcAnnualizedReturn(evPct, turnaroundDays) {
@@ -4611,7 +4612,7 @@ function renderGradeIQ(){
           bestAnn = ann;
           headerEV = ev;
           headerTierName = t.tier_name;
-          headerMaxBuy = (ev.totalCost > 0) ? ev.totalCost / 0.40 - ev.totalCost + (r.raw_price || 0) : null;
+          headerMaxBuy = (ev.totalCost > 0) ? (ev.expectedReturn / 1.40) - t.cost_per_card : null;
         }
       });
     }
@@ -4665,7 +4666,8 @@ function renderGradeIQ(){
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
     if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
     if(r.actual_gem_rate!=null)html+=giqCell('Gem Rate',(r.actual_gem_rate*100).toFixed(1)+'%','var(--text)',false);
-    if(r.max_buy_40!=null)html+=giqCell('Max Buy @40%',f$(r.max_buy_40),'var(--green)',true);
+    var liveMaxBuy = headerMaxBuy !== null ? headerMaxBuy : r.max_buy_40;
+    if(liveMaxBuy!=null)html+=giqCell('Max Buy @40%',f$(liveMaxBuy),'var(--green)',true);
     html+='</div>';
     // ── TIER COMPARISON TABLE ──
     if (GRADING_TIERS.length && r.psa10_price) {
