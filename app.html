@@ -4782,15 +4782,29 @@ async function saveGIQEdit(scpId,cid,idx){
   if(!raw||!p10){toast('Raw and PSA10 prices are required',true);return;}
   if(p10<=raw){toast('PSA10 must be greater than raw price',true);return;}
   if(p9&&p9>=p10){toast('PSA9 must be less than PSA10',true);return;}
-  var PLATFORM_FEE=0.135;var GRADING_COST=30;
+  var PLATFORM_FEE=0.135;
   var n10=p10*(1-PLATFORM_FEE);
   var n9=(p9>0&&p9<p10)?p9*(1-PLATFORM_FEE):n10*0.30;
   var r=GRADEIQ_FILTERED[idx];
   var gemRate=r.actual_gem_rate||0.5;
-  var totalCost=raw+GRADING_COST;
-  var ev=gemRate*n10+(1-gemRate)*n9-totalCost;
-  var evPct=totalCost>0?ev/totalCost:0;
   var expectedReturn=gemRate*n10+(1-gemRate)*n9;
+  // Find best tier grading cost
+  var bestGradingCost=30;
+  if(GRADING_TIERS.length){
+    var bestAnn=-Infinity;
+    GRADING_TIERS.forEach(function(t){
+      var tc=raw+t.cost_per_card;
+      var evD=expectedReturn-tc;
+      var evP=tc>0?evD/tc:0;
+      var days=(t.turnaround_business_days_avg||0)*1.4;
+      var ann=(evD>0&&evP>=0.40&&days>0)?Math.pow(1+evP,365/days)-1:null;
+      if(ann!==null&&ann>bestAnn){bestAnn=ann;bestGradingCost=t.cost_per_card;}
+    });
+  }
+  var GRADING_COST=bestGradingCost;
+  var totalCost=raw+GRADING_COST;
+  var ev=expectedReturn-totalCost;
+  var evPct=totalCost>0?ev/totalCost:0;
   var maxBuy40=Math.max(0,(expectedReturn-GRADING_COST)/1.40);
   var maxBuy35=Math.max(0,(expectedReturn-GRADING_COST)/1.35);
   var decision=evPct>=0.40?'BUY':evPct>=0.35?'CAUTION':'PASS';
