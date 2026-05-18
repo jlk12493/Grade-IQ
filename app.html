@@ -4805,8 +4805,8 @@ async function saveGIQEdit(scpId,cid,idx){
   var totalCost=raw+GRADING_COST;
   var ev=expectedReturn-totalCost;
   var evPct=totalCost>0?ev/totalCost:0;
-  var maxBuy40=Math.max(0,(expectedReturn-GRADING_COST)/1.40);
-  var maxBuy35=Math.max(0,(expectedReturn-GRADING_COST)/1.35);
+  var maxBuy40=Math.max(0,(expectedReturn/1.40)-GRADING_COST);
+  var maxBuy35=Math.max(0,(expectedReturn/1.35)-GRADING_COST);
   var decision=evPct>=0.40?'BUY':evPct>=0.35?'CAUTION':'PASS';
   var editBox=g('giq-edit-'+cid);
   var saveBtn=editBox?editBox.querySelector('.btn-a'):null;
