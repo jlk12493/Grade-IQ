@@ -2036,7 +2036,7 @@ function renderInv() {
       var bestInvAnn = -Infinity;
       GRADING_TIERS.forEach(function(t) {
         var n10 = r.psa10 * 0.865, n9 = (r.psa9 || 0) * 0.865;
-        var totalCost = (r.price || 0) + t.cost_per_card;
+        var totalCost = (r.price || 0) + (r.ship || 0) + t.cost_per_card;
         var evD = r.gem_rate * n10 + (1 - r.gem_rate) * n9 - totalCost;
         var evPct = totalCost > 0 ? evD / totalCost : 0;
         var days = (t.turnaround_business_days_avg || 0) * 1.4;
@@ -2107,7 +2107,7 @@ function renderInv() {
             var gemRate = r.gem_rate || 0.5;
             var n10 = r.psa10 * 0.865;
             var n9 = (r.psa9 || 0) * 0.865;
-            var totalCost = (r.cost || 0) + t.cost_per_card;
+            var totalCost = (r.price || 0) + (r.ship || 0) + t.cost_per_card;
             var evD = gemRate * n10 + (1 - gemRate) * n9 - totalCost;
             var evPct = totalCost > 0 ? evD / totalCost : 0;
             var days = (t.turnaround_business_days_avg || 0) * 1.4;
@@ -3015,7 +3015,6 @@ function openEdit(id) {
   g('e-src').value = r.source || '';
   g('e-price').value = r.price != null ? r.price : '';
   g('e-ship').value = r.ship != null ? r.ship : '';
-  g('e-grade').value = r.grading != null ? r.grading : '';
   g('e-gem').value = r.gem_rate != null ? r.gem_rate : '';
   g('e-p10').value = r.psa10 != null ? r.psa10 : '';
   g('e-p9').value = r.psa9 != null ? r.psa9 : '';
@@ -3077,7 +3076,7 @@ async function saveEdit() {
   const id = g('edit-id').value;
   const price = parseFloat(g('e-price').value) || 0;
   const ship = parseFloat(g('e-ship').value) || 0;
-  const grade = parseFloat(g('e-grade').value) || 0;
+  const grade = 0;
   const pf = (id) => { const v = parseFloat(g(id).value); return isNaN(v) ? null : v; };
   const ps = (id) => g(id).value.trim() || null;
   const updates = {
