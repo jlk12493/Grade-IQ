@@ -4553,14 +4553,28 @@ function renderTopPicks(){
         liveIQ = calcSCCScoreJS(bestEVPct, r.sales_volume||0, r.actual_gem_rate||0, impliedGR, r.total||0, null, bestAnnReturn);
       }
     }
+    // Live EV% and Max Buy for top picks
+    var tpEVPct = r.ev_pct || 0, tpMaxBuy = r.max_buy_40;
+    if (GRADING_TIERS.length && r.psa10_price) {
+      var tpBestAnn = -Infinity;
+      GRADING_TIERS.forEach(function(t) {
+        var ev = calcEVForTier(r, t.cost_per_card);
+        var days = (t.turnaround_business_days_avg || 0) * 1.4;
+        var ann = calcAnnualizedReturn(ev.evPct, days);
+        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > tpBestAnn) {
+          tpBestAnn = ann; tpEVPct = ev.evPct;
+          tpMaxBuy = (ev.expectedReturn / 1.40) - t.cost_per_card;
+        }
+      });
+    }
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
-    var ec=(r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    var ec = tpEVPct >= 1 ? 'var(--green)' : tpEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
       +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+(r.scc_score||'--')+'</div>'
       +'<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>'
       +'<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ss+(r.card_no?' #'+r.card_no:'')+'</div>'
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;font-weight:800;color:'+ec+';">'+(r.ev_pct?(r.ev_pct*100).toFixed(0)+'%':'--')+'</span>'
-      +'<span style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(r.max_buy_40)+'</strong></span></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;font-weight:800;color:'+ec+';">'+(tpEVPct?(tpEVPct*100).toFixed(0)+'%':'--')+'</span>'
+      +'<span style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(tpMaxBuy)+'</strong></span></div>'
     +'</div>';
   }).join('');
 }
