@@ -4675,7 +4675,8 @@ function renderGradeIQ(){
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
     if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
     if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
-    if(r.ev_dollar!=null)html+=giqCell('EV$',f$(r.ev_dollar),(r.ev_dollar||0)>=0?'var(--green)':'#F87171',true);
+    var liveEVDollar = headerEV ? headerEV.evDollar : r.ev_dollar;
+    if(liveEVDollar!=null)html+=giqCell('EV$',f$(liveEVDollar),(liveEVDollar||0)>=0?'var(--green)':'#F87171',true);
     if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
     if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
