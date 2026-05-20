@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v73 -->
+<!-- v74 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -3044,7 +3044,7 @@ function toggleSoldFields() {
 function calcEditTotal() {
   const p = parseFloat(g('e-price')?.value)||0;
   const s = parseFloat(g('e-ship')?.value)||0;
-  const gr = parseFloat(g('e-grade')?.value)||0;
+  const gr = parseFloat(g('e-grade')?.value||0)||0;
   const el = g('e-total-preview');
   if (el) el.textContent = f$(p+s+gr);
 }
@@ -3059,13 +3059,13 @@ function calcSoldPreview() {
   const shipout = parseFloat(g('e-shipout')?.value) || 0;
   const price = parseFloat(g('e-price')?.value) || 0;
   const ship = parseFloat(g('e-ship')?.value) || 0;
-  const grade = parseFloat(g('e-grade')?.value) || 0;
+  const grade = parseFloat(g('e-grade')?.value||0) || 0;
   if (!sp) { g('sold-preview').style.display = 'none'; return; }
   const proc = sp - fees - shipout;
   const basis = price + ship + grade;
   const prof = proc - price - ship - grade;
   const roi = basis > 0 ? (prof/basis*100) : 0;
-  g('sold-preview').style.display = 'block';
+  g('sold-preview').style.display = 'grid';
   g('sp-proc').textContent = f$(proc);
   g('sp-prof').textContent = f$(prof);
   g('sp-prof').style.color = prof >= 0 ? 'var(--green)' : '#F87171';
@@ -3078,7 +3078,7 @@ async function saveEdit() {
   const price = parseFloat(g('e-price').value) || 0;
   const ship = parseFloat(g('e-ship').value) || 0;
   const grade = 0;
-  const pf = (id) => { const v = parseFloat(g(id).value); return isNaN(v) ? null : v; };
+  const pf = (id) => { const el = g(id); if (!el) return null; const v = parseFloat(el.value); return isNaN(v) ? null : v; };
   const ps = (id) => g(id).value.trim() || null;
   const updates = {
     card_id: ps('e-cid'), player: ps('e-player'),
@@ -4469,7 +4469,9 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
+  var q=sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,staging').eq('decision','BUY');
+  if(!CU||CU.email!==ADMIN) q=q.eq('staging',false);
+  var res=await q.order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
@@ -5976,7 +5978,7 @@ function blCalc() {
         <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
         <div class="ff"><label>Ship Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
       </div>
-      <div id="sold-preview" style="display:none;background:var(--surface);border-radius:5px;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div id="sold-preview" style="display:none;background:var(--surface);border-radius:5px;padding:10px;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Net Proceeds</div><div style="font-size:14px;font-weight:700;color:var(--text);" id="sp-proc">--</div></div>
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Profit</div><div style="font-size:14px;font-weight:700;" id="sp-prof">--</div></div>
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">ROI</div><div style="font-size:14px;font-weight:700;" id="sp-roi">--</div></div>
