@@ -996,6 +996,7 @@ body.logged-in #app-footer{display:block;}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run All Sets</button>
           <button class="btn-s" style="border-color:var(--green);color:var(--green);" onclick="scanNewSets()" id="btn-scan-new">&#10133; Scan New Sets Only</button>
+          <button class="btn-s" onclick="openInventoryCheck()">&#128202; Inventory Check</button>
         </div>
       </div>
 
@@ -6960,6 +6961,94 @@ function triggerPWAInstall() {
     </div>
   </div>
 </div>
+
+
+<!-- INVENTORY CHECK MODAL -->
+<div id="inv-check-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;overflow-y:auto;padding:24px;">
+  <div style="max-width:960px;margin:0 auto;background:#111;border:1px solid #222;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#fff;">&#128202; Scanner Inventory Check</div>
+        <div style="font-size:12px;color:#666;margin-top:2px;">gem_rates (uploaded) vs ev_scanner (processed)</div>
+      </div>
+      <button onclick="document.getElementById('inv-check-modal').style.display='none'" style="background:transparent;border:1px solid #333;color:#666;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Close</button>
+    </div>
+    <div id="inv-check-status" style="color:#F59E0B;font-size:13px;margin-bottom:16px;"></div>
+    <div id="inv-check-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>
+    <div id="inv-check-body"></div>
+  </div>
+</div>
+<script>
+async function openInventoryCheck() {
+  var modal = document.getElementById('inv-check-modal');
+  var status = document.getElementById('inv-check-status');
+  var summary = document.getElementById('inv-check-summary');
+  var body = document.getElementById('inv-check-body');
+  modal.style.display = 'block';
+  status.textContent = 'Fetching gem_rates...';
+  summary.innerHTML = ''; body.innerHTML = '';
+  try {
+    var gemRows = [], page = 0;
+    while (true) {
+      var gr = await sb.from('gem_rates').select('set_name').range(page*1000,(page+1)*1000-1);
+      if (gr.error||!gr.data||gr.data.length===0) break;
+      gemRows = gemRows.concat(gr.data);
+      if (gr.data.length < 1000) break;
+      page++;
+    }
+    status.textContent = 'Fetching ev_scanner...';
+    var scanRows = []; page = 0;
+    while (true) {
+      var sr = await sb.from('ev_scanner').select('set_name,decision,sport').range(page*1000,(page+1)*1000-1);
+      if (sr.error||!sr.data||sr.data.length===0) break;
+      scanRows = scanRows.concat(sr.data);
+      if (sr.data.length < 1000) break;
+      page++;
+    }
+    status.textContent = 'Building report...';
+    var gemBySet={};
+    gemRows.forEach(function(r){gemBySet[r.set_name]=(gemBySet[r.set_name]||0)+1;});
+    var scanTotal={},scanBuy={},scanCaution={},scanSport={};
+    scanRows.forEach(function(r){
+      scanTotal[r.set_name]=(scanTotal[r.set_name]||0)+1;
+      if(r.decision==='BUY')scanBuy[r.set_name]=(scanBuy[r.set_name]||0)+1;
+      if(r.decision==='CAUTION')scanCaution[r.set_name]=(scanCaution[r.set_name]||0)+1;
+      if(!scanSport[r.set_name])scanSport[r.set_name]=r.sport||'';
+    });
+    var gemSetNames=Object.keys(gemBySet).sort();
+    var totalBuys=scanRows.filter(function(r){return r.decision==='BUY';}).length;
+    summary.innerHTML=[
+      [gemSetNames.length,'Sets Uploaded'],
+      [gemRows.length.toLocaleString(),'Gem Rate Rows'],
+      [scanRows.length.toLocaleString(),'Scanner Rows'],
+      [totalBuys,'Total BUYs']
+    ].map(function(x){return '<div style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:12px;"><div style="font-size:24px;font-weight:800;color:#B6FF00;">'+x[0]+'</div><div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">'+x[1]+'</div></div>';}).join('');
+    var html='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="border-bottom:2px solid #B6FF00;"><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Set</th><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Type</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Uploaded</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Scanned</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">BUYs</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Cautions</th><th style="padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Coverage</th></tr></thead><tbody>';
+    gemSetNames.forEach(function(s){
+      var uploaded=gemBySet[s],scanned=scanTotal[s]||0,buys=scanBuy[s]||0,cautions=scanCaution[s]||0;
+      var isTCG=/^TCG Cards /i.test(s),isOP=/one.?piece/i.test(s);
+      var coverage=scanned>0?Math.min(100,Math.round(scanned/uploaded*100)):0;
+      var sc=!scanned?'#ef4444':buys>0?'#B6FF00':'#F59E0B';
+      var st=!scanned?'Not scanned':scanned+' rows';
+      var tag=isOP?'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);">ONE PIECE</span>':isTCG?'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(182,255,0,.1);color:#B6FF00;border:1px solid rgba(182,255,0,.2);">TCG</span>':'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2);">SPORT</span>';
+      var bar=coverage>0?'<div style="display:inline-flex;align-items:center;gap:6px;"><div style="width:60px;height:3px;background:#222;border-radius:2px;"><div style="width:'+coverage+'%;height:3px;background:#B6FF00;border-radius:2px;"></div></div><span style="color:#555;font-size:10px;">'+coverage+'%</span></div>':'<span style="color:#333;font-size:10px;">0%</span>';
+      html+='<tr style="border-bottom:1px solid #1a1a1a;"><td style="padding:6px 10px;color:#fff;">'+s.replace(/^(TCG|Baseball|Football|Basketball|Hockey|Soccer) Cards /i,'')+'</td><td style="padding:6px 10px;">'+tag+'</td><td style="padding:6px 10px;text-align:right;color:#888;">'+uploaded.toLocaleString()+'</td><td style="padding:6px 10px;text-align:right;color:'+sc+';">'+st+'</td><td style="padding:6px 10px;text-align:right;color:'+(buys>0?'#B6FF00':'#333')+';">'+(buys||'&mdash;')+'</td><td style="padding:6px 10px;text-align:right;color:'+(cautions>0?'#F59E0B':'#333')+';">'+(cautions||'&mdash;')+'</td><td style="padding:6px 10px;">'+bar+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+    var orphans=Object.keys(scanTotal).filter(function(s){return !gemBySet[s];}).sort();
+    if(orphans.length){
+      html+='<div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin:24px 0 10px;">Orphaned Scanner Rows (no gem_rates backing)</div><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;">Set</th><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;">Sport</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;">Rows</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;">BUYs</th></tr></thead><tbody>';
+      orphans.forEach(function(s){html+='<tr style="border-bottom:1px solid #111;"><td style="padding:6px 10px;color:#f87171;">'+s+'</td><td style="padding:6px 10px;color:#666;">'+(scanSport[s]||'&mdash;')+'</td><td style="padding:6px 10px;text-align:right;color:#666;">'+scanTotal[s]+'</td><td style="padding:6px 10px;text-align:right;color:'+(scanBuy[s]?'#B6FF00':'#333')+';">'+(scanBuy[s]||'&mdash;')+'</td></tr>';});
+      html+='</tbody></table>';
+    }
+    body.innerHTML=html;
+    status.textContent='';
+  } catch(e) {
+    status.textContent='Error: '+e.message;
+    status.style.color='#ef4444';
+  }
+}
+</script>
 
 </body>
 </html>
