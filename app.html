@@ -4741,8 +4741,71 @@ function renderGradeIQ(){
     html+='</div>';
     html+='</div>';
 
-    html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
+    html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:0;">';
+
+    // ── DETAIL HEADER ──
+    html+='<div style="display:flex;gap:16px;padding:16px 16px 0;align-items:flex-start;">';
+
+    // Large card image
+    if(r.image_url){
+      html+='<div style="flex-shrink:0;width:90px;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.4);">'
+        +'<img src="'+r.image_url+'" loading="lazy" style="width:100%;display:block;" onerror="this.parentElement.style.display=\'none\'">'
+        +'</div>';
+    }
+
+    // Card identity + key prices
+    html+='<div style="flex:1;min-width:0;">';
+    // Full card name + set
+    html+='<div style="font-size:18px;font-weight:900;color:var(--text);line-height:1.1;margin-bottom:2px;">'+(r.player||'--')+'</div>';
+    if(r.parallel&&r.parallel.toLowerCase()!=='base')html+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">'+(r.parallel)+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' \u00b7 #'+r.card_no:'')+'</div>';
+
+    // Price trio: Raw | PSA 9 | PSA 10
+    html+='<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;">';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--text);">'+f$(r.raw_price)+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--text-muted);">'+(r.psa9_price?f$(r.psa9_price):'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;background:rgba(182,255,0,.04);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 10</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--green);">'+f$(r.psa10_price)+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Secondary stats row: Gem Rate | Sales Vol | Pop
+    html+='<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+    if(r.actual_gem_rate!=null)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Gem Rate</div><div style="font-size:13px;font-weight:700;color:var(--text);">'+(r.actual_gem_rate*100).toFixed(1)+'%</div></div>';
+    if(r.sales_volume)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Sales Vol</div><div style="font-size:13px;font-weight:700;color:var(--text);">'+r.sales_volume+'</div></div>';
+    if(ratioChip&&r.raw_price&&r.psa10_price)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Multiplier</div><div style="font-size:13px;font-weight:700;color:var(--green);">'+(r.psa10_price/r.raw_price).toFixed(1)+'x</div></div>';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // EV summary band
+    html+='<div style="display:flex;gap:0;margin:16px 16px 0;border:1px solid rgba(182,255,0,.2);border-radius:8px;overflow:hidden;background:rgba(182,255,0,.04);">';
+    html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Expected Return</div>';
+    var expRet = headerEV ? headerEV.expectedReturn : null;
+    html+='<div style="font-size:18px;font-weight:900;color:var(--green);">'+(expRet?f$(expRet):'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div>';
+    html+='<div style="font-size:18px;font-weight:900;color:'+ec+';">'+(displayEVPct?(displayEVPct*100).toFixed(1)+'%':'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 14px;">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @40%</div>';
+    html+='<div style="font-size:18px;font-weight:900;color:var(--green);">'+f$(displayMaxBuy)+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Divider before stats grid
+    html+='<div style="padding:16px 16px 0;">';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
+
     if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
     if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
     var liveEVDollar = headerEV ? headerEV.evDollar : r.ev_dollar;
@@ -4799,6 +4862,8 @@ function renderGradeIQ(){
       html += '</tbody></table></div></div>';
     }
 
+    html+='</div>';
+    html+='<div style="padding:0 16px 16px;">';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
@@ -4824,6 +4889,7 @@ function renderGradeIQ(){
       html+='</div>';
       html+='</div>';
     }
+    html+='</div>';
     html+='</div></div>';
   }
   list.innerHTML=html;
