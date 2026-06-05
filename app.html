@@ -4711,33 +4711,29 @@ function renderGradeIQ(){
     // THUMBNAIL
     var thumbHtml='';
     if(r.image_url){
-      thumbHtml='<div style="flex-shrink:0;width:52px;height:72px;border-radius:5px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);">'
+      thumbHtml='<div style="flex-shrink:0;width:76px;height:104px;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.3);">'
         +'<img src="'+r.image_url+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display=\'none\'">'
         +'</div>';
     }
 
-    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;transition:border-color .15s;" onmouseenter="this.style.borderColor=\'rgba(182,255,0,.35)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">';
-    html+='<div style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .15s;" onmouseenter="this.style.borderColor=\'rgba(182,255,0,.35)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">';
+    html+='<div style="padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
     html+=thumbHtml;
     html+='<div style="flex:1;min-width:0;">';
     html+='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:5px;">';
-    html+=sportChip;
     if(parallelChip)html+=parallelChip;
-    if(ratioChip)html+=ratioChip;
     if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:2px 5px;border-radius:4px;">NEW</span>';
     if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
     html+='</div>';
     html+='<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.1;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>';
     html+='<div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' #'+r.card_no:'')+'</div>';
     html+='</div>';
-    html+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">';
-    html+='<div style="font-size:22px;font-weight:900;color:'+ec+';line-height:1;">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'%':'--')+'</div>';
-    if(displayTierLabel)html+='<div style="font-size:9px;color:var(--text-muted);text-align:right;margin-top:-2px;">'+displayTierLabel.replace(/<[^>]+>/g,'')+'</div>';
-    html+='<div style="font-size:11px;color:var(--text-muted);text-align:right;">Max Buy <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div>';
-    html+='<div style="font-size:10px;color:'+sc+';font-weight:700;text-align:right;">IQ '+Math.round(liveIQ||0)+'</div>';
-    html+='<div style="display:flex;align-items:center;gap:5px;margin-top:2px;">';
-    html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:14px;text-decoration:none;padding:3px;">&#128722;</a>';
-    html+='<button class="giq-bookmark'+(ibm?' saved':'')+'" data-bkey="'+bk+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(ibm?'\u2605':'\u2606')+'</button>';
+    html+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">';
+    html+='<div style="font-size:26px;font-weight:900;color:'+sc+';line-height:1;">'+Math.round(liveIQ||0)+'</div>';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-align:right;margin-top:-2px;">IQ SCORE</div>';
+    html+='<div style="font-size:12px;font-weight:700;color:'+ec+';text-align:right;margin-top:4px;">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'% EV':'--')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted);text-align:right;">Buy ≤ <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div>';
+    html+='<div style="display:flex;align-items:center;gap:3px;margin-top:4px;">';
     if(CU&&CU.email===ADMIN)html+='<button onclick="event.stopPropagation();toggleGIQEdit(\''+cid+'\')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px;color:var(--text-muted);" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#9998;</button>';
     html+='<span id="chev-'+cid+'" style="font-size:9px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>';
     html+='</div>';
