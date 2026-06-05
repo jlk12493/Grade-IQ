@@ -4729,8 +4729,8 @@ function renderGradeIQ(){
     if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:2px 5px;border-radius:4px;">NEW</span>';
     if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
     html+='</div>';
-    html+='<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.1;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>';
-    html+='<div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' #'+r.card_no:'')+'</div>';
+    html+='<div style="font-size:18px;font-weight:800;color:var(--text);line-height:1.1;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>';
+    html+='<div style="font-size:13px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' #'+r.card_no:'')+'</div>';
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">';
     html+='<div style="font-size:26px;font-weight:900;color:'+sc+';line-height:1;">'+Math.round(liveIQ||0)+'</div>';
