@@ -4698,7 +4698,7 @@ function renderGradeIQ(){
       else if(/gold/i.test(r.parallel||'')){pChipBg='rgba(234,179,8,.15)';pChipColor='#fbbf24';pChipBorder='rgba(234,179,8,.3)';}
       else if(/refractor|prizm|holo/i.test(r.parallel||'')){pChipBg='rgba(16,185,129,.12)';pChipColor='#34d399';pChipBorder='rgba(16,185,129,.25)';}
       var pLabel=pd||r.parallel;
-      parallelChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:'+pChipBg+';color:'+pChipColor+';border:1px solid '+pChipBorder+';letter-spacing:.3px;">'+pLabel+'</span>';
+      parallelChip='<span style="font-size:8px;font-weight:600;padding:2px 5px;border-radius:4px;background:'+pChipBg+';color:'+pChipColor+';border:1px solid '+pChipBorder+';opacity:.85;letter-spacing:.3px;">'+pLabel+'</span>';
     }
 
     // RATIO CHIP
@@ -4711,8 +4711,12 @@ function renderGradeIQ(){
     // THUMBNAIL
     var thumbHtml='';
     if(r.image_url){
-      thumbHtml='<div style="flex-shrink:0;width:76px;height:104px;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.3);">'
+      thumbHtml='<div style="flex-shrink:0;width:96px;height:134px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.4);">'
         +'<img src="'+r.image_url+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display=\'none\'">'
+        +'</div>';
+    } else {
+      thumbHtml='<div style="flex-shrink:0;width:96px;height:134px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;">'
+        +'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>'
         +'</div>';
     }
 
