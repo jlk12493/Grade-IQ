@@ -4470,7 +4470,7 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
+  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
@@ -4523,15 +4523,18 @@ function filterGradeIQ(){
     if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);
     if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);
     if(sort==='annualized'){
+      var _annCache={};
       var getAnn=function(r){
-        if(!GRADING_TIERS.length||!r.psa10_price)return -Infinity;
+        var k=r.scp_id;
+        if(_annCache[k]!==undefined)return _annCache[k];
+        if(!GRADING_TIERS.length||!r.psa10_price)return(_annCache[k]=-Infinity);
         var best=-Infinity;
         GRADING_TIERS.forEach(function(t){
           var ev=calcEVForTier(r,t.cost_per_card);
           var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
           if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>best)best=ann;
         });
-        return best;
+        return(_annCache[k]=best);
       };
       return getAnn(b)-getAnn(a);
     }
@@ -4586,7 +4589,7 @@ function renderTopPicks(){
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     var ec = tpEVPct >= 1 ? 'var(--green)' : tpEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
-      +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+(r.scc_score||'--')+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+Math.round(liveIQ||0)+'</div>'
       +'<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>'
       +'<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ss+(r.card_no?' #'+r.card_no:'')+'</div>'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;font-weight:800;color:'+ec+';">'+(tpEVPct?(tpEVPct*100).toFixed(0)+'%':'--')+'</span>'
