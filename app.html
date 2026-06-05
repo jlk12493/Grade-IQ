@@ -4660,7 +4660,7 @@ function renderGradeIQ(){
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
     var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
-    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
+    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
     // Build clean set name: strip sport prefix, year, and manufacturer brand
