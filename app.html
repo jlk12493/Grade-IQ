@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v74 -->
+<!-- v73 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -673,7 +673,7 @@ body.logged-in #app-footer{display:block;}
         <button class="giq-sport-btn" data-sport="Baseball" onclick="setGIQSport(this)">&#9918; Baseball</button>
         <button class="giq-sport-btn" data-sport="Football" onclick="setGIQSport(this)">&#127944; Football</button>
         <button class="giq-sport-btn" data-sport="Basketball" onclick="setGIQSport(this)">&#127936; Basketball</button>
-          <button class="giq-sport-btn" data-sport="TCG" onclick="setGIQSport(this)">&#127183; TCG</button>
+        <button class="giq-sport-btn" data-sport="TCG" onclick="setGIQSport(this)">&#127183; TCG</button>
         
       </div>
       <div style="margin-bottom:20px;">
@@ -996,6 +996,7 @@ body.logged-in #app-footer{display:block;}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run All Sets</button>
           <button class="btn-s" style="border-color:var(--green);color:var(--green);" onclick="scanNewSets()" id="btn-scan-new">&#10133; Scan New Sets Only</button>
+          <button class="btn-s" onclick="openInventoryCheck()">&#128202; Inventory Check</button>
         </div>
       </div>
 
@@ -1911,7 +1912,7 @@ function renderDash() {
   const onHand = INV.filter(r => r.status !== 'Sold');
   const profit = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0), 0);
   const invCost = onHand.reduce((s,r) => s+(r.price||0)+(r.ship||0), 0);
-  const graders = onHand.filter(r => r.disposition === 'Grade' && r.gem_rate && r.psa10);
+  const graders = onHand.filter(r => r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
   const evVals = graders.map(r => calcEV(r));
   const avgEV = evVals.length ? evVals.reduce((a,b) => a+b, 0)/evVals.length : null;
   const avgEVP = graders.length ? evVals.map((v,i) => v/(graders[i].total_cost||1)).reduce((a,b) => a+b, 0)/graders.length : null;
@@ -3044,7 +3045,7 @@ function toggleSoldFields() {
 function calcEditTotal() {
   const p = parseFloat(g('e-price')?.value)||0;
   const s = parseFloat(g('e-ship')?.value)||0;
-  const gr = parseFloat(g('e-grade')?.value||0)||0;
+  const gr = parseFloat(g('e-grade')?.value)||0;
   const el = g('e-total-preview');
   if (el) el.textContent = f$(p+s+gr);
 }
@@ -3059,13 +3060,13 @@ function calcSoldPreview() {
   const shipout = parseFloat(g('e-shipout')?.value) || 0;
   const price = parseFloat(g('e-price')?.value) || 0;
   const ship = parseFloat(g('e-ship')?.value) || 0;
-  const grade = parseFloat(g('e-grade')?.value||0) || 0;
+  const grade = parseFloat(g('e-grade')?.value) || 0;
   if (!sp) { g('sold-preview').style.display = 'none'; return; }
   const proc = sp - fees - shipout;
   const basis = price + ship + grade;
   const prof = proc - price - ship - grade;
   const roi = basis > 0 ? (prof/basis*100) : 0;
-  g('sold-preview').style.display = 'grid';
+  g('sold-preview').style.display = 'block';
   g('sp-proc').textContent = f$(proc);
   g('sp-prof').textContent = f$(prof);
   g('sp-prof').style.color = prof >= 0 ? 'var(--green)' : '#F87171';
@@ -3078,7 +3079,7 @@ async function saveEdit() {
   const price = parseFloat(g('e-price').value) || 0;
   const ship = parseFloat(g('e-ship').value) || 0;
   const grade = 0;
-  const pf = (id) => { const el = g(id); if (!el) return null; const v = parseFloat(el.value); return isNaN(v) ? null : v; };
+  const pf = (id) => { const v = parseFloat(g(id).value); return isNaN(v) ? null : v; };
   const ps = (id) => g(id).value.trim() || null;
   const updates = {
     card_id: ps('e-cid'), player: ps('e-player'),
@@ -4469,15 +4470,27 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var q=sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,staging').eq('decision','BUY');
-  if(!CU||CU.email!==ADMIN) q=q.eq('staging',false);
-  var res=await q.order('scc_score',{ascending:false,nullsFirst:false});
+  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
   GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
 function setGIQSport(btn){
   document.querySelectorAll('.giq-sport-btn').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');GIQ_SELECTED_SPORT=btn.dataset.sport||'';filterGradeIQ();
+}
+
+function calcLiveIQ(r){
+  if(!GRADING_TIERS.length||!r.psa10_price)return r.scc_score||0;
+  var bestEVPct=0,bestAnnReturn=null,bestAnn=-Infinity;
+  GRADING_TIERS.forEach(function(t){
+    var ev=calcEVForTier(r,t.cost_per_card);
+    var days=(t.turnaround_business_days_avg||0)*1.4;
+    var ann=calcAnnualizedReturn(ev.evPct,days);
+    if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){bestAnn=ann;bestEVPct=ev.evPct;bestAnnReturn=ann;}
+  });
+  if(bestEVPct<=0)return r.scc_score||0;
+  var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
+  return calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
 }
 
 function filterGradeIQ(){
@@ -4489,7 +4502,7 @@ function filterGradeIQ(){
   var tf=(g('giq-tier-filter')||{value:''}).value;
   GRADEIQ_FILTERED=GRADEIQ_DATA.filter(function(r){
     if(GIQ_SELECTED_SPORT&&(r.sport||'')!==GIQ_SELECTED_SPORT)return false;
-    if(iq70&&(r.scc_score||0)<70)return false;
+    if(iq70&&calcLiveIQ(r)<70)return false;
     if(pf==='base'&&r.parallel)return false;
     if(pf==='parallel'&&!r.parallel)return false;
     if(pr){var p=r.raw_price||0;if(pr==='5'&&p>=5)return false;if(pr==='20'&&(p<5||p>=20))return false;if(pr==='50'&&(p<20||p>=50))return false;if(pr==='999'&&p<50)return false;}
@@ -4506,19 +4519,22 @@ function filterGradeIQ(){
     return true;
   });
   GRADEIQ_FILTERED.sort(function(a,b){
-    if(sort==='scc_score')return(b.scc_score||0)-(a.scc_score||0);
+    if(sort==='scc_score')return calcLiveIQ(b)-calcLiveIQ(a);
     if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);
     if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);
     if(sort==='annualized'){
+      var _annCache={};
       var getAnn=function(r){
-        if(!GRADING_TIERS.length||!r.psa10_price)return -Infinity;
+        var k=r.scp_id;
+        if(_annCache[k]!==undefined)return _annCache[k];
+        if(!GRADING_TIERS.length||!r.psa10_price)return(_annCache[k]=-Infinity);
         var best=-Infinity;
         GRADING_TIERS.forEach(function(t){
           var ev=calcEVForTier(r,t.cost_per_card);
           var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
           if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>best)best=ann;
         });
-        return best;
+        return(_annCache[k]=best);
       };
       return getAnn(b)-getAnn(a);
     }
@@ -4573,7 +4589,7 @@ function renderTopPicks(){
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     var ec = tpEVPct >= 1 ? 'var(--green)' : tpEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
-      +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+(r.scc_score||'--')+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:'+sc+';margin-bottom:2px;">IQ '+Math.round(liveIQ||0)+'</div>'
       +'<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>'
       +'<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+ss+(r.card_no?' #'+r.card_no:'')+'</div>'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-size:15px;font-weight:800;color:'+ec+';">'+(tpEVPct?(tpEVPct*100).toFixed(0)+'%':'--')+'</span>'
@@ -4644,7 +4660,7 @@ function renderGradeIQ(){
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
     var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+' '+(r.parallel&&r.parallel.toLowerCase()!='base'?r.parallel:'')+' -psa -bgs -sgc -cgc');
-    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_sacat=0&LH_BIN=1';
+    var ebayUrl='https://www.ebay.com/sch/183454/i.html?_nkw='+ebayQ+'&_ipg=240&Graded=No&LH_PrefLoc=1&Language=%21%7CEnglish&_sop=13&Card%2520Condition=Near%2520Mint%2520or%2520Better&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
     // Build clean set name: strip sport prefix, year, and manufacturer brand
@@ -4658,24 +4674,141 @@ function renderGradeIQ(){
     var verifyQ=(r.player||'')+(r.year?' '+r.year:'')+(setOnly?' '+setOnly:'')+(r.card_no?' #'+r.card_no:'')+(parallelClean?' '+parallelClean:'');
     var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+encodeURIComponent(verifyQ);
     var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+encodeURIComponent(verifyQ);
-    var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
-    html+='<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
-    html+='<div style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
-    html+='<div style="min-width:36px;text-align:center;"><div style="font-size:10px;color:var(--text-muted);line-height:1;">IQ</div><div style="font-size:15px;font-weight:800;color:'+sc+';line-height:1.2;">'+Math.round(liveIQ||0)+'</div></div>';
-    html+='<div style="flex:1;min-width:0;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;"><span style="font-size:13px;font-weight:800;color:var(--text);">'+(r.player||'--')+'</span>';
-    if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;">NEW</span>';
-    if(pd)html+='<span style="font-size:10px;font-weight:600;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;">'+pd+'</span>';
+        var pd=r.parallel?r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' '):null;
+
+    // SPORT CHIP
+    var sportChip='';
+    var sport=r.sport||'';
+    if(sport==='TCG'){sportChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(168,85,247,.15);color:#c084fc;border:1px solid rgba(168,85,247,.3);letter-spacing:.5px;">POKEMON</span>';}
+    else if(sport==='Baseball'){sportChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);letter-spacing:.5px;">BASEBALL</span>';}
+    else if(sport==='Basketball'){sportChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(249,115,22,.12);color:#fb923c;border:1px solid rgba(249,115,22,.25);letter-spacing:.5px;">BASKETBALL</span>';}
+    else if(sport==='Football'){sportChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25);letter-spacing:.5px;">FOOTBALL</span>';}
+    else if(sport==='Hockey'){sportChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);letter-spacing:.5px;">HOCKEY</span>';}
+
+    // PARALLEL CHIP
+    var parallelChip='';
+    var pl=(r.parallel||'').toLowerCase();
+    if(pl&&pl!=='base'){
+      var pChipBg='rgba(239,68,68,.12)',pChipColor='#f87171',pChipBorder='rgba(239,68,68,.25)';
+      if(/illustration rare|art rare/i.test(r.parallel||'')){pChipBg='rgba(59,130,246,.12)';pChipColor='#60a5fa';pChipBorder='rgba(59,130,246,.25)';}
+      else if(/special.*(illustration|art)|sar\b/i.test(r.parallel||'')){pChipBg='rgba(168,85,247,.15)';pChipColor='#c084fc';pChipBorder='rgba(168,85,247,.3)';}
+      else if(/shiny|shining/i.test(r.parallel||'')){pChipBg='rgba(234,179,8,.12)';pChipColor='#facc15';pChipBorder='rgba(234,179,8,.25)';}
+      else if(/full art/i.test(r.parallel||'')){pChipBg='rgba(20,184,166,.12)';pChipColor='#2dd4bf';pChipBorder='rgba(20,184,166,.25)';}
+      else if(/silver prizm/i.test(r.parallel||'')){pChipBg='rgba(148,163,184,.12)';pChipColor='#94a3b8';pChipBorder='rgba(148,163,184,.25)';}
+      else if(/gold/i.test(r.parallel||'')){pChipBg='rgba(234,179,8,.15)';pChipColor='#fbbf24';pChipBorder='rgba(234,179,8,.3)';}
+      else if(/refractor|prizm|holo/i.test(r.parallel||'')){pChipBg='rgba(16,185,129,.12)';pChipColor='#34d399';pChipBorder='rgba(16,185,129,.25)';}
+      var pLabel=pd||r.parallel;
+      parallelChip='<span style="font-size:8px;font-weight:600;padding:2px 5px;border-radius:4px;background:'+pChipBg+';color:'+pChipColor+';border:1px solid '+pChipBorder+';opacity:.85;letter-spacing:.3px;">'+pLabel+'</span>';
+    }
+
+    // RATIO CHIP
+    var ratioChip='';
+    if(r.raw_price&&r.psa10_price&&r.raw_price>0){
+      var ratio=r.psa10_price/r.raw_price;
+      if(ratio>=5)ratioChip='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(182,255,0,.08);color:var(--green);border:1px solid rgba(182,255,0,.2);">'+ratio.toFixed(0)+'x</span>';
+    }
+
+    // THUMBNAIL
+    var thumbHtml='';
+    if(r.image_url){
+      thumbHtml='<div style="flex-shrink:0;width:96px;height:134px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 2px 12px rgba(0,0,0,.4);">'
+        +'<img src="'+r.image_url+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display=\'none\'">'
+        +'</div>';
+    } else {
+      thumbHtml='<div style="flex-shrink:0;width:96px;height:134px;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;">'
+        +'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>'
+        +'</div>';
+    }
+
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;transition:border-color .15s;" onmouseenter="this.style.borderColor=\'rgba(182,255,0,.35)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">';
+    html+='<div style="padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;" onclick="toggleGIQCard(this)" data-giqid="'+cid+'">';
+    html+=thumbHtml;
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:5px;">';
+    if(parallelChip)html+=parallelChip;
+    if(isn)html+='<span style="font-size:9px;font-weight:700;background:var(--green);color:#000;padding:2px 5px;border-radius:4px;">NEW</span>';
     if(isSilver)html+='<span title="Silver Prizm pricing may be unreliable - verify before buying" style="font-size:11px;cursor:help;">&#9888;&#65039;</span>';
-    html+='</div><div style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+' '+ss+(r.card_no?' #'+r.card_no:'')+'</div></div>';
-    html+='<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">';
-    html+='<div style="text-align:right;"><div style="font-size:14px;font-weight:800;color:'+ec+';">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'%':'--')+displayTierLabel+'</div><div style="font-size:11px;color:var(--text-muted);">Buy ≤ <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div></div>';
-    html+='<a href="'+ebayUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--text-muted);font-size:16px;text-decoration:none;padding:4px;">&#128722;</a>';
-    html+='<button class="giq-bookmark'+(ibm?' saved':'')+'" data-bkey="'+bk+'" onclick="event.stopPropagation();toggleGIQBookmark(decodeURIComponent(this.dataset.bkey),this)">'+(ibm?'★':'☆')+'</button>';
-    if(CU&&CU.email===ADMIN)html+='<button onclick="event.stopPropagation();toggleGIQEdit(\''+cid+'\')" title="Edit prices" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px;color:var(--text-muted);transition:color .2s;" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#9998;</button>';
-    html+='<span id="chev-'+cid+'" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>';
-    html+='</div></div>';
-    html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:12px 14px;">';
+    html+='</div>';
+    html+='<div style="font-size:18px;font-weight:800;color:var(--text);line-height:1.1;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.player||'--')+'</div>';
+    html+='<div style="font-size:13px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' #'+r.card_no:'')+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">';
+    html+='<div style="font-size:26px;font-weight:900;color:'+sc+';line-height:1;">'+Math.round(liveIQ||0)+'</div>';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-align:right;margin-top:-2px;">IQ SCORE</div>';
+    html+='<div style="font-size:12px;font-weight:700;color:'+ec+';text-align:right;margin-top:4px;">'+(displayEVPct?(displayEVPct*100).toFixed(0)+'% EV':'--')+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted);text-align:right;">Buy ≤ <strong style="color:var(--green);">'+f$(displayMaxBuy)+'</strong></div>';
+    html+='<div style="display:flex;align-items:center;gap:3px;margin-top:4px;">';
+    if(CU&&CU.email===ADMIN)html+='<button onclick="event.stopPropagation();toggleGIQEdit(\''+cid+'\')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px;color:var(--text-muted);" onmouseover="this.style.color=\'var(--green)\'" onmouseout="this.style.color=\'var(--text-muted)\'">&#9998;</button>';
+    html+='<span id="chev-'+cid+'" style="font-size:9px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+
+    html+='<div id="'+cid+'" style="display:none;border-top:1px solid var(--border);padding:0;">';
+
+    // ── DETAIL HEADER ──
+    html+='<div style="display:flex;gap:16px;padding:16px 16px 0;align-items:flex-start;">';
+
+    // Large card image
+    if(r.image_url){
+      html+='<div style="flex-shrink:0;width:90px;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.4);">'
+        +'<img src="'+r.image_url+'" loading="lazy" style="width:100%;display:block;" onerror="this.parentElement.style.display=\'none\'">'
+        +'</div>';
+    }
+
+    // Card identity + key prices
+    html+='<div style="flex:1;min-width:0;">';
+    // Full card name + set
+    html+='<div style="font-size:18px;font-weight:900;color:var(--text);line-height:1.1;margin-bottom:2px;">'+(r.player||'--')+'</div>';
+    if(r.parallel&&r.parallel.toLowerCase()!=='base')html+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">'+(r.parallel)+'</div>';
+    html+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">'+(r.year?r.year+' ':'')+ss+(r.card_no?' \u00b7 #'+r.card_no:'')+'</div>';
+
+    // Price trio: Raw | PSA 9 | PSA 10
+    html+='<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;">';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--text);">'+f$(r.raw_price)+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;border-right:1px solid var(--border);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--text-muted);">'+(r.psa9_price?f$(r.psa9_price):'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 12px;text-align:center;background:rgba(182,255,0,.04);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 10</div>';
+    html+='<div style="font-size:16px;font-weight:800;color:var(--green);">'+f$(r.psa10_price)+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Secondary stats row: Gem Rate | Sales Vol | Pop
+    html+='<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+    if(r.actual_gem_rate!=null)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Gem Rate</div><div style="font-size:13px;font-weight:700;color:var(--text);">'+(r.actual_gem_rate*100).toFixed(1)+'%</div></div>';
+    if(r.sales_volume)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Sales Vol</div><div style="font-size:13px;font-weight:700;color:var(--text);">'+r.sales_volume+'</div></div>';
+    if(ratioChip&&r.raw_price&&r.psa10_price)html+='<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Multiplier</div><div style="font-size:13px;font-weight:700;color:var(--green);">'+(r.psa10_price/r.raw_price).toFixed(1)+'x</div></div>';
+    html+='</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // EV summary band
+    html+='<div style="display:flex;gap:0;margin:16px 16px 0;border:1px solid rgba(182,255,0,.2);border-radius:8px;overflow:hidden;background:rgba(182,255,0,.04);">';
+    html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Expected Return</div>';
+    var expRet = headerEV ? headerEV.expectedReturn : null;
+    html+='<div style="font-size:18px;font-weight:900;color:var(--green);">'+(expRet?f$(expRet):'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div>';
+    html+='<div style="font-size:18px;font-weight:900;color:'+ec+';">'+(displayEVPct?(displayEVPct*100).toFixed(1)+'%':'--')+'</div>';
+    html+='</div>';
+    html+='<div style="flex:1;padding:10px 14px;">';
+    html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @40%</div>';
+    html+='<div style="font-size:18px;font-weight:900;color:var(--green);">'+f$(displayMaxBuy)+'</div>';
+    html+='</div>';
+    html+='</div>';
+
+    // Divider before stats grid
+    html+='<div style="padding:16px 16px 0;">';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px;">';
+
     if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
     if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
     var liveEVDollar = headerEV ? headerEV.evDollar : r.ev_dollar;
@@ -4732,6 +4865,8 @@ function renderGradeIQ(){
       html += '</tbody></table></div></div>';
     }
 
+    html+='</div>';
+    html+='<div style="padding:0 16px 16px;">';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
     html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
@@ -4757,6 +4892,7 @@ function renderGradeIQ(){
       html+='</div>';
       html+='</div>';
     }
+    html+='</div>';
     html+='</div></div>';
   }
   list.innerHTML=html;
@@ -5978,7 +6114,7 @@ function blCalc() {
         <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
         <div class="ff"><label>Ship Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:12px;outline:none;"></div>
       </div>
-      <div id="sold-preview" style="display:none;background:var(--surface);border-radius:5px;padding:10px;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+      <div id="sold-preview" style="display:none;background:var(--surface);border-radius:5px;padding:10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Net Proceeds</div><div style="font-size:14px;font-weight:700;color:var(--text);" id="sp-proc">--</div></div>
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Profit</div><div style="font-size:14px;font-weight:700;" id="sp-prof">--</div></div>
         <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">ROI</div><div style="font-size:14px;font-weight:700;" id="sp-roi">--</div></div>
@@ -6948,6 +7084,94 @@ function triggerPWAInstall() {
     </div>
   </div>
 </div>
+
+
+<!-- INVENTORY CHECK MODAL -->
+<div id="inv-check-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;overflow-y:auto;padding:24px;">
+  <div style="max-width:960px;margin:0 auto;background:#111;border:1px solid #222;border-radius:12px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:#fff;">&#128202; Scanner Inventory Check</div>
+        <div style="font-size:12px;color:#666;margin-top:2px;">gem_rates (uploaded) vs ev_scanner (processed)</div>
+      </div>
+      <button onclick="document.getElementById('inv-check-modal').style.display='none'" style="background:transparent;border:1px solid #333;color:#666;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;">Close</button>
+    </div>
+    <div id="inv-check-status" style="color:#F59E0B;font-size:13px;margin-bottom:16px;"></div>
+    <div id="inv-check-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>
+    <div id="inv-check-body"></div>
+  </div>
+</div>
+<script>
+async function openInventoryCheck() {
+  var modal = document.getElementById('inv-check-modal');
+  var status = document.getElementById('inv-check-status');
+  var summary = document.getElementById('inv-check-summary');
+  var body = document.getElementById('inv-check-body');
+  modal.style.display = 'block';
+  status.textContent = 'Fetching gem_rates...';
+  summary.innerHTML = ''; body.innerHTML = '';
+  try {
+    var gemRows = [], page = 0;
+    while (true) {
+      var gr = await sb.from('gem_rates').select('set_name').range(page*1000,(page+1)*1000-1);
+      if (gr.error||!gr.data||gr.data.length===0) break;
+      gemRows = gemRows.concat(gr.data);
+      if (gr.data.length < 1000) break;
+      page++;
+    }
+    status.textContent = 'Fetching ev_scanner...';
+    var scanRows = []; page = 0;
+    while (true) {
+      var sr = await sb.from('ev_scanner').select('set_name,decision,sport').range(page*1000,(page+1)*1000-1);
+      if (sr.error||!sr.data||sr.data.length===0) break;
+      scanRows = scanRows.concat(sr.data);
+      if (sr.data.length < 1000) break;
+      page++;
+    }
+    status.textContent = 'Building report...';
+    var gemBySet={};
+    gemRows.forEach(function(r){gemBySet[r.set_name]=(gemBySet[r.set_name]||0)+1;});
+    var scanTotal={},scanBuy={},scanCaution={},scanSport={};
+    scanRows.forEach(function(r){
+      scanTotal[r.set_name]=(scanTotal[r.set_name]||0)+1;
+      if(r.decision==='BUY')scanBuy[r.set_name]=(scanBuy[r.set_name]||0)+1;
+      if(r.decision==='CAUTION')scanCaution[r.set_name]=(scanCaution[r.set_name]||0)+1;
+      if(!scanSport[r.set_name])scanSport[r.set_name]=r.sport||'';
+    });
+    var gemSetNames=Object.keys(gemBySet).sort();
+    var totalBuys=scanRows.filter(function(r){return r.decision==='BUY';}).length;
+    summary.innerHTML=[
+      [gemSetNames.length,'Sets Uploaded'],
+      [gemRows.length.toLocaleString(),'Gem Rate Rows'],
+      [scanRows.length.toLocaleString(),'Scanner Rows'],
+      [totalBuys,'Total BUYs']
+    ].map(function(x){return '<div style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:12px;"><div style="font-size:24px;font-weight:800;color:#B6FF00;">'+x[0]+'</div><div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:3px;">'+x[1]+'</div></div>';}).join('');
+    var html='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="border-bottom:2px solid #B6FF00;"><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:1px;">Set</th><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Type</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Uploaded</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Scanned</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">BUYs</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Cautions</th><th style="padding:6px 10px;color:#555;font-size:10px;text-transform:uppercase;">Coverage</th></tr></thead><tbody>';
+    gemSetNames.forEach(function(s){
+      var uploaded=gemBySet[s],scanned=scanTotal[s]||0,buys=scanBuy[s]||0,cautions=scanCaution[s]||0;
+      var isTCG=/^TCG Cards /i.test(s),isOP=/one.?piece/i.test(s);
+      var coverage=scanned>0?Math.min(100,Math.round(scanned/uploaded*100)):0;
+      var sc=!scanned?'#ef4444':buys>0?'#B6FF00':'#F59E0B';
+      var st=!scanned?'Not scanned':scanned+' rows';
+      var tag=isOP?'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);">ONE PIECE</span>':isTCG?'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(182,255,0,.1);color:#B6FF00;border:1px solid rgba(182,255,0,.2);">TCG</span>':'<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.2);">SPORT</span>';
+      var bar=coverage>0?'<div style="display:inline-flex;align-items:center;gap:6px;"><div style="width:60px;height:3px;background:#222;border-radius:2px;"><div style="width:'+coverage+'%;height:3px;background:#B6FF00;border-radius:2px;"></div></div><span style="color:#555;font-size:10px;">'+coverage+'%</span></div>':'<span style="color:#333;font-size:10px;">0%</span>';
+      html+='<tr style="border-bottom:1px solid #1a1a1a;"><td style="padding:6px 10px;color:#fff;">'+s.replace(/^(TCG|Baseball|Football|Basketball|Hockey|Soccer) Cards /i,'')+'</td><td style="padding:6px 10px;">'+tag+'</td><td style="padding:6px 10px;text-align:right;color:#888;">'+uploaded.toLocaleString()+'</td><td style="padding:6px 10px;text-align:right;color:'+sc+';">'+st+'</td><td style="padding:6px 10px;text-align:right;color:'+(buys>0?'#B6FF00':'#333')+';">'+(buys||'&mdash;')+'</td><td style="padding:6px 10px;text-align:right;color:'+(cautions>0?'#F59E0B':'#333')+';">'+(cautions||'&mdash;')+'</td><td style="padding:6px 10px;">'+bar+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+    var orphans=Object.keys(scanTotal).filter(function(s){return !gemBySet[s];}).sort();
+    if(orphans.length){
+      html+='<div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin:24px 0 10px;">Orphaned Scanner Rows (no gem_rates backing)</div><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;">Set</th><th style="text-align:left;padding:6px 10px;color:#555;font-size:10px;">Sport</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;">Rows</th><th style="text-align:right;padding:6px 10px;color:#555;font-size:10px;">BUYs</th></tr></thead><tbody>';
+      orphans.forEach(function(s){html+='<tr style="border-bottom:1px solid #111;"><td style="padding:6px 10px;color:#f87171;">'+s+'</td><td style="padding:6px 10px;color:#666;">'+(scanSport[s]||'&mdash;')+'</td><td style="padding:6px 10px;text-align:right;color:#666;">'+scanTotal[s]+'</td><td style="padding:6px 10px;text-align:right;color:'+(scanBuy[s]?'#B6FF00':'#333')+';">'+(scanBuy[s]||'&mdash;')+'</td></tr>';});
+      html+='</tbody></table>';
+    }
+    body.innerHTML=html;
+    status.textContent='';
+  } catch(e) {
+    status.textContent='Error: '+e.message;
+    status.style.color='#ef4444';
+  }
+}
+</script>
 
 </body>
 </html>
