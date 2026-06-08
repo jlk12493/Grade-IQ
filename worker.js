@@ -3,6 +3,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/jarvis') {
+
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {
@@ -24,16 +25,16 @@ export default {
 
       if (request.method === 'POST') {
         try {
-          const body = await request.json();
-
           if (!env.ANTHROPIC_API_KEY) {
-            return new Response(JSON.stringify({ error: 'Missing API key' }), {
+            return new Response(JSON.stringify({ error: 'Missing ANTHROPIC_API_KEY' }), {
               status: 500,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
             });
           }
 
-          const response = await fetch('https://api.anthropic.com/v1/messages', {
+          const body = await request.json();
+
+          const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -43,30 +44,28 @@ export default {
             body: JSON.stringify(body),
           });
 
-          const text = await response.text();
+          const rawText = await anthropicRes.text();
 
-          const text = await response.text();
+          console.log('Anthropic status:', anthropicRes.status);
+          console.log('Anthropic response preview:', rawText.substring(0, 300));
 
-// Log for debugging
-console.log('Anthropic status:', response.status);
-console.log('Anthropic response:', text.substring(0, 500));
+          if (!rawText || rawText.trim() === '') {
+            return new Response(JSON.stringify({ error: 'Empty response from Anthropic', status: anthropicRes.status }), {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+          }
 
-if (!text || text.trim() === '') {
-  return new Response(JSON.stringify({ error: 'Empty response from Anthropic', status: response.status }), {
-    status: 500,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-  });
-}
-
-return new Response(text, {
-  status: response.status,
-  headers: {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-  }
-});
+          return new Response(rawText, {
+            status: anthropicRes.status,
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            }
+          });
 
         } catch (err) {
+          console.log('Worker error:', err.message);
           return new Response(JSON.stringify({ error: err.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -75,7 +74,6 @@ return new Response(text, {
       }
     }
 
-    // Everything else — serve static assets
     return env.ASSETS.fetch(request);
   }
 };
