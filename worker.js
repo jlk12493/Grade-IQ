@@ -45,13 +45,26 @@ export default {
 
           const text = await response.text();
 
-          return new Response(text, {
-            status: response.status,
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-            }
-          });
+          const text = await response.text();
+
+// Log for debugging
+console.log('Anthropic status:', response.status);
+console.log('Anthropic response:', text.substring(0, 500));
+
+if (!text || text.trim() === '') {
+  return new Response(JSON.stringify({ error: 'Empty response from Anthropic', status: response.status }), {
+    status: 500,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+  });
+}
+
+return new Response(text, {
+  status: response.status,
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+  }
+});
 
         } catch (err) {
           return new Response(JSON.stringify({ error: err.message }), {
