@@ -98,7 +98,6 @@ body{background:var(--bg);color:var(--text);font-family:'Geist',system-ui,sans-s
 .ibtn.rec{border-color:var(--red);background:var(--red-dim);color:var(--red)}
 .input-meta{display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--text3)}
 kbd{background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padding:0 4px;font-size:10px;font-family:'Geist Mono',monospace;color:var(--text3)}
-/* Right panel */
 .right-panel{width:220px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg1);display:flex;flex-direction:column;overflow:hidden}
 .mem-item{padding:10px 16px;border-bottom:1px solid var(--border);cursor:default}
 .mem-item:last-child{border:none}
@@ -189,7 +188,7 @@ kbd{background:var(--bg3);border:1px solid var(--border2);border-radius:3px;padd
 </div>
 <script>
 const SB_URL='https://lmwqizcflhikvtoqehzj.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub28iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const PRICE=19.99;
 let biz=null,hist=[],tyEl2=null,isRec=false,rec=null;
 
@@ -209,9 +208,19 @@ async function loadBiz(){
       const d=Math.floor((now-new Date(x.joined_at))/86400000);
       return{...x,ds:d,dl:30-d};
     }).filter(x=>x.dl<=7&&x.dl>=0).sort((a,b)=>a.dl-b.dl);
-    biz={mrr:(paying.length*PRICE).toFixed(2),paying:paying.length,trials:trials.length,inactive:m.filter(x=>x.status==='inactive').length,total:m.length,exp,discOn:active.filter(x=>x.discord_id).length,discOff:active.filter(x=>!x.discord_id).length,active:active.length};
+    biz={
+      mrr:(paying.length*PRICE).toFixed(2),
+      paying:paying.length,
+      trials:trials.length,
+      inactive:m.filter(x=>x.status==='inactive').length,
+      total:m.length,
+      exp,
+      discOn:active.filter(x=>x.discord_id).length,
+      discOff:active.filter(x=>!x.discord_id).length,
+      active:active.length
+    };
     renderSB();
-  }catch(e){console.error(e);}
+  }catch(e){console.error('loadBiz error:',e);}
 }
 
 function renderSB(){
@@ -240,12 +249,12 @@ async function loadMemories(){
     const res=await fetch('/api/memories');
     const mems=await res.json();
     renderMemories(mems);
-  }catch(e){console.error(e);}
+  }catch(e){console.error('loadMemories error:',e);}
 }
 
 function renderMemories(mems){
   const el=document.getElementById('memList');
-  if(!mems||!mems.length){
+  if(!mems||!Array.isArray(mems)||!mems.length){
     el.innerHTML=`<div class="mem-empty">No memories yet.<br>Chat with Jarvis and it will start remembering important things.</div>`;
     return;
   }
@@ -260,23 +269,20 @@ function renderMemories(mems){
 async function clearMemories(){
   if(!confirm('Clear all memories?'))return;
   try{
-    await fetch(`${SB_URL}/rest/v1/jarvis_memory?id=not.is.null`,{
-      method:'DELETE',
-      headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`}
-    });
+    await fetch('/api/memories',{method:'DELETE'});
     renderMemories([]);
   }catch(e){console.error(e);}
 }
 
 function sys(){
-  if(!biz)return"You are Jarvis, Jordan's AI business assistant for GradeIQ.";
-  const expStr=biz.exp.map(x=>`${x.email} - ${x.dl} days left`).join(', ')||'None';
+  if(!biz)return"You are Jarvis, Jordan's AI business assistant for GradeIQ. You don't have live data right now.";
+  const expStr=biz.exp.map(x=>`${x.email} (${x.dl}d left)`).join(', ')||'None';
   return`You are Jarvis — Jordan's personal AI business operating system.
 
 Jordan founded GradeIQ (gradeiq.co), a sports card investment platform using expected value math to surface raw-to-grade opportunities across PSA submission tiers. Built with no coding background using Claude as a partner. Entrepreneurial, gets bored fast, wants GradeIQ running on 30 min/day while building more companies.
 
 LIVE DATA RIGHT NOW:
-MRR: $${biz.mrr} | Paying: ${biz.paying} | Trials: ${biz.trials} | Inactive: ${biz.inactive} | Total: ${biz.total}
+MRR: $${biz.mrr} | Paying: ${biz.paying} | Trials: ${biz.trials} | Inactive: ${biz.inactive} | Total ever: ${biz.total}
 Discord connected: ${biz.discOn} of ${biz.active} active members
 Expiring this week: ${biz.exp.length}
 Expiring trials: ${expStr}
@@ -295,6 +301,7 @@ async function send(){
   el.value='';grow(el);
   addMsg('user',txt);
   hist.push({role:'user',content:txt});
+  if(!biz) await loadBiz();
   showTyp();setPbar(true);
   try{
     const res=await fetch('/api/jarvis',{
@@ -306,7 +313,7 @@ async function send(){
     const reply=d.content?.[0]?.text||'No response received.';
     hideTyp();addMsg('jarvis',reply);
     hist.push({role:'assistant',content:reply});
-    setTimeout(loadMemories,3000);
+    setTimeout(loadMemories,2000);
   }catch(e){hideTyp();addMsg('jarvis',`Connection error: ${e.message}`);}
   setPbar(false);
 }
