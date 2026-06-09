@@ -4,98 +4,99 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jarvis — Command Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@200;300;400;500;600;700&family=Geist+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
---bg:#080808;--bg1:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--bg4:#262626;
---border:#1e1e1e;--border2:#2a2a2a;
---text:#f0f0f0;--text2:#888;--text3:#444;
---green:#00e676;--green-dim:rgba(0,230,118,0.08);
---red:#ff5252;--red-dim:rgba(255,82,82,0.08);
---amber:#ffab40;--amber-dim:rgba(255,171,64,0.08);
---blue:#448aff;--blue-dim:rgba(68,138,255,0.08);
---purple:#e040fb;
+--bg:#080808;--bg1:#101010;--bg2:#181818;--bg3:#222;--bg4:#2c2c2c;
+--border:#222;--border2:#2e2e2e;
+--text:#f5f5f5;--text2:#999;--text3:#555;
+--accent:#fff;
+--green:#00e676;--green-dim:rgba(0,230,118,0.1);
+--red:#ff5252;--red-dim:rgba(255,82,82,0.1);
+--amber:#ffab40;--amber-dim:rgba(255,171,64,0.1);
+--blue:#448aff;--blue-dim:rgba(68,138,255,0.1);
 }
 html,body{height:100%;overflow:hidden;background:var(--bg)}
 body{font-family:'Geist',system-ui,sans-serif;color:var(--text);display:flex;flex-direction:column}
 
-/* ── Header bar ── */
-.hdr{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 32px;flex-shrink:0;background:var(--bg1);gap:24px}
-.hdr-brand{display:flex;align-items:center;gap:10px}
-.hdr-logo{width:24px;height:24px;background:var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center}
-.hdr-logo svg{width:12px;height:12px}
-.hdr-name{font-size:13px;font-weight:600;letter-spacing:0.02em;color:var(--text)}
-.hdr-sep{width:1px;height:18px;background:var(--border2)}
-.hdr-time{font-family:'Geist Mono',monospace;font-size:13px;color:var(--text2);letter-spacing:0.05em}
-.hdr-date{font-size:12px;color:var(--text3);letter-spacing:0.03em}
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:16px}
-.hdr-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:glow 3s ease-in-out infinite}
-@keyframes glow{0%,100%{box-shadow:0 0 0 2px rgba(0,230,118,0.2)}50%{box-shadow:0 0 0 4px rgba(0,230,118,0.1)}}
-.refresh-badge{font-family:'Geist Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.1em}
+/* ── Header ── */
+.hdr{height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 32px;flex-shrink:0;background:var(--bg1)}
+.hdr-brand{display:flex;align-items:center;gap:12px;padding-right:28px;border-right:1px solid var(--border)}
+.hdr-logo{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.hdr-logo svg{width:14px;height:14px}
+.hdr-name{font-size:15px;font-weight:600;color:var(--accent);letter-spacing:-0.01em}
+.hdr-sep{width:1px;height:20px;background:var(--border2);margin:0 24px}
+.hdr-time{font-family:'Geist Mono',monospace;font-size:15px;color:var(--text2);letter-spacing:0.04em}
+.hdr-date{font-size:13px;color:var(--text3);margin-left:12px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:20px}
+.refresh{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:0.1em}
+.status{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px var(--green-dim);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px var(--green-dim)}50%{box-shadow:0 0 0 5px var(--green-dim)}}
 
 /* ── Grid ── */
 .grid{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--border);overflow:hidden}
-.cell{background:var(--bg1);padding:28px 32px;display:flex;flex-direction:column;overflow:hidden;position:relative}
-
-/* ── Cell labels ── */
-.cell-label{font-family:'Geist Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;display:flex;align-items:center;gap:8px}
-.cell-label::after{content:'';flex:1;height:1px;background:var(--border2)}
+.cell{background:var(--bg1);padding:28px 32px;display:flex;flex-direction:column;overflow:hidden}
+.cell-wide{grid-column:span 2}
+.cell-lbl{font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.cell-lbl::after{content:'';flex:1;height:1px;background:var(--border2)}
 
 /* ── Big number ── */
-.big-num{font-family:'Geist Mono',monospace;font-size:64px;font-weight:500;line-height:1;letter-spacing:-0.03em;color:var(--text)}
-.big-num.green{color:var(--green)}
-.big-num.amber{color:var(--amber)}
-.big-num.red{color:var(--red)}
-.big-sub{font-size:13px;color:var(--text3);margin-top:8px;font-weight:300}
+.big{font-family:'Geist Mono',monospace;font-size:72px;font-weight:500;line-height:1;letter-spacing:-0.03em}
+.big.green{color:var(--green)}.big.amber{color:var(--amber)}.big.red{color:var(--red)}
+.big-sub{font-size:15px;color:var(--text3);margin-top:10px;font-weight:300}
 
 /* ── Metric grid ── */
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1}
-.metric-box{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between}
-.metric-box-val{font-family:'Geist Mono',monospace;font-size:28px;font-weight:500;letter-spacing:-0.02em;color:var(--text);line-height:1}
-.metric-box-val.green{color:var(--green)}
-.metric-box-val.amber{color:var(--amber)}
-.metric-box-val.red{color:var(--red)}
-.metric-box-val.blue{color:var(--blue)}
-.metric-box-label{font-size:11px;color:var(--text3);font-weight:300;margin-top:6px;letter-spacing:0.02em}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1}
+.m-box{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between}
+.m-val{font-family:'Geist Mono',monospace;font-size:36px;font-weight:500;letter-spacing:-0.02em;line-height:1}
+.m-val.green{color:var(--green)}.m-val.amber{color:var(--amber)}.m-val.red{color:var(--red)}.m-val.blue{color:var(--blue)}
+.m-lbl{font-size:12px;color:var(--text3);margin-top:8px;letter-spacing:0.03em}
+
+/* ── Goal bar ── */
+.goal-section{margin-top:20px}
+.goal-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.goal-label{font-size:13px;color:var(--text2)}
+.goal-pct{font-family:'Geist Mono',monospace;font-size:15px;color:var(--green);font-weight:500}
+.goal-bg{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:14px}
+.goal-fill{height:100%;background:var(--green);border-radius:4px;transition:width 1s ease}
+.goal-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.goal-stat{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px}
+.goal-stat-val{font-family:'Geist Mono',monospace;font-size:18px;font-weight:500;color:var(--text);line-height:1}
+.goal-stat-lbl{font-size:11px;color:var(--text3);margin-top:5px}
 
 /* ── Trial list ── */
-.trial-list{flex:1;display:flex;flex-direction:column;gap:0;overflow:hidden}
-.trial-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.trial-list{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.trial-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
 .trial-row:last-child{border:none}
-.trial-email{font-family:'Geist Mono',monospace;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
-.trial-info{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.trial-day{font-size:11px;color:var(--text3);font-family:'Geist Mono',monospace}
-.badge{font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px}
+.trial-email{font-family:'Geist Mono',monospace;font-size:14px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
+.trial-meta{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.trial-day{font-size:12px;color:var(--text3);font-family:'Geist Mono',monospace}
+.badge{font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border-radius:5px}
 .badge-red{background:var(--red-dim);color:var(--red)}
 .badge-amber{background:var(--amber-dim);color:var(--amber)}
 .badge-green{background:var(--green-dim);color:var(--green)}
 
 /* ── Chart ── */
 .chart-wrap{flex:1;position:relative;min-height:0}
-canvas{width:100%!important;height:100%!important}
 
 /* ── Calendar ── */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1}
-.cal-day-name{font-size:9px;font-family:'Geist Mono',monospace;color:var(--text3);text-align:center;padding-bottom:6px;letter-spacing:0.1em;text-transform:uppercase}
-.cal-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:11px;color:var(--text3);background:var(--bg2);cursor:default;position:relative;flex-direction:column;gap:2px}
-.cal-cell.today{border:1px solid var(--blue);color:var(--blue)}
+.cal-wrap{flex:1;display:flex;flex-direction:column}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;flex:1}
+.cal-day-name{font-size:10px;font-family:'Geist Mono',monospace;color:var(--text3);text-align:center;padding-bottom:8px;letter-spacing:0.1em;text-transform:uppercase}
+.cal-cell{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:13px;color:var(--text3);background:var(--bg2);flex-direction:column;gap:3px}
+.cal-cell.today{border:1.5px solid var(--blue);color:var(--blue)}
 .cal-cell.has-post{background:var(--green-dim);color:var(--green)}
 .cal-cell.empty{background:transparent}
-.cal-cell-dot{width:4px;height:4px;border-radius:50%;background:var(--green)}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--green)}
 
 /* ── Ticker ── */
-.ticker{height:36px;border-top:1px solid var(--border);background:var(--bg);display:flex;align-items:center;overflow:hidden;flex-shrink:0}
-.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker 40s linear infinite}
-.ticker-item{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:0.05em;display:flex;align-items:center;gap:8px}
-.ticker-item .val{color:var(--text2)}
-.ticker-item .up{color:var(--green)}
-.ticker-item .down{color:var(--red)}
-@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-/* ── Cell spanning ── */
-.cell-wide{grid-column:span 2}
+.ticker{height:38px;border-top:1px solid var(--border);background:var(--bg);display:flex;align-items:center;overflow:hidden;flex-shrink:0}
+.ticker-track{display:flex;gap:52px;white-space:nowrap;animation:tick 45s linear infinite}
+.tick-item{font-family:'Geist Mono',monospace;font-size:12px;color:var(--text3);letter-spacing:0.06em;display:flex;align-items:center;gap:8px}
+.tick-item .v{color:var(--text2)}.tick-item .up{color:var(--green)}.tick-item .dn{color:var(--red)}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 </style>
 </head>
 <body>
@@ -111,75 +112,69 @@ canvas{width:100%!important;height:100%!important}
   <div class="hdr-time" id="clock">—</div>
   <div class="hdr-date" id="dateDisp">—</div>
   <div class="hdr-right">
-    <div class="refresh-badge" id="refreshBadge">Refreshing...</div>
-    <div class="hdr-status"><div class="dot"></div>GradeIQ Live</div>
+    <div class="refresh" id="refreshBadge">Loading...</div>
+    <div class="status"><div class="dot"></div>GradeIQ Live</div>
   </div>
 </div>
 
 <div class="grid">
 
-  <!-- Cell 1: MRR -->
+  <!-- MRR + Goal -->
   <div class="cell">
-    <div class="cell-label">Monthly Recurring Revenue</div>
-    <div class="big-num green" id="mrr">—</div>
+    <div class="cell-lbl">Monthly Recurring Revenue</div>
+    <div class="big green" id="mrr">—</div>
     <div class="big-sub" id="mrrSub">Loading...</div>
-  </div>
-
-  <!-- Cell 2: Key metrics 2x2 -->
-  <div class="cell">
-    <div class="cell-label">Overview</div>
-    <div class="metric-grid">
-      <div class="metric-box">
-        <div class="metric-box-val" id="mPaying">—</div>
-        <div class="metric-box-label">Paying members</div>
+    <div class="goal-section">
+      <div class="goal-row">
+        <span class="goal-label">Path to $1,000 MRR</span>
+        <span class="goal-pct" id="goalPct">0%</span>
       </div>
-      <div class="metric-box">
-        <div class="metric-box-val amber" id="mTrials">—</div>
-        <div class="metric-box-label">Active trials</div>
-      </div>
-      <div class="metric-box">
-        <div class="metric-box-val red" id="mExpiring">—</div>
-        <div class="metric-box-label">Expiring this week</div>
-      </div>
-      <div class="metric-box">
-        <div class="metric-box-val blue" id="mDiscord">—</div>
-        <div class="metric-box-label">Discord connected</div>
+      <div class="goal-bg"><div class="goal-fill" id="goalBar" style="width:0%"></div></div>
+      <div class="goal-stats">
+        <div class="goal-stat"><div class="goal-stat-val" id="goalGap">—</div><div class="goal-stat-lbl">MRR gap</div></div>
+        <div class="goal-stat"><div class="goal-stat-val" id="goalNeeded">—</div><div class="goal-stat-lbl">Members needed</div></div>
       </div>
     </div>
   </div>
 
-  <!-- Cell 3: MRR chart -->
+  <!-- Key metrics -->
   <div class="cell">
-    <div class="cell-label">MRR Growth</div>
-    <div class="chart-wrap" id="chartWrap">
-      <canvas id="mrrChart"></canvas>
+    <div class="cell-lbl">Overview</div>
+    <div class="m-grid">
+      <div class="m-box"><div class="m-val" id="mPaying">—</div><div class="m-lbl">Paying members</div></div>
+      <div class="m-box"><div class="m-val amber" id="mTrials">—</div><div class="m-lbl">Active trials</div></div>
+      <div class="m-box"><div class="m-val red" id="mExp">—</div><div class="m-lbl">Expiring this week</div></div>
+      <div class="m-box"><div class="m-val blue" id="mDisc">—</div><div class="m-lbl">Discord connected</div></div>
     </div>
   </div>
 
-  <!-- Cell 4: Expiring trials list -->
+  <!-- MRR chart -->
+  <div class="cell">
+    <div class="cell-lbl">MRR Growth — 8 weeks</div>
+    <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  </div>
+
+  <!-- Expiring trials -->
   <div class="cell cell-wide">
-    <div class="cell-label">Trials Expiring This Week</div>
-    <div class="trial-list" id="trialList">
-      <div style="font-size:12px;color:var(--text3)">Loading...</div>
-    </div>
+    <div class="cell-lbl">Trials Expiring This Week</div>
+    <div class="trial-list" id="trialList"><div style="font-size:14px;color:var(--text3)">Loading...</div></div>
   </div>
 
-  <!-- Cell 5: Content calendar -->
+  <!-- Calendar -->
   <div class="cell">
-    <div class="cell-label">Content Calendar — <span id="calMonth"></span></div>
-    <div class="cal-grid" id="calGrid"></div>
+    <div class="cell-lbl">Content Calendar — <span id="calMonth"></span></div>
+    <div class="cal-wrap"><div class="cal-days" id="calGrid"></div></div>
   </div>
 
 </div>
 
-<div class="ticker">
-  <div class="ticker-inner" id="ticker"></div>
-</div>
+<div class="ticker"><div class="ticker-track" id="ticker"></div></div>
 
 <script>
 const SB_URL='https://lmwqizcflhikvtoqehzj.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const PRICE=19.99;
+const GOAL=1000;
 let chartInst=null;
 
 async function dbq(t,p=''){
@@ -187,17 +182,14 @@ async function dbq(t,p=''){
   return r.json();
 }
 
-// ── Clock ──
-function updateClock(){
+function tick(){
   const now=new Date();
-  document.getElementById('clock').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  document.getElementById('clock').textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   document.getElementById('dateDisp').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
 }
-setInterval(updateClock,1000);
-updateClock();
+setInterval(tick,1000);tick();
 
-// ── Load data ──
-async function loadData(){
+async function load(){
   document.getElementById('refreshBadge').textContent='Refreshing...';
   try{
     const m=await dbq('whop_members','select=*');
@@ -207,26 +199,58 @@ async function loadData(){
     const trials=active.filter(x=>(now-new Date(x.joined_at))/86400000<=30);
     const exp=trials.map(x=>{
       const d=Math.floor((now-new Date(x.joined_at))/86400000);
-      return{...x,daysSince:d,daysLeft:30-d};
-    }).filter(x=>x.daysLeft<=7&&x.daysLeft>=0).sort((a,b)=>a.daysLeft-b.daysLeft);
-    const mrr=paying.length*PRICE;
+      return{...x,ds:d,dl:30-d};
+    }).filter(x=>x.dl<=7&&x.dl>=0).sort((a,b)=>a.dl-b.dl);
+    const mrr=+(paying.length*PRICE).toFixed(2);
     const discOn=active.filter(x=>x.discord_id).length;
+    const gap=Math.max(0,GOAL-mrr);
+    const needed=Math.ceil(gap/PRICE);
+    const pct=Math.min(Math.round(mrr/GOAL*100),100);
 
-    // MRR
+    // MRR + goal
     document.getElementById('mrr').textContent=`$${mrr.toFixed(2)}`;
     document.getElementById('mrrSub').textContent=`${paying.length} paying × $${PRICE} · ${trials.length} trials in pipeline`;
+    document.getElementById('goalPct').textContent=`${pct}%`;
+    document.getElementById('goalBar').style.width=`${pct}%`;
+    document.getElementById('goalGap').textContent=`$${gap.toFixed(0)}`;
+    document.getElementById('goalNeeded').textContent=needed;
 
     // Metrics
     document.getElementById('mPaying').textContent=paying.length;
     document.getElementById('mTrials').textContent=trials.length;
-    document.getElementById('mExpiring').textContent=exp.length;
-    document.getElementById('mDiscord').textContent=`${discOn}/${active.length}`;
+    document.getElementById('mExp').textContent=exp.length;
+    document.getElementById('mDisc').textContent=`${discOn}/${active.length}`;
 
-    // Trials list
-    renderTrials(exp);
+    // Trials
+    const tl=document.getElementById('trialList');
+    if(!exp.length){tl.innerHTML=`<div style="font-size:15px;color:var(--text3);padding:20px 0">No trials expiring this week</div>`;}
+    else{
+      tl.innerHTML=exp.slice(0,7).map(x=>{
+        const cls=x.dl<=2?'badge-red':x.dl<=4?'badge-amber':'badge-green';
+        const label=x.dl===0?'Today':x.dl===1?'Tomorrow':`${x.dl} days`;
+        return`<div class="trial-row"><span class="trial-email">${x.email||'unknown'}</span><div class="trial-meta"><span class="trial-day">Day ${x.ds} of 30</span><span class="badge ${cls}">${label}</span></div></div>`;
+      }).join('');
+    }
 
     // Chart
-    renderChart(m, paying.length, mrr);
+    renderChart(m,mrr);
+
+    // Ticker
+    const conv=trials>0?Math.round(paying.length/(paying.length+trials.length)*100):0;
+    const items=[
+      {l:'MRR',v:`$${mrr.toFixed(2)}`,c:'up'},
+      {l:'PAYING',v:paying.length,c:''},
+      {l:'TRIALS',v:trials.length,c:''},
+      {l:'EXPIRING',v:exp.length,c:exp.length>5?'dn':''},
+      {l:'DISCORD',v:`${discOn}/${active.length}`,c:''},
+      {l:'CONV RATE',v:`${conv}%`,c:'up'},
+      {l:'TO $1K MRR',v:`$${gap.toFixed(0)}`,c:''},
+      {l:'PROGRESS',v:`${pct}%`,c:'up'},
+      {l:'GOAL',v:'$1,000 MRR',c:''},
+      {l:'NEXT',v:'$10,000 MRR',c:''},
+    ];
+    const html=items.map(i=>`<div class="tick-item">${i.l} <span class="v ${i.c}">${i.v}</span></div>`).join('');
+    document.getElementById('ticker').innerHTML=html+html;
 
     document.getElementById('refreshBadge').textContent=`Updated ${new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}`;
   }catch(e){
@@ -235,165 +259,62 @@ async function loadData(){
   }
 }
 
-function renderTrials(exp){
-  const el=document.getElementById('trialList');
-  if(!exp.length){
-    el.innerHTML=`<div style="font-size:13px;color:var(--text3);padding:20px 0">No trials expiring this week</div>`;
-    return;
-  }
-  el.innerHTML=exp.slice(0,8).map(x=>{
-    const name=x.email||'unknown';
-    const cls=x.daysLeft<=2?'badge-red':x.daysLeft<=4?'badge-amber':'badge-green';
-    const dayLabel=x.daysLeft===0?'Today':x.daysLeft===1?'Tomorrow':`${x.daysLeft} days`;
-    return`<div class="trial-row">
-      <span class="trial-email">${name}</span>
-      <div class="trial-info">
-        <span class="trial-day">Day ${x.daysSince} of 30</span>
-        <span class="badge ${cls}">${dayLabel}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderChart(members, currentPaying, currentMrr){
+function renderChart(members,currentMrr){
   const now=new Date();
-  const labels=[];
-  const data=[];
-
-  // Build 8-week estimated MRR history based on join dates
+  const labels=[],data=[];
   for(let w=7;w>=0;w--){
-    const weekStart=new Date(now);
-    weekStart.setDate(weekStart.getDate()-(w*7));
-    const weekLabel=weekStart.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-    labels.push(weekLabel);
-
-    // Count members who were paying at that point
-    const payingThen=members.filter(m=>{
-      if(m.status!=='active'&&m.status!=='inactive')return false;
+    const d=new Date(now);d.setDate(d.getDate()-(w*7));
+    labels.push(d.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    const p=members.filter(m=>{
       const joined=new Date(m.joined_at);
-      const daysSinceJoin=(weekStart-joined)/86400000;
-      return daysSinceJoin>30;
+      return(d-joined)/86400000>30;
     }).length;
-    data.push(+(payingThen*PRICE).toFixed(2));
+    data.push(+(p*PRICE).toFixed(2));
   }
   data[data.length-1]=+currentMrr.toFixed(2);
-
-  const ctx=document.getElementById('mrrChart').getContext('2d');
+  const ctx=document.getElementById('chart').getContext('2d');
   if(chartInst)chartInst.destroy();
-
   chartInst=new Chart(ctx,{
     type:'line',
-    data:{
-      labels,
-      datasets:[{
-        data,
-        borderColor:'#00e676',
-        backgroundColor:'rgba(0,230,118,0.05)',
-        borderWidth:2,
-        pointRadius:3,
-        pointBackgroundColor:'#00e676',
-        fill:true,
-        tension:0.4,
-      }]
-    },
+    data:{labels,datasets:[{data,borderColor:'#00e676',backgroundColor:'rgba(0,230,118,0.06)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#00e676',fill:true,tension:0.4}]},
     options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{
-        backgroundColor:'#1e1e1e',
-        borderColor:'#2a2a2a',
-        borderWidth:1,
-        titleColor:'#888',
-        bodyColor:'#f0f0f0',
-        callbacks:{label:ctx=>`$${ctx.raw}`}
-      }},
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e1e1e',borderColor:'#2e2e2e',borderWidth:1,titleColor:'#999',bodyColor:'#f5f5f5',callbacks:{label:c=>`$${c.raw}`}}},
       scales:{
-        x:{grid:{color:'#1a1a1a'},ticks:{color:'#444',font:{family:'Geist Mono',size:10}}},
-        y:{grid:{color:'#1a1a1a'},ticks:{color:'#444',font:{family:'Geist Mono',size:10},callback:v=>`$${v}`},beginAtZero:true}
+        x:{grid:{color:'#181818'},ticks:{color:'#555',font:{family:'Geist Mono',size:11}}},
+        y:{grid:{color:'#181818'},ticks:{color:'#555',font:{family:'Geist Mono',size:11},callback:v=>`$${v}`},beginAtZero:true}
       }
     }
   });
 }
 
-// ── Calendar ──
-function renderCalendar(){
+function renderCal(){
   const now=new Date();
-  const year=now.getFullYear();
-  const month=now.getMonth();
   document.getElementById('calMonth').textContent=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-
-  const firstDay=new Date(year,month,1).getDay();
-  const daysInMonth=new Date(year,month+1,0).getDate();
-  const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
-
-  // Simple posting schedule — M/W/F
+  const first=new Date(now.getFullYear(),now.getMonth(),1).getDay();
+  const days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
   const postDays=[1,3,5];
-
-  let html=days.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
-
-  // Empty cells before first day
-  for(let i=0;i<firstDay;i++) html+=`<div class="cal-cell empty"></div>`;
-
-  for(let d=1;d<=daysInMonth;d++){
-    const date=new Date(year,month,d);
-    const dow=date.getDay();
+  let html=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  for(let i=0;i<first;i++)html+=`<div class="cal-cell empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const dow=new Date(now.getFullYear(),now.getMonth(),d).getDay();
     const isToday=d===now.getDate();
-    const hasPost=postDays.includes(dow)&&d>=now.getDate();
-    const isPast=d<now.getDate();
+    const hasPost=postDays.includes(dow)&&d>=now.getDate()&&!isToday;
     let cls='cal-cell';
     if(isToday)cls+=' today';
-    else if(hasPost&&!isPast)cls+=' has-post';
-    else if(isPast)cls+='';
-    html+=`<div class="${cls}">${d}${hasPost&&!isPast&&!isToday?'<div class="cal-cell-dot"></div>':''}</div>`;
+    else if(hasPost)cls+=' has-post';
+    html+=`<div class="${cls}">${d}${hasPost?'<div class="cal-dot"></div>':''}</div>`;
   }
-
   document.getElementById('calGrid').innerHTML=html;
 }
 
-// ── Ticker ──
-function renderTicker(data){
-  if(!data)return;
-  const items=[
-    {label:'MRR',val:`$${(data.paying*PRICE).toFixed(2)}`,cls:'up'},
-    {label:'PAYING',val:data.paying,cls:''},
-    {label:'TRIALS',val:data.trials,cls:''},
-    {label:'EXPIRING',val:data.exp,cls:data.exp>5?'down':''},
-    {label:'DISCORD',val:`${data.discOn}/${data.active}`,cls:''},
-    {label:'CONV RATE',val:`${data.trials>0?Math.round(data.paying/(data.paying+data.trials)*100):0}%`,cls:'up'},
-    {label:'TARGET MRR',val:'$10,000',cls:''},
-    {label:'PROGRESS',val:`${Math.round((data.paying*PRICE)/10000*100)}%`,cls:'up'},
-  ];
-
-  const html=items.map(i=>`<div class="ticker-item">${i.label} <span class="val ${i.cls}">${i.val}</span></div>`).join('');
-  document.getElementById('ticker').innerHTML=html+html; // duplicate for seamless loop
-}
-
-// ── Boot ──
 async function boot(){
-  renderCalendar();
-
-  // Load Chart.js
-  const script=document.createElement('script');
-  script.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
-  script.onload=async()=>{
-    await loadData();
-    // Also fetch ticker data
-    try{
-      const m=await dbq('whop_members','select=*');
-      const now=new Date();
-      const active=m.filter(x=>x.status==='active');
-      const paying=active.filter(x=>(now-new Date(x.joined_at))/86400000>30);
-      const trials=active.filter(x=>(now-new Date(x.joined_at))/86400000<=30);
-      const exp=trials.filter(x=>{const d=Math.floor((now-new Date(x.joined_at))/86400000);return 30-d<=7;});
-      renderTicker({paying:paying.length,trials:trials.length,exp:exp.length,discOn:active.filter(x=>x.discord_id).length,active:active.length});
-    }catch(e){}
-  };
-  document.head.appendChild(script);
-
-  // Refresh every 5 minutes
-  setInterval(()=>{loadData();renderCalendar();},5*60*1000);
+  renderCal();
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+  s.onload=()=>{load();setInterval(()=>{load();renderCal();},5*60*1000);};
+  document.head.appendChild(s);
 }
-
 boot();
 </script>
 </body>
