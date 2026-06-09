@@ -232,7 +232,7 @@ async function load(){
     }
 
     renderChart(m,mrr);
-    renderRevCal(paying);
+    await renderRevCal(m);
 
     const conv=trials.length>0?Math.round(paying.length/(paying.length+trials.length)*100):0;
     const items=[
@@ -255,7 +255,7 @@ async function load(){
   }
 }
 
-function renderRevCal(payingMembers){
+async function renderRevCal(allMembers){
   const now=new Date();
   const year=now.getFullYear();
   const month=now.getMonth();
@@ -265,27 +265,22 @@ function renderRevCal(payingMembers){
 
   document.getElementById('calMonth').textContent=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
 
-  // Build revenue map: day -> {amount, count}
+  // Build revenue map from actual renewal_date in Supabase
   const revMap={};
-  for(const member of payingMembers){
-    const joined=new Date(member.joined_at);
-    const joinDay=joined.getDate();
-    const joinMonth=joined.getMonth();
-    const joinYear=joined.getFullYear();
+  for(const member of allMembers){
+    if(!member.renewal_date)continue;
+    const renewal=new Date(member.renewal_date);
+    const rMonth=renewal.getMonth();
+    const rYear=renewal.getFullYear();
+    const rDay=renewal.getDate();
 
-    // Calculate which day of this month they renew
-    // Their billing day is the same day of month they joined
-    let renewDay=joinDay;
-
-    // If their join month is the current month or earlier, they may renew this month
-    // Find the renewal date in the current month
-    const monthsDiff=(year-joinYear)*12+(month-joinMonth);
-    if(monthsDiff>=1){
-      // They've been paying — their renewal day is joinDay each month
-      if(renewDay<=daysInMonth){
-        if(!revMap[renewDay])revMap[renewDay]={amount:0,count:0};
-        revMap[renewDay].amount+=PRICE;
-        revMap[renewDay].count+=1;
+    // Show renewals in current month OR next month (for members renewing in July)
+    if((rYear===year&&rMonth===month)||(rYear===year&&rMonth===month+1)||(month===11&&rYear===year+1&&rMonth===0)){
+      // For current month renewals
+      if(rYear===year&&rMonth===month){
+        if(!revMap[rDay])revMap[rDay]={amount:0,count:0};
+        revMap[rDay].amount+=PRICE;
+        revMap[rDay].count+=1;
       }
     }
   }
