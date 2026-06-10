@@ -2,6 +2,22 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/discord-members') {
+      try {
+        const res = await fetch(`https://discordapp.com/api/guilds/1484224198036426884?with_counts=true`, {
+          headers: { Authorization: `Bot ${env.DISCORD_BOT_TOKEN}` }
+        });
+        const data = await res.json();
+        return cors(new Response(JSON.stringify({ count: data.approximate_member_count || data.member_count || 0 }), {
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      } catch (err) {
+        return cors(new Response(JSON.stringify({ count: 0, error: err.message }), {
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+    }
+
     if (url.pathname === '/api/test-memory') {
       try {
         const writeRes = await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_memory`, {
