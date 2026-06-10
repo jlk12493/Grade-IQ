@@ -279,12 +279,22 @@ async function loadBiz(){
       const d=Math.floor((now-new Date(x.joined_at))/86400000);
       return{...x,ds:d,dl:30-d};
     }).filter(x=>x.dl<=7&&x.dl>=0).sort((a,b)=>a.dl-b.dl);
+
+    // Fetch real Discord server member count
+    let discordMembers = '—';
+    try{
+      const dr=await fetch('/api/discord-members');
+      const dd=await dr.json();
+      if(dd.count) discordMembers=dd.count;
+    }catch(e){}
+
     biz={
       mrr:+(paying.length*PRICE).toFixed(2),
       paying:paying.length,trials:trials.length,
       inactive:m.filter(x=>x.status==='inactive').length,
       total:m.length,exp,
       discOn:active.filter(x=>x.discord_id).length,
+      discordMembers,
       active:active.length
     };
     renderSidebar();
@@ -305,7 +315,7 @@ function renderSidebar(){
   document.getElementById('sMRR').textContent=`$${mrr.toFixed(2)}`;
   document.getElementById('sPaying').textContent=paying;
   document.getElementById('sTrials').textContent=trials;
-  document.getElementById('sDiscord').textContent=`${discOn} / ${active}`;
+  document.getElementById('sDiscord').textContent=`${biz.discordMembers} members`;
   document.getElementById('sExp').textContent=exp.length;
 
   // Expiring list
@@ -370,7 +380,7 @@ Jordan founded GradeIQ (gradeiq.co), a sports card investment platform using exp
 
 LIVE DATA:
 MRR: $${biz.mrr} | Paying: ${biz.paying} | Trials: ${biz.trials} | Inactive: ${biz.inactive} | Total: ${biz.total}
-Discord: ${biz.discOn} of ${biz.active} connected
+Discord server: ${biz.discordMembers} members | Whop-connected: ${biz.discOn} of ${biz.active}
 Expiring this week: ${biz.exp.length}
 Expiring: ${expStr}
 
