@@ -40,10 +40,11 @@ jobs:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
         run: node sync.js
 
-      - name: Upload logs on failure
+      - name: Upload debug screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: sync-logs
-          path: scripts/*.log
+          name: debug-screenshots
+          path: /tmp/gemrate-debug.png
           retention-days: 7
+          if-no-files-found: ignore
