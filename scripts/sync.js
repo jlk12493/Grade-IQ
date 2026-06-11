@@ -162,6 +162,35 @@ async function downloadPlayerCSV(browser, playerName) {
     locale: 'en-US',
     timezoneId: 'America/New_York',
   });
+
+  // Inject Cloudflare clearance cookies to bypass bot detection
+  const cookies = [];
+  if (process.env.GEMRATE_CF_CLEARANCE) {
+    cookies.push({
+      name: 'cf_clearance',
+      value: process.env.GEMRATE_CF_CLEARANCE,
+      domain: '.gemrate.com',
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None'
+    });
+  }
+  if (process.env.GEMRATE_CF_LOGGED_IN) {
+    cookies.push({
+      name: '__cf_logged_in',
+      value: process.env.GEMRATE_CF_LOGGED_IN,
+      domain: '.gemrate.com',
+      path: '/',
+      httpOnly: false,
+      secure: true,
+      sameSite: 'None'
+    });
+  }
+  if (cookies.length > 0) {
+    await context.addCookies(cookies);
+    console.log(`  Injected ${cookies.length} Cloudflare cookies`);
+  }
   const page = await context.newPage();
 
   try {
