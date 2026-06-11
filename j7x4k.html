@@ -273,8 +273,8 @@ async function loadBiz(){
     const m=await dbq('whop_members','select=*');
     const now=new Date();
     const active=m.filter(x=>x.status==='active');
-    const paying=active.filter(x=>(now-new Date(x.joined_at))/86400000>30);
-    const trials=active.filter(x=>(now-new Date(x.joined_at))/86400000<=30);
+    const paying=active.filter(x=>x.renewal_date!=null);
+    const trials=active.filter(x=>x.renewal_date==null);
     const exp=trials.map(x=>{
       const d=Math.floor((now-new Date(x.joined_at))/86400000);
       return{...x,ds:d,dl:30-d};
