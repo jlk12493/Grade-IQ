@@ -1,5 +1,6 @@
 const { chromium } = require('playwright');
 const { createClient } = require('@supabase/supabase-js');
+const ws = require('ws');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -12,7 +13,9 @@ const DISCORD_USER_ID = '794344511782125598';
 const BATCH_SIZE = 500;
 const PLAYER_DELAY_MS = 2000;
 
-const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  realtime: { transport: ws }
+});
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function sleep(ms) {
