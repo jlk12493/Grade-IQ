@@ -209,6 +209,14 @@ async function downloadPlayerCSV(browser, playerName) {
     
     const isVisible = await exportBtn.isVisible().catch(() => false);
     if (!isVisible) {
+      // Save screenshot as base64 in logs
+      const screenshotBuf = await page.screenshot({ fullPage: true });
+      const screenshotB64 = screenshotBuf.toString('base64').slice(0, 200);
+      console.log(`  Screenshot prefix (base64): ${screenshotB64}`);
+      
+      // Save full screenshot to file for artifact upload
+      await page.screenshot({ path: '/tmp/gemrate-debug.png', fullPage: true });
+      
       throw new Error(`Export button not found. Buttons on page: ${allBtns.join(', ')}`);
     }
 
