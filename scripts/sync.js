@@ -161,13 +161,41 @@ async function downloadPlayerCSV(browser, playerName) {
     const url = `https://www.gemrate.com/player?grader=psa&player=${encodeURIComponent(playerName)}`;
     console.log(`  Visiting: ${url}`);
     
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // Wait for page content to load
+    try {
+      await page.waitForSelector('table, [class*="export"], button', { timeout: 15000 });
+    } catch {
+      // Continue anyway and try to find the export button
+    }
     await sleep(2000);
 
-    // Find and click the Export to CSV button
-    const exportBtn = await page.locator('button:has-text("Export"), button:has-text("CSV"), a:has-text("Export"), a:has-text("CSV")').first();
+    // Debug: log page title and URL
+    console.log(`  Page title: ${await page.title()}`);
+    console.log(`  Page URL: ${page.url()}`);
     
-    if (!await exportBtn.isVisible()) {
+    // Debug: log all buttons on the page
+    const allBtns = await page.locator('button, a[href]').allTextContents();
+    console.log(`  Buttons found: ${allBtns.slice(0, 10).join(' | ')}`);
+
+    // Find and click the Export to CSV button - try multiple selectors
+    const exportBtn = await page.locator([
+      'button:has-text("Export")',
+      'button:has-text("CSV")',
+      'button:has-text("Download")',
+      'a:has-text("Export")',
+      'a:has-text("CSV")',
+      'a:has-text("Download")',
+      '[class*="export"]',
+      '[class*="download"]'
+    ].join(', ')).first();
+    
+    const isVisible = await exportBtn.isVisible().catch(() => false);
+    if (!isVisible) {
+      // Take screenshot for debugging
+      await page.screenshot({ path: `/tmp/debug_${Date.now()}.png` });
+      const pageText = await page.locator('body').innerText().catch(() => '');
+      console.log(`  Page text preview: ${pageText.slice(0, 300)}`);
       throw new Error('Export button not found');
     }
 
