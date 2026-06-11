@@ -170,15 +170,28 @@ async function downloadPlayerCSV(browser, playerName) {
     }
     await sleep(2000);
 
-    // Debug: log page title and URL
+    // Wait for React to render the page content
     console.log(`  Page title: ${await page.title()}`);
     console.log(`  Page URL: ${page.url()}`);
-    
-    // Debug: log all buttons on the page
-    const allBtns = await page.locator('button, a[href]').allTextContents();
-    console.log(`  Buttons found: ${allBtns.slice(0, 10).join(' | ')}`);
 
-    // Find and click the Export to CSV button - try multiple selectors
+    // Wait up to 30s for any table or meaningful content to appear
+    await page.waitForSelector('table, tbody, [role="table"], [class*="table"], [class*="grid"]', { 
+      timeout: 30000 
+    }).catch(() => console.log('  No table found, continuing...'));
+
+    await sleep(3000);
+
+    // Log everything visible for debugging
+    const bodyText = await page.locator('body').innerText().catch(() => '');
+    console.log(`  Body preview: ${bodyText.slice(0, 500)}`);
+    
+    const allBtns = await page.locator('button').allTextContents().catch(() => []);
+    console.log(`  All buttons: ${allBtns.join(' | ')}`);
+
+    const allLinks = await page.locator('a').allTextContents().catch(() => []);
+    console.log(`  All links: ${allLinks.slice(0, 15).join(' | ')}`);
+
+    // Find export button
     const exportBtn = await page.locator([
       'button:has-text("Export")',
       'button:has-text("CSV")',
@@ -187,16 +200,16 @@ async function downloadPlayerCSV(browser, playerName) {
       'a:has-text("CSV")',
       'a:has-text("Download")',
       '[class*="export"]',
-      '[class*="download"]'
+      '[class*="download"]',
+      '[aria-label*="export" i]',
+      '[aria-label*="csv" i]',
+      '[title*="export" i]',
+      '[title*="csv" i]'
     ].join(', ')).first();
     
     const isVisible = await exportBtn.isVisible().catch(() => false);
     if (!isVisible) {
-      // Take screenshot for debugging
-      await page.screenshot({ path: `/tmp/debug_${Date.now()}.png` });
-      const pageText = await page.locator('body').innerText().catch(() => '');
-      console.log(`  Page text preview: ${pageText.slice(0, 300)}`);
-      throw new Error('Export button not found');
+      throw new Error(`Export button not found. Buttons on page: ${allBtns.join(', ')}`);
     }
 
     // Wait for download
