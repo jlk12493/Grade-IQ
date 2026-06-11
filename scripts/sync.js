@@ -1,4 +1,7 @@
-const { chromium } = require('playwright');
+const { chromium: playwrightChromium } = require('playwright');
+const { chromium } = require('playwright-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+chromium.use(StealthPlugin());
 const { createClient } = require('@supabase/supabase-js');
 const ws = require('ws');
 const fs = require('fs');
@@ -153,7 +156,11 @@ async function getPlayers() {
 // ── Download CSV for a player via Playwright ─────────────────────────────────
 async function downloadPlayerCSV(browser, playerName) {
   const context = await browser.newContext({
-    acceptDownloads: true
+    acceptDownloads: true,
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    viewport: { width: 1920, height: 1080 },
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
   });
   const page = await context.newPage();
 
@@ -324,7 +331,16 @@ async function main() {
     process.exit(1);
   }
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ 
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-infobars',
+      '--window-size=1920,1080',
+    ]
+  });
 
   for (let i = 0; i < players.length; i++) {
     const player = players[i];
