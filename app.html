@@ -668,14 +668,7 @@ body.logged-in #app-footer{display:block;}
     <!-- GRADEIQ PUBLIC BUY SIGNALS -->
     <div class="sec" id="sec-gradeiq">
 
-      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="giq-sport-btn active" data-sport="" onclick="setGIQSport(this)">All</button>
-        <button class="giq-sport-btn" data-sport="Baseball" onclick="setGIQSport(this)">&#9918; Baseball</button>
-        <button class="giq-sport-btn" data-sport="Football" onclick="setGIQSport(this)">&#127944; Football</button>
-        <button class="giq-sport-btn" data-sport="Basketball" onclick="setGIQSport(this)">&#127936; Basketball</button>
-        <button class="giq-sport-btn" data-sport="TCG" onclick="setGIQSport(this)">&#127183; TCG</button>
-        
-      </div>
+
       <div style="margin-bottom:20px;">
         <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">&#11088; Top Picks Today</div>
         <div id="giq-top-picks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div>
@@ -685,19 +678,115 @@ body.logged-in #app-footer{display:block;}
         <span style="font-size:11px;color:var(--text-muted);">All Signals</span>
         <div style="flex:1;height:1px;background:var(--border);"></div>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:150px;"><option value="scc_score">IQ Rating High&#8594;Low</option><option value="ev_pct">EV% High&#8594;Low</option><option value="annualized">Annualized Return High&#8594;Low</option><option value="raw_price">Raw Price Low&#8594;High</option>
-            <option value="gem_rate">Gem Rate High&#8594;Low</option></select>
-          <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">All Cards</option><option value="base">Base Only</option><option value="parallel">Parallels Only</option></select>
-          <select class="fi" id="giq-price-filter" onchange="filterGradeIQ()" style="min-width:120px;"><option value="">Any Price</option><option value="5">Under $5</option><option value="20">$5 - $20</option><option value="50">$20 - $50</option><option value="999">$50+</option></select>
-          <select class="fi" id="giq-tier-filter" onchange="filterGradeIQ()" style="min-width:140px;"><option value="">Any Tier</option><option value="Value Bulk">Value Bulk</option><option value="Value">Value</option><option value="Value Plus">Value Plus</option><option value="Value Max">Value Max</option><option value="Regular">Regular</option><option value="Express">Express</option><option value="Super Express">Super Express</option><option value="Walk-Through">Walk-Through</option></select>
-          <input class="fi" type="text" id="giq-search" placeholder="Search player..." oninput="filterGradeIQ()" style="flex:1;min-width:120px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;white-space:nowrap;"><input type="checkbox" id="giq-iq70" onchange="filterGradeIQ()" checked style="accent-color:var(--green);"> IQ 70+ only</label>
-        </div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text-muted);">Showing <strong id="giq-showing" style="color:var(--text);">--</strong> of <strong id="giq-total" style="color:var(--text);">--</strong> signals <span id="giq-new-count" style="display:none;margin-left:8px;color:var(--green);font-weight:700;"></span></div>
+      <!-- TOP BAR: Search + Sort + Filter Toggle -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <input class="fi" type="text" id="giq-search" placeholder="&#128269; Search player or set..." oninput="filterGradeIQ()" style="flex:1;min-width:180px;">
+        <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="min-width:190px;">
+          <option value="scc_score">Sort: IQ Rating High→Low</option>
+          <option value="ev_pct">Sort: EV% High→Low</option>
+          <option value="gem_rate">Sort: Gem Rate High→Low</option>
+          <option value="annualized">Sort: Annualized Return High→Low</option>
+          <option value="raw_price">Sort: Raw Price Low→High</option>
+        </select>
+        <button onclick="toggleGIQFilters()" id="giq-filter-btn" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          &#9776; Filters <span id="giq-filter-count" style="display:none;background:var(--green);color:#000;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:800;"></span>
+        </button>
+        <button onclick="clearGIQFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:4px 8px;text-decoration:underline;">Clear All</button>
+        <div style="font-size:12px;color:var(--text-muted);white-space:nowrap;">Showing <strong id="giq-showing" style="color:var(--text);">--</strong> of <strong id="giq-total" style="color:var(--text);">--</strong> <span id="giq-new-count" style="display:none;margin-left:6px;color:var(--green);font-weight:700;"></span></div>
       </div>
-      <div id="giq-list"></div>
+
+      <!-- FILTER PANEL + CARD LIST LAYOUT -->
+      <div style="display:flex;gap:16px;align-items:flex-start;">
+
+        <!-- LEFT FILTER PANEL -->
+        <div id="giq-filter-panel" style="display:none;width:220px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:sticky;top:16px;">
+
+          <!-- SPORT -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Sport</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:6px;"><input type="checkbox" class="giq-sport-cb" value="Baseball" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> ⚾ Baseball</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:6px;"><input type="checkbox" class="giq-sport-cb" value="Football" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> 🏈 Football</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;margin-bottom:6px;"><input type="checkbox" class="giq-sport-cb" value="Basketball" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> 🏀 Basketball</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);cursor:pointer;"><input type="checkbox" class="giq-sport-cb" value="TCG" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> 🃏 TCG</label>
+          </div>
+
+          <!-- GRADING TIER -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Grading Tier</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Value Bulk" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Value Bulk ($24.99)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Value" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Value ($32.99)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Value Plus" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Value Plus ($49.99)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Value Max" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Value Max ($64.99)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Regular" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Regular ($79.99)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Express" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Express ($149)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;margin-bottom:5px;"><input type="checkbox" class="giq-tier-cb" value="Super Express" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Super Express ($349)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);cursor:pointer;"><input type="checkbox" class="giq-tier-cb" value="Walk-Through" onchange="filterGradeIQ()" checked style="accent-color:var(--green);width:14px;height:14px;"> Walk-Through ($599)</label>
+          </div>
+
+          <!-- IQ RATING -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">IQ Rating</div>
+            <input type="range" id="giq-iq-slider" min="0" max="100" value="0" oninput="syncSlider('giq-iq','giq-iq-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN</div><input class="fi" type="number" id="giq-iq-min" min="0" max="100" value="0" oninput="syncSliderFromInput('giq-iq','giq-iq-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX</div><input class="fi" type="number" id="giq-iq-max" min="0" max="100" placeholder="100" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+            </div>
+          </div>
+
+          <!-- GEM RATE -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Gem Rate</div>
+            <input type="range" id="giq-gem-slider" min="0" max="100" value="0" oninput="syncSlider('giq-gem','giq-gem-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-gem-min" min="0" max="100" value="0" oninput="syncSliderFromInput('giq-gem','giq-gem-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-gem-max" min="0" max="100" placeholder="100" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+            </div>
+          </div>
+
+          <!-- EV% -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">EV%</div>
+            <input type="range" id="giq-ev-slider" min="0" max="500" value="0" oninput="syncSlider('giq-ev','giq-ev-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-ev-min" min="0" value="0" oninput="syncSliderFromInput('giq-ev','giq-ev-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-ev-max" min="0" placeholder="Any" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+            </div>
+          </div>
+
+          <!-- ANNUALIZED RETURN -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Annualized Return</div>
+            <input type="range" id="giq-ann-slider" min="0" max="5000" value="0" oninput="syncSlider('giq-ann','giq-ann-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-ann-min" min="0" value="0" oninput="syncSliderFromInput('giq-ann','giq-ann-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-ann-max" min="0" placeholder="Any" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+            </div>
+          </div>
+
+          <!-- RAW PRICE -->
+          <div style="margin-bottom:8px;">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Raw Price</div>
+            <input type="range" id="giq-price-slider" min="0" max="500" value="500" oninput="syncSlider('giq-price','giq-price-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN $</div><input class="fi" type="number" id="giq-price-min" min="0" value="0" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+              <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX $</div><input class="fi" type="number" id="giq-price-max" min="0" placeholder="Any" oninput="syncSliderFromInput('giq-price','giq-price-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;"></div>
+            </div>
+          </div>
+
+          <!-- PARALLELS -->
+          <div style="padding-top:16px;border-top:1px solid var(--border);">
+            <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Card Type</div>
+            <select class="fi" id="giq-parallel-filter" onchange="filterGradeIQ()" style="width:100%;"><option value="">All Cards</option><option value="base">Base Only</option><option value="parallel">Parallels Only</option></select>
+          </div>
+
+        </div>
+
+        <!-- CARD LIST -->
+        <div style="flex:1;min-width:0;">
+          <div id="giq-list"></div>
+        </div>
+
+      </div>
     </div>
 
     <div class="sec" id="sec-inventory">
@@ -4480,41 +4569,146 @@ function setGIQSport(btn){
 }
 
 function calcLiveIQ(r){
-  if(!GRADING_TIERS.length||!r.psa10_price)return r.scc_score||0;
-  var bestEVPct=0,bestAnnReturn=null,bestAnn=-Infinity;
-  GRADING_TIERS.forEach(function(t){
-    var ev=calcEVForTier(r,t.cost_per_card);
-    var days=(t.turnaround_business_days_avg||0)*1.4;
-    var ann=calcAnnualizedReturn(ev.evPct,days);
-    if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){bestAnn=ann;bestEVPct=ev.evPct;bestAnnReturn=ann;}
-  });
-  if(bestEVPct<=0)return r.scc_score||0;
-  var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
-  return calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
+  // Use stored scc_score from database — recalculating client-side inflates scores
+  return r.scc_score||0;
+}
+
+function toggleGIQFilters(){
+  var panel=g('giq-filter-panel');
+  if(!panel)return;
+  var open=panel.style.display!=='none';
+  panel.style.display=open?'none':'block';
+  var btn=g('giq-filter-btn');
+  if(btn)btn.style.borderColor=open?'var(--border)':'var(--green)';
+}
+
+function clearGIQFilters(){
+  // Reset sport checkboxes
+  document.querySelectorAll('.giq-sport-cb').forEach(function(cb){cb.checked=true;});
+  // Reset tier checkboxes
+  document.querySelectorAll('.giq-tier-cb').forEach(function(cb){cb.checked=true;});
+  // Reset sliders and inputs
+  var resets={
+    'giq-iq-slider':'0','giq-iq-min':'0','giq-iq-max':'',
+    'giq-gem-slider':'0','giq-gem-min':'0','giq-gem-max':'',
+    'giq-ev-slider':'0','giq-ev-min':'0','giq-ev-max':'',
+    'giq-ann-slider':'0','giq-ann-min':'0','giq-ann-max':'',
+    'giq-price-slider':'500','giq-price-min':'0','giq-price-max':''
+  };
+  Object.keys(resets).forEach(function(id){if(g(id))g(id).value=resets[id];});
+  if(g('giq-parallel-filter'))g('giq-parallel-filter').value='';
+  if(g('giq-search'))g('giq-search').value='';
+  if(g('giq-sort'))g('giq-sort').value='scc_score';
+  updateGIQFilterCount();
+  filterGradeIQ();
+}
+
+function syncSlider(prefix,sliderId){
+  var slider=g(sliderId);
+  var minInput=g(prefix+'-min');
+  if(slider&&minInput)minInput.value=slider.value;
+}
+
+function syncSliderFromInput(prefix,sliderId){
+  var slider=g(sliderId);
+  var minInput=g(prefix+'-min');
+  if(slider&&minInput)slider.value=minInput.value||0;
+}
+
+function updateGIQFilterCount(){
+  var count=0;
+  var sportCbs=document.querySelectorAll('.giq-sport-cb');
+  var allSports=Array.from(sportCbs).every(function(cb){return cb.checked;});
+  if(!allSports)count++;
+  var tierCbs=document.querySelectorAll('.giq-tier-cb');
+  var allTiers=Array.from(tierCbs).every(function(cb){return cb.checked;});
+  if(!allTiers)count++;
+  if(parseFloat((g('giq-iq-min')||{value:'0'}).value)>0)count++;
+  if(parseFloat((g('giq-iq-max')||{value:''}).value)>0)count++;
+  if(parseFloat((g('giq-gem-min')||{value:'0'}).value)>0)count++;
+  if(parseFloat((g('giq-gem-max')||{value:''}).value)>0)count++;
+  if(parseFloat((g('giq-ev-min')||{value:'0'}).value)>0)count++;
+  if(parseFloat((g('giq-ev-max')||{value:''}).value)>0)count++;
+  if(parseFloat((g('giq-ann-min')||{value:'0'}).value)>0)count++;
+  if(parseFloat((g('giq-ann-max')||{value:''}).value)>0)count++;
+  if(parseFloat((g('giq-price-min')||{value:'0'}).value)>0)count++;
+  if((g('giq-price-max')||{value:''}).value)count++;
+  if((g('giq-parallel-filter')||{value:''}).value)count++;
+  var badge=g('giq-filter-count');
+  if(badge){badge.style.display=count>0?'inline':'none';badge.textContent=count;}
 }
 
 function filterGradeIQ(){
   var sort=(g('giq-sort')||{value:'scc_score'}).value;
   var pf=(g('giq-parallel-filter')||{value:''}).value;
-  var pr=(g('giq-price-filter')||{value:''}).value;
   var search=((g('giq-search')||{value:''}).value||'').toLowerCase().trim();
-  var iq70=g('giq-iq70')?g('giq-iq70').checked:false;
-  var tf=(g('giq-tier-filter')||{value:''}).value;
+
+  // Sport checkboxes
+  var sportCbs=document.querySelectorAll('.giq-sport-cb');
+  var selectedSports=sportCbs.length?Array.from(sportCbs).filter(function(cb){return cb.checked;}).map(function(cb){return cb.value;}):['Baseball','Football','Basketball','TCG'];
+
+  // Tier checkboxes
+  var tierCbs=document.querySelectorAll('.giq-tier-cb');
+  var selectedTiers=tierCbs.length?Array.from(tierCbs).filter(function(cb){return cb.checked;}).map(function(cb){return cb.value;}):null;
+  var allTiersChecked=!selectedTiers||selectedTiers.length===tierCbs.length;
+
+  // Slider/input values
+  var iqMin=parseFloat((g('giq-iq-min')||{value:'0'}).value)||0;
+  var iqMax=parseFloat((g('giq-iq-max')||{value:''}).value)||0;
+  var gemMin=parseFloat((g('giq-gem-min')||{value:'0'}).value)||0;
+  var gemMax=parseFloat((g('giq-gem-max')||{value:''}).value)||0;
+  var evMin=parseFloat((g('giq-ev-min')||{value:'0'}).value)||0;
+  var evMax=parseFloat((g('giq-ev-max')||{value:''}).value)||0;
+  var annMin=parseFloat((g('giq-ann-min')||{value:'0'}).value)||0;
+  var annMax=parseFloat((g('giq-ann-max')||{value:''}).value)||0;
+  var priceMin=parseFloat((g('giq-price-min')||{value:'0'}).value)||0;
+  var priceMax=parseFloat((g('giq-price-max')||{value:''}).value)||0;
+
   GRADEIQ_FILTERED=GRADEIQ_DATA.filter(function(r){
-    if(GIQ_SELECTED_SPORT&&(r.sport||'')!==GIQ_SELECTED_SPORT)return false;
-    if(iq70&&calcLiveIQ(r)<70)return false;
+    // Sport
+    if(selectedSports.length&&!selectedSports.includes(r.sport||''))return false;
+    // Parallel
     if(pf==='base'&&r.parallel)return false;
     if(pf==='parallel'&&!r.parallel)return false;
-    if(pr){var p=r.raw_price||0;if(pr==='5'&&p>=5)return false;if(pr==='20'&&(p<5||p>=20))return false;if(pr==='50'&&(p<20||p>=50))return false;if(pr==='999'&&p<50)return false;}
-    if(tf&&GRADING_TIERS.length){
+    // IQ
+    var iq=calcLiveIQ(r);
+    if(iqMin&&iq<iqMin)return false;
+    if(iqMax&&iq>iqMax)return false;
+    // Gem rate
+    var gem=(r.actual_gem_rate||0)*100;
+    if(gemMin&&gem<gemMin)return false;
+    if(gemMax&&gem>gemMax)return false;
+    // EV%
+    var ev=(r.ev_pct||0)*100;
+    if(evMin&&ev<evMin)return false;
+    if(evMax&&ev>evMax)return false;
+    // Raw price
+    var price=r.raw_price||0;
+    if(priceMin&&price<priceMin)return false;
+    if(priceMax&&price>priceMax)return false;
+    // Grading tier
+    if(!allTiersChecked&&GRADING_TIERS.length){
       var bestTier=null,bestAnn=-Infinity;
       GRADING_TIERS.forEach(function(t){
         var ev=calcEVForTier(r,t.cost_per_card);
         var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
         if(ev.evDollar>0&&ev.evPct>=0.40&&ann>bestAnn){bestAnn=ann;bestTier=t.tier_name;}
       });
-      if(bestTier!==tf)return false;
+      if(!bestTier||!selectedTiers.includes(bestTier))return false;
     }
+    // Annualized return filter
+    if((annMin||annMax)&&GRADING_TIERS.length){
+      var bestAnnVal=-Infinity;
+      GRADING_TIERS.forEach(function(t){
+        var ev=calcEVForTier(r,t.cost_per_card);
+        var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
+        if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnnVal)bestAnnVal=ann;
+      });
+      var annPct=bestAnnVal*100;
+      if(annMin&&annPct<annMin)return false;
+      if(annMax&&annPct>annMax)return false;
+    }
+    // Search
     if(search&&!(r.player||'').toLowerCase().includes(search)&&!(r.set_name||'').toLowerCase().includes(search))return false;
     return true;
   });
@@ -4540,6 +4734,7 @@ function filterGradeIQ(){
     }
     return(a.raw_price||0)-(b.raw_price||0);
   });
+  updateGIQFilterCount();
   if(g('giq-showing'))g('giq-showing').textContent=GRADEIQ_FILTERED.length;
   if(g('giq-total'))g('giq-total').textContent=GRADEIQ_DATA.length;
   var now=Date.now();
@@ -4553,25 +4748,8 @@ function renderTopPicks(){
   var top=GRADEIQ_FILTERED.slice(0,5);if(!top.length){el.innerHTML='';return;}
   el.innerHTML=top.map(function(r){
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    // Calculate live IQ score using best tier
+    // Use stored IQ score from database
     var liveIQ = r.scc_score || 0;
-    if (GRADING_TIERS.length && r.psa10_price) {
-      var bestEVPct = 0, bestAnnReturn = null, bestAnn = -Infinity;
-      GRADING_TIERS.forEach(function(t) {
-        var ev = calcEVForTier(r, t.cost_per_card);
-        var days = (t.turnaround_business_days_avg || 0) * 1.4;
-        var ann = calcAnnualizedReturn(ev.evPct, days);
-        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > bestAnn) {
-          bestAnn = ann;
-          bestEVPct = ev.evPct;
-          bestAnnReturn = ann;
-        }
-      });
-      if (bestEVPct > 0) {
-        var impliedGR = r.psa9_price > 0 ? (r.psa9_price / (r.psa10_price || 1)) : 0;
-        liveIQ = calcSCCScoreJS(bestEVPct, r.sales_volume||0, r.actual_gem_rate||0, impliedGR, r.total||0, null, bestAnnReturn);
-      }
-    }
     // Live EV% and Max Buy for top picks
     var tpEVPct = r.ev_pct || 0, tpMaxBuy = r.max_buy_40;
     if (GRADING_TIERS.length && r.psa10_price) {
@@ -4612,25 +4790,8 @@ function renderGradeIQ(){
   for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    // Calculate live IQ score using best tier
+    // Use stored IQ score from database
     var liveIQ = r.scc_score || 0;
-    if (GRADING_TIERS.length && r.psa10_price) {
-      var bestEVPct = 0, bestAnnReturn = null, bestAnn = -Infinity;
-      GRADING_TIERS.forEach(function(t) {
-        var ev = calcEVForTier(r, t.cost_per_card);
-        var days = (t.turnaround_business_days_avg || 0) * 1.4;
-        var ann = calcAnnualizedReturn(ev.evPct, days);
-        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > bestAnn) {
-          bestAnn = ann;
-          bestEVPct = ev.evPct;
-          bestAnnReturn = ann;
-        }
-      });
-      if (bestEVPct > 0) {
-        var impliedGR = r.psa9_price > 0 ? (r.psa9_price / (r.psa10_price || 1)) : 0;
-        liveIQ = calcSCCScoreJS(bestEVPct, r.sales_volume||0, r.actual_gem_rate||0, impliedGR, r.total||0, null, bestAnnReturn);
-      }
-    }
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     // Calculate best tier EV for header display
     var headerEV = null, headerMaxBuy = null, headerTierName = null;
