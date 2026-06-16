@@ -723,7 +723,7 @@ body.logged-in #app-footer{display:block;}
           <!-- IQ RATING -->
           <div style="margin-bottom:20px;">
             <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">IQ Rating</div>
-            <input type="range" id="giq-iq-slider" min="0" max="100" value="0" oninput="syncSlider('giq-iq','giq-iq-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <input type="range" id="giq-iq-slider" min="0" max="100" value="0" step="5" oninput="syncSlider('giq-iq','giq-iq-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
             <div style="display:flex;gap:6px;align-items:center;">
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN</div><input class="fi" type="number" id="giq-iq-min" min="0" max="100" value="0" oninput="syncSliderFromInput('giq-iq','giq-iq-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX</div><input class="fi" type="number" id="giq-iq-max" min="0" max="100" placeholder="100" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
@@ -733,7 +733,7 @@ body.logged-in #app-footer{display:block;}
           <!-- GEM RATE -->
           <div style="margin-bottom:20px;">
             <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Gem Rate</div>
-            <input type="range" id="giq-gem-slider" min="0" max="100" value="0" oninput="syncSlider('giq-gem','giq-gem-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <input type="range" id="giq-gem-slider" min="0" max="100" value="0" step="5" oninput="syncSlider('giq-gem','giq-gem-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
             <div style="display:flex;gap:6px;align-items:center;">
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-gem-min" min="0" max="100" value="0" oninput="syncSliderFromInput('giq-gem','giq-gem-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-gem-max" min="0" max="100" placeholder="100" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
@@ -743,7 +743,7 @@ body.logged-in #app-footer{display:block;}
           <!-- EV% -->
           <div style="margin-bottom:20px;">
             <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">EV%</div>
-            <input type="range" id="giq-ev-slider" min="0" max="500" value="0" oninput="syncSlider('giq-ev','giq-ev-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <input type="range" id="giq-ev-slider" min="0" max="500" value="0" step="5" oninput="syncSlider('giq-ev','giq-ev-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
             <div style="display:flex;gap:6px;align-items:center;">
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-ev-min" min="0" value="0" oninput="syncSliderFromInput('giq-ev','giq-ev-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-ev-max" min="0" placeholder="Any" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
@@ -753,7 +753,7 @@ body.logged-in #app-footer{display:block;}
           <!-- ANNUALIZED RETURN -->
           <div style="margin-bottom:20px;">
             <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Annualized Return</div>
-            <input type="range" id="giq-ann-slider" min="0" max="5000" value="0" oninput="syncSlider('giq-ann','giq-ann-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <input type="range" id="giq-ann-slider" min="0" max="5000" value="0" step="250" oninput="syncSlider('giq-ann','giq-ann-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
             <div style="display:flex;gap:6px;align-items:center;">
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN %</div><input class="fi" type="number" id="giq-ann-min" min="0" value="0" oninput="syncSliderFromInput('giq-ann','giq-ann-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX %</div><input class="fi" type="number" id="giq-ann-max" min="0" placeholder="Any" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
@@ -763,7 +763,7 @@ body.logged-in #app-footer{display:block;}
           <!-- RAW PRICE -->
           <div style="margin-bottom:8px;">
             <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Raw Price</div>
-            <input type="range" id="giq-price-slider" min="0" max="500" value="500" oninput="syncSlider('giq-price','giq-price-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
+            <input type="range" id="giq-price-slider" min="0" max="500" value="500" step="25" oninput="syncSlider('giq-price','giq-price-slider');filterGradeIQ();" style="width:100%;accent-color:var(--green);margin-bottom:6px;">
             <div style="display:flex;gap:6px;align-items:center;">
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MIN $</div><input class="fi" type="number" id="giq-price-min" min="0" value="0" oninput="filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
               <div style="flex:1;"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">MAX $</div><input class="fi" type="number" id="giq-price-max" min="0" placeholder="Any" oninput="syncSliderFromInput('giq-price','giq-price-slider');filterGradeIQ();" style="width:100%;padding:4px 6px;font-size:12px;box-sizing:border-box;"></div>
