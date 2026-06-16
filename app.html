@@ -1524,7 +1524,7 @@ body.logged-in #app-footer{display:block;}
 <script>
 // - SUPABASE -
 const SURL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.NWmMhMpJTMmBNVZqc5Z3GGmDMvRUgIpPH-5lpfbKFxw';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const ADMIN = 'jlk12493@gmail.com';
 const sb = supabase.createClient(SURL, SKEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 let CU = null, INV = [], BATCHES = [], BL = [], invF = [], blF = [], invPg = 1;
@@ -1595,7 +1595,7 @@ async function handleWhopCallback() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.NWmMhMpJTMmBNVZqc5Z3GGmDMvRUgIpPH-5lpfbKFxw'
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
       },
       body: JSON.stringify({ code, code_verifier: codeVerifier })
     });
@@ -1684,7 +1684,7 @@ async function checkWhopAccess(email) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.NWmMhMpJTMmBNVZqc5Z3GGmDMvRUgIpPH-5lpfbKFxw'
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
       },
       body: JSON.stringify({ email })
     });
