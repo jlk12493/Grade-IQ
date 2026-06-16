@@ -1761,7 +1761,7 @@ async function doForgotPassword() {
   document.getElementById('btn-fp').disabled = true;
   document.getElementById('btn-fp').textContent = 'Sending...';
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/app.html'
+    redirectTo: 'https://gradeiq.co/app.html'
   });
   document.getElementById('btn-fp').disabled = false;
   document.getElementById('btn-fp').textContent = 'Send Reset Link';
@@ -1869,27 +1869,58 @@ function loadTheme() {
 }
 
 async function checkResetToken() {
-  // Check if URL has a recovery token from Supabase password reset email
-  const hash = window.location.hash;
-  const params = new URLSearchParams(hash.replace('#', '?'));
-  const type = params.get('type');
-  const accessToken = params.get('access_token');
+  // Handle both hash fragment (implicit flow) and search params (PKCE flow)
+  var hash = window.location.hash;
+  var search = window.location.search;
+  
+  // Try hash fragment first (older Supabase flow)
+  var hashParams = new URLSearchParams(hash.replace('#', ''));
+  var type = hashParams.get('type');
+  var accessToken = hashParams.get('access_token');
+  
+  // Then try search params (newer PKCE flow)
+  if (!type || !accessToken) {
+    var searchParams = new URLSearchParams(search);
+    type = searchParams.get('type') || type;
+    // PKCE flow uses code exchange, handled by onAuthStateChange
+  }
+  
   if (type === 'recovery' && accessToken) {
-    // Set the session with the recovery token
     const { error } = await sb.auth.setSession({
       access_token: accessToken,
-      refresh_token: params.get('refresh_token') || ''
+      refresh_token: hashParams.get('refresh_token') || ''
     });
     if (!error) {
       g('auth-screen').style.display = 'none';
       const resetEl = g('reset-screen');
       resetEl.style.display = 'flex';
-      // Clear the hash from URL
       history.replaceState(null, '', window.location.pathname);
       return true;
     }
   }
-  return false;
+  
+  // Handle PKCE recovery via onAuthStateChange
+  return new Promise(function(resolve) {
+    var handled = false;
+    var unsub = sb.auth.onAuthStateChange(function(event, session) {
+      if (event === 'PASSWORD_RECOVERY') {
+        handled = true;
+        if (unsub && unsub.data) unsub.data.subscription.unsubscribe();
+        g('auth-screen').style.display = 'none';
+        const resetEl = g('reset-screen');
+        resetEl.style.display = 'flex';
+        history.replaceState(null, '', window.location.pathname);
+        resolve(true);
+      }
+    });
+    // If no recovery event after 2 seconds, resolve false
+    setTimeout(function() {
+      if (!handled) {
+        if (unsub && unsub.data) unsub.data.subscription.unsubscribe();
+        resolve(false);
+      }
+    }, 2000);
+  });
 }
 
 async function doResetPassword() {
