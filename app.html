@@ -4594,8 +4594,10 @@ function calcCardStats(r, activeTiers){
   });
   if(foundViable){
     // Recalculate IQ dynamically based on selected tiers
-    var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
-    result.iq=calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
+    try{
+      var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
+      result.iq=calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
+    }catch(e){result.iq=r.scc_score||0;}
     result.viable=true;
   } else if(allTiersSelected){
     // All tiers checked but none viable — keep stored values, mark viable to still show
@@ -4793,7 +4795,7 @@ function renderGradeIQ(){
   var list=g('giq-list');if(!list)return;
   if(!GRADEIQ_FILTERED.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No signals match your filters</div><div style="font-size:12px;">Try adjusting the filters above</div></div>';return;}
   var now=Date.now();var html='';
-  for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
+  for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){try{
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
     var cardStats=calcCardStats(r,getSelectedTiers());
@@ -4941,7 +4943,7 @@ function renderGradeIQ(){
     html+='<div style="display:flex;gap:0;margin:16px 16px 0;border:1px solid rgba(182,255,0,.2);border-radius:8px;overflow:hidden;background:rgba(182,255,0,.04);">';
     html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
     html+='<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Expected Return</div>';
-    var expRet = headerEV ? headerEV.expectedReturn : null;
+    var expRet = cardStats.viable && cardStats.evDollar ? (cardStats.maxBuy * 1.40 + (cardStats.tierName && GRADING_TIERS.find(function(t){return t.tier_name===cardStats.tierName;}) ? GRADING_TIERS.find(function(t){return t.tier_name===cardStats.tierName;}).cost_per_card : 0)) : null;
     html+='<div style="font-size:18px;font-weight:900;color:var(--green);">'+(expRet?f$(expRet):'--')+'</div>';
     html+='</div>';
     html+='<div style="flex:1;padding:10px 14px;border-right:1px solid rgba(182,255,0,.15);">';
@@ -4960,13 +4962,13 @@ function renderGradeIQ(){
 
     if(r.scc_score!=null)html+=giqCell('IQ Rating',Math.round(liveIQ||0).toString(),sc,true);
     if(displayEVPct)html+=giqCell('EV%',(displayEVPct*100).toFixed(1)+'%',ec,true);
-    var liveEVDollar = headerEV ? headerEV.evDollar : r.ev_dollar;
+    var liveEVDollar = cardStats.evDollar || r.ev_dollar;
     if(liveEVDollar!=null)html+=giqCell('EV$',f$(liveEVDollar),(liveEVDollar||0)>=0?'var(--green)':'#F87171',true);
     if(r.raw_price!=null)html+=giqCell('Raw Price',f$(r.raw_price),'var(--text)',false);
     if(r.psa10_price!=null)html+=giqCell('PSA 10',f$(r.psa10_price),'var(--text)',false);
     if(r.psa9_price!=null)html+=giqCell('PSA 9',f$(r.psa9_price),'var(--text-muted)',false);
     if(r.actual_gem_rate!=null)html+=giqCell('Gem Rate',(r.actual_gem_rate*100).toFixed(1)+'%','var(--text)',false);
-    var liveMaxBuy = headerMaxBuy !== null ? headerMaxBuy : r.max_buy_40;
+    var liveMaxBuy = cardStats.maxBuy || r.max_buy_40;
     if(liveMaxBuy!=null)html+=giqCell('Max Buy @40%',f$(liveMaxBuy),'var(--green)',true);
     html+='</div>';
     // ── TIER COMPARISON TABLE ──
@@ -5043,7 +5045,7 @@ function renderGradeIQ(){
     }
     html+='</div>';
     html+='</div></div>';
-  }
+  }catch(e){console.error('Card render error idx='+idx,e,GRADEIQ_FILTERED[idx]);}}
   list.innerHTML=html;
   list.querySelectorAll('[data-giqadd]').forEach(function(btn){btn.addEventListener('click',function(e){e.stopPropagation();giqAddToInventory(parseInt(this.dataset.giqadd));});});
   try{localStorage.setItem('giq_last_visit',now.toString());}catch(e){}
