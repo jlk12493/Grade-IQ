@@ -4565,9 +4565,43 @@ function setGIQSport(btn){
   btn.classList.add('active');GIQ_SELECTED_SPORT=btn.dataset.sport||'';filterGradeIQ();
 }
 
+// Returns array of tier objects that are currently checked in the filter panel
+function getSelectedTiers(){
+  var tierCbs=document.querySelectorAll('.giq-tier-cb');
+  if(!tierCbs.length)return GRADING_TIERS;
+  var checked=Array.from(tierCbs).filter(function(cb){return cb.checked;}).map(function(cb){return cb.value;});
+  if(!checked.length)return GRADING_TIERS;
+  return GRADING_TIERS.filter(function(t){return checked.includes(t.tier_name);});
+}
+
+// Core stat calculator — all rendering uses this so numbers are always consistent
+function calcCardStats(r, activeTiers){
+  var result={iq:r.scc_score||0,evPct:r.ev_pct||0,evDollar:r.ev_dollar||0,annualized:null,maxBuy:r.max_buy_40||0,tierName:null,viable:false};
+  if(!activeTiers||!activeTiers.length||!r.psa10_price)return result;
+  var bestAnn=-Infinity,bestEVPct=0,bestAnnReturn=null;
+  activeTiers.forEach(function(t){
+    var ev=calcEVForTier(r,t.cost_per_card);
+    var days=(t.turnaround_business_days_avg||0)*1.4;
+    var ann=calcAnnualizedReturn(ev.evPct,days);
+    if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){
+      bestAnn=ann;bestEVPct=ev.evPct;bestAnnReturn=ann;
+      result.evPct=ev.evPct;result.evDollar=ev.evDollar;
+      result.annualized=ann;result.tierName=t.tier_name;result.viable=true;
+      result.maxBuy=(ev.expectedReturn/1.40)-t.cost_per_card;
+    }
+  });
+  // Recalculate IQ dynamically based on selected tiers
+  if(result.viable){
+    var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
+    result.iq=calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
+  } else {
+    result.iq=0; // not viable at selected tiers
+  }
+  return result;
+}
+
 function calcLiveIQ(r){
-  // Use stored scc_score from database — recalculating client-side inflates scores
-  return r.scc_score||0;
+  return calcCardStats(r, getSelectedTiers()).iq;
 }
 
 function toggleGIQFilters(){
@@ -4661,47 +4695,43 @@ function filterGradeIQ(){
   var priceMin=parseFloat((g('giq-price-min')||{value:'0'}).value)||0;
   var priceMax=parseFloat((g('giq-price-max')||{value:''}).value)||0;
 
+  var activeTiers=getSelectedTiers();
+  // Cache stats per card for filtering and sorting
+  var statsCache={};
+  function getStats(r){
+    var k=r.scp_id;
+    if(!statsCache[k])statsCache[k]=calcCardStats(r,activeTiers);
+    return statsCache[k];
+  }
+
   GRADEIQ_FILTERED=GRADEIQ_DATA.filter(function(r){
     // Sport
     if(selectedSports.length&&!selectedSports.includes(r.sport||''))return false;
     // Parallel
     if(pf==='base'&&r.parallel)return false;
     if(pf==='parallel'&&!r.parallel)return false;
-    // IQ
-    var iq=calcLiveIQ(r);
-    if(iqMin&&iq<iqMin)return false;
-    if(iqMax&&iq>iqMax)return false;
-    // Gem rate
-    var gem=(r.actual_gem_rate||0)*100;
-    if(gemMin&&gem<gemMin)return false;
-    if(gemMax&&gem>gemMax)return false;
-    // EV%
-    var ev=(r.ev_pct||0)*100;
-    if(evMin&&ev<evMin)return false;
-    if(evMax&&ev>evMax)return false;
     // Raw price
     var price=r.raw_price||0;
     if(priceMin&&price<priceMin)return false;
     if(priceMax&&price>priceMax)return false;
-    // Grading tier
-    if(!allTiersChecked&&GRADING_TIERS.length){
-      var bestTier=null,bestAnn=-Infinity;
-      GRADING_TIERS.forEach(function(t){
-        var ev=calcEVForTier(r,t.cost_per_card);
-        var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
-        if(ev.evDollar>0&&ev.evPct>=0.40&&ann>bestAnn){bestAnn=ann;bestTier=t.tier_name;}
-      });
-      if(!bestTier||!selectedTiers.includes(bestTier))return false;
-    }
-    // Annualized return filter
-    if((annMin||annMax)&&GRADING_TIERS.length){
-      var bestAnnVal=-Infinity;
-      GRADING_TIERS.forEach(function(t){
-        var ev=calcEVForTier(r,t.cost_per_card);
-        var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
-        if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnnVal)bestAnnVal=ann;
-      });
-      var annPct=bestAnnVal*100;
+    // Gem rate (static — not tier-dependent)
+    var gem=(r.actual_gem_rate||0)*100;
+    if(gemMin&&gem<gemMin)return false;
+    if(gemMax&&gem>gemMax)return false;
+    // Dynamic stats based on selected tiers
+    var stats=getStats(r);
+    // Must be viable at at least one selected tier
+    if(!stats.viable)return false;
+    // IQ
+    if(iqMin&&stats.iq<iqMin)return false;
+    if(iqMax&&stats.iq>iqMax)return false;
+    // EV%
+    var evPct=stats.evPct*100;
+    if(evMin&&evPct<evMin)return false;
+    if(evMax&&evPct>evMax)return false;
+    // Annualized return
+    if(annMin||annMax){
+      var annPct=stats.annualized!==null?stats.annualized*100:-Infinity;
       if(annMin&&annPct<annMin)return false;
       if(annMax&&annPct>annMax)return false;
     }
@@ -4710,25 +4740,10 @@ function filterGradeIQ(){
     return true;
   });
   GRADEIQ_FILTERED.sort(function(a,b){
-    if(sort==='scc_score')return calcLiveIQ(b)-calcLiveIQ(a);
-    if(sort==='ev_pct')return(b.ev_pct||0)-(a.ev_pct||0);
+    if(sort==='scc_score')return getStats(b).iq-getStats(a).iq;
+    if(sort==='ev_pct')return getStats(b).evPct-getStats(a).evPct;
     if(sort==='gem_rate')return(b.actual_gem_rate||0)-(a.actual_gem_rate||0);
-    if(sort==='annualized'){
-      var _annCache={};
-      var getAnn=function(r){
-        var k=r.scp_id;
-        if(_annCache[k]!==undefined)return _annCache[k];
-        if(!GRADING_TIERS.length||!r.psa10_price)return(_annCache[k]=-Infinity);
-        var best=-Infinity;
-        GRADING_TIERS.forEach(function(t){
-          var ev=calcEVForTier(r,t.cost_per_card);
-          var ann=calcAnnualizedReturn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
-          if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>best)best=ann;
-        });
-        return(_annCache[k]=best);
-      };
-      return getAnn(b)-getAnn(a);
-    }
+    if(sort==='annualized')return(getStats(b).annualized||0)-(getStats(a).annualized||0);
     return(a.raw_price||0)-(b.raw_price||0);
   });
   updateGIQFilterCount();
@@ -4745,22 +4760,8 @@ function renderTopPicks(){
   var top=GRADEIQ_FILTERED.slice(0,5);if(!top.length){el.innerHTML='';return;}
   el.innerHTML=top.map(function(r){
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    // Use stored IQ score from database
-    var liveIQ = r.scc_score || 0;
-    // Live EV% and Max Buy for top picks
-    var tpEVPct = r.ev_pct || 0, tpMaxBuy = r.max_buy_40;
-    if (GRADING_TIERS.length && r.psa10_price) {
-      var tpBestAnn = -Infinity;
-      GRADING_TIERS.forEach(function(t) {
-        var ev = calcEVForTier(r, t.cost_per_card);
-        var days = (t.turnaround_business_days_avg || 0) * 1.4;
-        var ann = calcAnnualizedReturn(ev.evPct, days);
-        if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > tpBestAnn) {
-          tpBestAnn = ann; tpEVPct = ev.evPct;
-          tpMaxBuy = (ev.expectedReturn / 1.40) - t.cost_per_card;
-        }
-      });
-    }
+    var tpStats=calcCardStats(r,getSelectedTiers());
+    var liveIQ=tpStats.iq,tpEVPct=tpStats.evPct,tpMaxBuy=tpStats.maxBuy;
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
     var ec = tpEVPct >= 1 ? 'var(--green)' : tpEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:10px 12px;cursor:pointer;">'
@@ -4787,30 +4788,12 @@ function renderGradeIQ(){
   for(var idx=0;idx<GRADEIQ_FILTERED.length;idx++){
     var r=GRADEIQ_FILTERED[idx];
     var ss=(r.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-    // Use stored IQ score from database
-    var liveIQ = r.scc_score || 0;
+    var cardStats=calcCardStats(r,getSelectedTiers());
+    var liveIQ=cardStats.iq;
     var sc = liveIQ >= 80 ? 'var(--green)' : liveIQ >= 60 ? 'var(--green)' : 'var(--text-muted)';
-    // Calculate best tier EV for header display
-    var headerEV = null, headerMaxBuy = null, headerTierName = null;
-    if (GRADING_TIERS.length && r.psa10_price) {
-      var bestAnn = -Infinity;
-      GRADING_TIERS.forEach(function(t) {
-        var ev = calcEVForTier(r, t.cost_per_card);
-        var days = t.turnaround_business_days_avg || 0;
-        var ann = calcAnnualizedReturn(ev.evPct, days * 1.4);
-        var viable = ev.evDollar > 0 && ev.evPct >= 0.40;
-        if (viable && ann !== null && ann > bestAnn) {
-          bestAnn = ann;
-          headerEV = ev;
-          headerTierName = t.tier_name;
-          headerMaxBuy = (ev.totalCost > 0) ? (ev.expectedReturn / 1.40) - t.cost_per_card : null;
-        }
-      });
-    }
-    // Fall back to stored values if no best tier found
-    var displayEVPct = headerEV ? headerEV.evPct : (r.ev_pct || 0);
-    var displayMaxBuy = headerMaxBuy !== null ? headerMaxBuy : r.max_buy_40;
-    var displayTierLabel = headerTierName ? ' <span style="font-size:9px;color:var(--text-muted);">@ ' + headerTierName + '</span>' : '';
+    var displayEVPct=cardStats.evPct;
+    var displayMaxBuy=cardStats.maxBuy;
+    var displayTierLabel=cardStats.tierName?' <span style="font-size:9px;color:var(--text-muted);">@ '+cardStats.tierName+'</span>':'';
     var ec = displayEVPct >= 1 ? 'var(--green)' : displayEVPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
     var cid='giq-card-'+idx;
     var bk=encodeURIComponent((r.player||'')+'|'+(r.set_name||'')+'|'+(r.card_no||''));
