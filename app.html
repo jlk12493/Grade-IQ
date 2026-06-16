@@ -4576,26 +4576,34 @@ function getSelectedTiers(){
 
 // Core stat calculator — all rendering uses this so numbers are always consistent
 function calcCardStats(r, activeTiers){
-  var result={iq:r.scc_score||0,evPct:r.ev_pct||0,evDollar:r.ev_dollar||0,annualized:null,maxBuy:r.max_buy_40||0,tierName:null,viable:false};
+  var allTiersSelected = activeTiers && GRADING_TIERS.length && activeTiers.length === GRADING_TIERS.length;
+  // Default to stored values (used when all tiers checked or no tier data)
+  var result={iq:r.scc_score||0,evPct:r.ev_pct||0,evDollar:r.ev_dollar||0,annualized:null,maxBuy:r.max_buy_40||0,tierName:null,viable:true};
   if(!activeTiers||!activeTiers.length||!r.psa10_price)return result;
-  var bestAnn=-Infinity,bestEVPct=0,bestAnnReturn=null;
+  var bestAnn=-Infinity,bestEVPct=0,bestAnnReturn=null,foundViable=false;
   activeTiers.forEach(function(t){
     var ev=calcEVForTier(r,t.cost_per_card);
     var days=(t.turnaround_business_days_avg||0)*1.4;
     var ann=calcAnnualizedReturn(ev.evPct,days);
     if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){
-      bestAnn=ann;bestEVPct=ev.evPct;bestAnnReturn=ann;
+      bestAnn=ann;bestEVPct=ev.evPct;bestAnnReturn=ann;foundViable=true;
       result.evPct=ev.evPct;result.evDollar=ev.evDollar;
-      result.annualized=ann;result.tierName=t.tier_name;result.viable=true;
+      result.annualized=ann;result.tierName=t.tier_name;
       result.maxBuy=(ev.expectedReturn/1.40)-t.cost_per_card;
     }
   });
-  // Recalculate IQ dynamically based on selected tiers
-  if(result.viable){
+  if(foundViable){
+    // Recalculate IQ dynamically based on selected tiers
     var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
     result.iq=calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
+    result.viable=true;
+  } else if(allTiersSelected){
+    // All tiers checked but none viable — keep stored values, mark viable to still show
+    result.viable=true;
   } else {
-    result.iq=0; // not viable at selected tiers
+    // Subset of tiers checked and none are viable — hide this card
+    result.viable=false;
+    result.iq=0;
   }
   return result;
 }
