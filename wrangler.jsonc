@@ -1,13 +1,14 @@
 {
-  "name": "gradeiq",
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "whop-auth",
   "compatibility_date": "2026-07-01",
-  "main": "worker.js",
-  "assets": {
-    "directory": "./",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+  "observability": {
+    "enabled": true
   },
-  "vars": {
-    "ENVIRONMENT": "production"
-  }
+  "assets": {
+    "directory": "."
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
 }
