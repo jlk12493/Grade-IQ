@@ -1761,7 +1761,7 @@ async function doForgotPassword() {
   document.getElementById('btn-fp').disabled = true;
   document.getElementById('btn-fp').textContent = 'Sending...';
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://gradeiq.co/app.html'
+    redirectTo: window.location.origin + '/app.html'
   });
   document.getElementById('btn-fp').disabled = false;
   document.getElementById('btn-fp').textContent = 'Send Reset Link';
@@ -1841,7 +1841,7 @@ async function removeUser(userId, email) {
   // Show reminder to delete from Supabase auth
   setTimeout(() => {
     if (confirm('Data deleted! To fully remove their login access, go to Supabase → Authentication → Users and delete ' + email + ' there.\n\nOpen Supabase now?')) {
-      window.open('https://supabase.com/dashboard/project/lmwqizcflhikvtoqehzj/auth/users', '_blank');
+      window.open('https://supabase.com/dashboard/project/butgbareffrnvlmvsdea/auth/users', '_blank');
     }
   }, 500);
 }
@@ -1869,58 +1869,27 @@ function loadTheme() {
 }
 
 async function checkResetToken() {
-  // Handle both hash fragment (implicit flow) and search params (PKCE flow)
-  var hash = window.location.hash;
-  var search = window.location.search;
-  
-  // Try hash fragment first (older Supabase flow)
-  var hashParams = new URLSearchParams(hash.replace('#', ''));
-  var type = hashParams.get('type');
-  var accessToken = hashParams.get('access_token');
-  
-  // Then try search params (newer PKCE flow)
-  if (!type || !accessToken) {
-    var searchParams = new URLSearchParams(search);
-    type = searchParams.get('type') || type;
-    // PKCE flow uses code exchange, handled by onAuthStateChange
-  }
-  
+  // Check if URL has a recovery token from Supabase password reset email
+  const hash = window.location.hash;
+  const params = new URLSearchParams(hash.replace('#', '?'));
+  const type = params.get('type');
+  const accessToken = params.get('access_token');
   if (type === 'recovery' && accessToken) {
+    // Set the session with the recovery token
     const { error } = await sb.auth.setSession({
       access_token: accessToken,
-      refresh_token: hashParams.get('refresh_token') || ''
+      refresh_token: params.get('refresh_token') || ''
     });
     if (!error) {
       g('auth-screen').style.display = 'none';
       const resetEl = g('reset-screen');
       resetEl.style.display = 'flex';
+      // Clear the hash from URL
       history.replaceState(null, '', window.location.pathname);
       return true;
     }
   }
-  
-  // Handle PKCE recovery via onAuthStateChange
-  return new Promise(function(resolve) {
-    var handled = false;
-    var unsub = sb.auth.onAuthStateChange(function(event, session) {
-      if (event === 'PASSWORD_RECOVERY') {
-        handled = true;
-        if (unsub && unsub.data) unsub.data.subscription.unsubscribe();
-        g('auth-screen').style.display = 'none';
-        const resetEl = g('reset-screen');
-        resetEl.style.display = 'flex';
-        history.replaceState(null, '', window.location.pathname);
-        resolve(true);
-      }
-    });
-    // If no recovery event after 2 seconds, resolve false
-    setTimeout(function() {
-      if (!handled) {
-        if (unsub && unsub.data) unsub.data.subscription.unsubscribe();
-        resolve(false);
-      }
-    }, 2000);
-  });
+  return false;
 }
 
 async function doResetPassword() {
@@ -4624,11 +4593,8 @@ function calcCardStats(r, activeTiers){
     }
   });
   if(foundViable){
-    // Recalculate IQ dynamically based on selected tiers
-    try{
-      var impliedGR=r.psa9_price>0?(r.psa9_price/(r.psa10_price||1)):0;
-      result.iq=calcSCCScoreJS(bestEVPct,r.sales_volume||0,r.actual_gem_rate||0,impliedGR,r.total||0,null,bestAnnReturn);
-    }catch(e){result.iq=r.scc_score||0;}
+    // Use stored scc_score for IQ display
+    result.iq=r.scc_score||0;
     result.viable=true;
   } else if(allTiersSelected){
     // All tiers checked but none viable — keep stored values, mark viable to still show
@@ -4842,7 +4808,7 @@ function renderGradeIQ(){
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
     var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc -tag -cgc');
-    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_ipg=240&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+    var ebayUrl='https://www.ebay.com/sch/183454/i.html?_nkw='+ebayQ+'&_ipg=240&Graded=No&LH_PrefLoc=1&Language=%21%7CEnglish&_sop=13&Card%2520Condition=Near%2520Mint%2520or%2520Better&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
     // Build clean set name: strip sport prefix, year, and manufacturer brand
@@ -5051,7 +5017,7 @@ function renderGradeIQ(){
     html+='<div style="padding:0 16px 16px;">';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
     html+='<button class="btn-a" style="font-size:11px;padding:5px 12px;" data-giqadd="'+idx+'">+ Add to Inventory</button>';
-    html+='<a href="'+ebayUrl+'" target="_blank" rel="noreferrer" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
+    html+='<a href="'+ebayUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128722; Find Raw on eBay</a>';
     html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
     html+='<a href="'+clUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128269; Verify on Card Ladder</a>';
     if(CU&&CU.email===ADMIN){
