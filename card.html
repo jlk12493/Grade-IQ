@@ -28,13 +28,13 @@
 .hero-img-empty{width:180px;height:252px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
 .hero-meta{min-width:0;}
 .hero-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-.hero-player{font-size:32px;font-weight:900;color:var(--text);line-height:1.05;margin-bottom:4px;}
+.hero-player{font-size:26px;font-weight:900;color:var(--text);line-height:1.05;margin-bottom:4px;}
 .hero-parallel{font-size:14px;color:var(--text-muted);margin-bottom:4px;}
 .hero-set{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
 .hero-stats{display:flex;gap:24px;flex-wrap:wrap;}
 .hero-stat{}
 .hero-stat-lbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.hero-stat-val{font-size:36px;font-weight:900;line-height:1;}
+.hero-stat-val{font-size:22px;font-weight:900;line-height:1;}
 .hero-stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
 
 /* Price trio */
@@ -255,7 +255,7 @@ function renderCard(){
 
   // Image
   var imgHtml = r.image_url
-    ? '<div class="hero-img"><img src="'+r.image_url+'" alt="'+r.player+'" onerror="this.parentElement.outerHTML=\'<div class=hero-img-empty><svg width=48 height=48 viewBox=\\\"0 0 24 24\\\" fill=none stroke=\\\"rgba(255,255,255,.1)\\\" stroke-width=1.5><rect x=2 y=3 width=20 height=18 rx=2/><circle cx=12 cy=10 r=3/><path d=\\\"M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6\\\"/></svg></div>\'"></div>'
+    ? '<div class="hero-img"><img src="'+r.image_url+'" alt="'+r.player+'" onerror="this.style.display=\'none\'"></div>'
     : '<div class="hero-img-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg><div style="font-size:10px;color:var(--text-muted);">No image</div></div>';
 
   // Tier table rows
