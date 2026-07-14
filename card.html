@@ -22,8 +22,8 @@
 .back-btn:hover svg{transform:translateX(-2px);}
 
 /* Hero section */
-.hero{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:flex-start;margin-bottom:24px;}
-.hero-img{width:180px;flex-shrink:0;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.hero{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:flex-start;margin-bottom:24px;}
+.hero-img{width:160px;flex-shrink:0;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.5);}
 .hero-img img{width:100%;display:block;}
 .hero-img-empty{width:180px;height:252px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
 .hero-meta{min-width:0;}
@@ -37,6 +37,16 @@
 .hero-stat-val{font-size:22px;font-weight:900;line-height:1;}
 .hero-stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
 
+/* EV Snapshot */
+.ev-snapshot{width:210px;flex-shrink:0;background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.2);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.ev-snap-title{font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;}
+.ev-snap-row{}
+.ev-snap-lbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.ev-snap-val{font-size:17px;font-weight:900;color:var(--green);}
+.ev-snap-sub{font-size:10px;color:var(--text-muted);margin-top:1px;}
+.ev-snap-divider{height:1px;background:rgba(182,255,0,.15);}
+@media(max-width:900px){.ev-snapshot{display:none;}}
+
 /* Price trio */
 .price-trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;}
 .price-col{padding:16px 20px;text-align:center;}
@@ -47,7 +57,7 @@
 .price-col-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
 
 /* Stat grid */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
 .stat-card-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
 .stat-card-val{font-size:20px;font-weight:900;color:var(--text);}
@@ -333,6 +343,33 @@ function renderCard(){
           </div>
         </div>
       </div>
+      <!-- EV SNAPSHOT -->
+      \${bestTierData ? \`
+      <div class="ev-snapshot">
+        <div class="ev-snap-title">Best Case Analysis</div>
+        <div class="ev-snap-row">
+          <div class="ev-snap-lbl">Best Tier</div>
+          <div class="ev-snap-val" style="font-size:14px;">\${bestTierData.tier.tier_name}</div>
+          <div class="ev-snap-sub">$\${bestTierData.tier.cost_per_card} grading cost</div>
+        </div>
+        <div class="ev-snap-divider"></div>
+        <div class="ev-snap-row">
+          <div class="ev-snap-lbl">Expected Return</div>
+          <div class="ev-snap-val">\${f\$(bestTierData.ev.expectedReturn)}</div>
+          <div class="ev-snap-sub">on a \${f\$(r.raw_price)} raw card</div>
+        </div>
+        <div class="ev-snap-row">
+          <div class="ev-snap-lbl">EV%</div>
+          <div class="ev-snap-val">\${fPct(bestTierData.ev.evPct,1)}</div>
+        </div>
+        <div class="ev-snap-divider"></div>
+        <div class="ev-snap-row">
+          <div class="ev-snap-lbl">Annualized Return</div>
+          <div class="ev-snap-val">\${fPct(bestTierData.ann,0)}</div>
+          <div class="ev-snap-sub">\${bestTierData.tier.turnaround_business_days_avg} business day turnaround</div>
+        </div>
+      </div>
+      \` : \`<div style="width:210px;"></div>\`}
     </div>
 
     <!-- PRICE TRIO -->
