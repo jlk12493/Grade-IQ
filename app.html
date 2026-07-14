@@ -1523,8 +1523,8 @@ body.logged-in #app-footer{display:block;}
 
 <script>
 // - SUPABASE -
-const SURL = 'https://butgbareffrnvlmvsdea.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1dGdiYXJlZmZybnZsbXZzZGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU4MDUsImV4cCI6MjA5NjkzMTgwNX0.LC7JD9TKYrJFlJ_3U4H62gugPkUWLs9t4a3UfeMa2QY';
+const SURL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const ADMIN = 'jlk12493@gmail.com';
 const sb = supabase.createClient(SURL, SKEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
 let CU = null, INV = [], BATCHES = [], BL = [], invF = [], blF = [], invPg = 1;
@@ -1591,11 +1591,11 @@ async function handleWhopCallback() {
     localStorage.removeItem('whop_verifier');
     localStorage.removeItem('whop_state');
     console.log('Code verifier found:', codeVerifier ? 'yes (length '+codeVerifier.length+')' : 'MISSING');
-    const workerRes = await fetch('https://butgbareffrnvlmvsdea.supabase.co/functions/v1/quick-responder', {
+    const workerRes = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-responder', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1dGdiYXJlZmZybnZsbXZzZGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU4MDUsImV4cCI6MjA5NjkzMTgwNX0.LC7JD9TKYrJFlJ_3U4H62gugPkUWLs9t4a3UfeMa2QY'
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
       },
       body: JSON.stringify({ code, code_verifier: codeVerifier })
     });
@@ -1680,11 +1680,11 @@ async function handleWhopCallback() {
 async function checkWhopAccess(email) {
   if (email === ADMIN) return true;
   try {
-    const res = await fetch('https://butgbareffrnvlmvsdea.supabase.co/functions/v1/quick-responder', {
+    const res = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-responder', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1dGdiYXJlZmZybnZsbXZzZGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNTU4MDUsImV4cCI6MjA5NjkzMTgwNX0.LC7JD9TKYrJFlJ_3U4H62gugPkUWLs9t4a3UfeMa2QY'
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
       },
       body: JSON.stringify({ email })
     });
@@ -4556,8 +4556,16 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false});
-  GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
+  var allData=[];
+  var page=0;
+  while(true){
+    var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false}).range(page*1000,(page+1)*1000-1);
+    var chunk=res.data||[];
+    allData=allData.concat(chunk);
+    if(chunk.length<1000)break;
+    page++;
+  }
+  GRADEIQ_DATA=allData;GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
 function setGIQSport(btn){
@@ -4808,7 +4816,7 @@ function renderGradeIQ(){
     var isn=r.scanned_at&&new Date(r.scanned_at).getTime()>GIQ_LAST_VISIT;
     var isSilver=r.parallel&&r.parallel.toLowerCase().replace(/[-_]/g,' ').includes('silver prizm');
     var ebayQ=encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc -tag -cgc');
-    var ebayUrl='https://www.ebay.com/sch/183454/i.html?_nkw='+ebayQ+'&_ipg=240&Graded=No&LH_PrefLoc=1&Language=%21%7CEnglish&_sop=13&Card%2520Condition=Near%2520Mint%2520or%2520Better&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+    var ebayUrl='https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&_ipg=240&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
     var isBase=!r.parallel||r.parallel.toLowerCase()==='base';
     // Strip sport prefix and year from set name to avoid duplicates in search query
     // Build clean set name: strip sport prefix, year, and manufacturer brand
@@ -5021,8 +5029,14 @@ function renderGradeIQ(){
     html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
     html+='<a href="'+clUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128269; Verify on Card Ladder</a>';
     if(CU&&CU.email===ADMIN){
-      var scpQ=encodeURIComponent([r.player,r.year,r.set_name,r.card_no?'#'+r.card_no:''].filter(Boolean).join(' '));
-      html+='<a href="https://www.sportscardspro.com/search-products?type=prices&q='+scpQ+'&go=Go" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; SCP</a>';
+      var isTCGCard=String(r.scp_id).startsWith('tcg_');
+      if(isTCGCard){
+        var pcId=String(r.scp_id).split('_')[1];
+        html+='<a href="https://www.pricecharting.com/game/id-'+pcId+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; Price Charting</a>';
+      } else {
+        var scpQ=encodeURIComponent([r.player,r.year,r.set_name,r.card_no?'#'+r.card_no:''].filter(Boolean).join(' '));
+        html+='<a href="https://www.sportscardspro.com/search-products?type=prices&q='+scpQ+'&go=Go" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; SCP</a>';
+      }
     }
     html+='</div>';
     if(CU&&CU.email===ADMIN){
