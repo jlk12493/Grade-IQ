@@ -4556,8 +4556,16 @@ var GIQ_BOOKMARKS=(function(){try{return JSON.parse(localStorage.getItem('giq_bo
 var GIQ_LAST_VISIT=(function(){try{return parseInt(localStorage.getItem('giq_last_visit')||'0');}catch(e){return 0;}})();
 
 async function loadGradeIQ(){
-  var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false}).limit(5000);
-  GRADEIQ_DATA=res.data||[];GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
+  var allData=[];
+  var page=0;
+  while(true){
+    var res=await sb.from('ev_scanner').select('scp_id,player,parallel,year,set_name,card_no,sport,ev_pct,ev_dollar,scc_score,raw_price,max_buy_40,max_buy_35,decision,psa10_price,psa9_price,net_psa10,net_psa9,actual_gem_rate,sales_volume,scanned_at,image_url').eq('decision','BUY').order('scc_score',{ascending:false,nullsFirst:false}).range(page*1000,(page+1)*1000-1);
+    var chunk=res.data||[];
+    allData=allData.concat(chunk);
+    if(chunk.length<1000)break;
+    page++;
+  }
+  GRADEIQ_DATA=allData;GRADEIQ_FILTERED=[...GRADEIQ_DATA];filterGradeIQ();
 }
 
 function setGIQSport(btn){
