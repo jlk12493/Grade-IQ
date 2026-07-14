@@ -181,11 +181,11 @@
 
   <!-- FILTER BAR -->
   <div class="filter-bar" id="filter-bar">
-    <div class="filter-row">
 
-      <!-- SPORT -->
-      <div class="filter-group">
-        <div class="filter-label">Sport</div>
+    <!-- ROW 1: Sport + Card Type -->
+    <div style="display:flex;align-items:flex-start;gap:0;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;padding-right:20px;border-right:1px solid var(--border);">
+        <div class="filter-label" style="margin-bottom:8px;">Sport</div>
         <div class="filter-pills">
           <button class="pill active giq-sport-pill" data-sport="" onclick="setSportPill(this)">All</button>
           <button class="pill giq-sport-pill" data-sport="Baseball" onclick="setSportPill(this)">⚾ Baseball</button>
@@ -194,32 +194,27 @@
           <button class="pill giq-sport-pill" data-sport="TCG" onclick="setSportPill(this)">🃏 TCG</button>
         </div>
       </div>
-
-      <!-- GRADING TIER -->
-      <div class="filter-group">
-        <div class="filter-label">Grading Tier</div>
-        <div class="filter-pills" id="tier-pills">
-          <!-- populated from grading_tiers table -->
-          <span style="font-size:11px;color:var(--text-muted);">Loading...</span>
-        </div>
-      </div>
-
-      <!-- CARD TYPE -->
-      <div class="filter-group">
-        <div class="filter-label">Card Type</div>
+      <div style="padding-left:20px;">
+        <div class="filter-label" style="margin-bottom:8px;">Card Type</div>
         <div class="filter-pills">
           <button class="pill active giq-type-pill" data-type="" onclick="setTypePill(this)">All</button>
           <button class="pill giq-type-pill" data-type="base" onclick="setTypePill(this)">Base Only</button>
           <button class="pill giq-type-pill" data-type="parallel" onclick="setTypePill(this)">Parallels Only</button>
         </div>
       </div>
-
     </div>
 
-    <!-- SECOND ROW: numeric ranges -->
-    <div class="filter-row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+    <!-- ROW 2: Grading Tier (full width) -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <div class="filter-label" style="margin-bottom:8px;">Grading Tier</div>
+      <div class="filter-pills" id="tier-pills">
+        <span style="font-size:11px;color:var(--text-muted);">Loading...</span>
+      </div>
+    </div>
 
-      <!-- IQ Range -->
+    <!-- ROW 3: Numeric ranges -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+
       <div class="filter-group">
         <div class="filter-label">IQ Score</div>
         <div class="range-group">
@@ -229,7 +224,6 @@
         </div>
       </div>
 
-      <!-- EV% -->
       <div class="filter-group">
         <div class="filter-label">EV%</div>
         <div class="range-group">
@@ -239,7 +233,6 @@
         </div>
       </div>
 
-      <!-- Gem Rate -->
       <div class="filter-group">
         <div class="filter-label">Gem Rate %</div>
         <div class="range-group">
@@ -249,7 +242,6 @@
         </div>
       </div>
 
-      <!-- Raw Price -->
       <div class="filter-group">
         <div class="filter-label">Raw Price $</div>
         <div class="range-group">
@@ -259,7 +251,6 @@
         </div>
       </div>
 
-      <!-- Annualized -->
       <div class="filter-group">
         <div class="filter-label">Annualized Return %</div>
         <div class="range-group">
