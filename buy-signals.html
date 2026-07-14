@@ -645,8 +645,8 @@ function renderSignals(){
       // ── CARD WRAPPER ──
       html += '<div class="signal-card" id="sc-card-'+idx+'">';
 
-      // HEAD (always visible)
-      html += '<div class="signal-card-head" onclick="toggleCard('+idx+')">';
+      // HEAD (always visible) — click card → detail page, click chevron → expand inline
+      html += '<div class="signal-card-head" onclick="goToCard(\''+r.scp_id+'\')" style="cursor:pointer;">';
       html += thumbHtml;
       html += '<div class="sc-info">';
       html += '<div class="sc-chips">';
@@ -664,7 +664,7 @@ function renderSignals(){
       html += '<div class="sc-iq-lbl">IQ SCORE</div>';
       html += '<div class="sc-ev" style="color:'+ec+';">'+(evPct?(evPct*100).toFixed(0)+'% EV':'--')+'</div>';
       html += '<div class="sc-buy">Buy ≤ <strong style="color:var(--green);">'+f$(stats.maxBuy)+'</strong></div>';
-      html += '<div class="sc-chev" id="sc-chev-'+idx+'">▶</div>';
+      html += '<button onclick="event.stopPropagation();toggleCard('+idx+')" title="Quick expand" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:11px;margin-top:4px;" id="sc-chev-'+idx+'">▶</button>';
       html += '</div>';
       html += '</div>'; // /head
 
@@ -776,6 +776,13 @@ function renderSignals(){
   }
 
   try{ localStorage.setItem('giq_last_visit', now.toString()); }catch(e){}
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// CARD NAVIGATION
+// ──────────────────────────────────────────────────────────────────────────
+function goToCard(scpId){
+  window.location.href = 'card.html?id=' + encodeURIComponent(scpId);
 }
 
 // ──────────────────────────────────────────────────────────────────────────
