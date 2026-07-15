@@ -357,13 +357,29 @@ var PLATFORM_FEE = 0.135;
 })();
 
 async function loadCards(){
+  var userId = (await sb.auth.getUser()).data.user.id;
   var { data, error } = await sb.from('inventory')
-    .select('*')
-    .eq('user_id', (await sb.auth.getUser()).data.user.id)
+    .select('*, ev_scanner!inventory_card_id_fkey(image_url)')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error){ toast('Error loading collection: ' + error.message, true); return; }
-  ALL_CARDS = data || [];
+  if (error){
+    // Fallback without join if FK doesn't exist
+    var { data: data2, error: error2 } = await sb.from('inventory')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error2){ toast('Error loading collection: ' + error2.message, true); return; }
+    ALL_CARDS = data2 || [];
+  } else {
+    // Flatten the join
+    ALL_CARDS = (data || []).map(function(c){
+      var img = c.ev_scanner && c.ev_scanner.image_url ? c.ev_scanner.image_url : null;
+      delete c.ev_scanner;
+      c._scanner_image = img;
+      return c;
+    });
+  }
   updateCounts();
   renderPortfolioStrip();
   renderCurrentTab();
@@ -451,6 +467,19 @@ function renderCurrentTab(){
 // ──────────────────────────────────────────────────────────────────────────
 // TABLE RENDERS
 // ──────────────────────────────────────────────────────────────────────────
+function cardThumb(c, size){
+  size = size || 60;
+  var h = Math.round(size * 1.4);
+  var imgUrl = c._scanner_image || c.image_url || null;
+  if (imgUrl) {
+    return '<img src="'+imgUrl+'" style="width:'+size+'px;height:'+h+'px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;" onerror="this.style.display='none'">';
+  }
+  // Upload placeholder
+  return '<label title="Upload card photo" style="width:'+size+'px;height:'+h+'px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:var(--surface-2);" onclick="uploadCardImage(''+c.id+'')">'
+    + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>'
+    + '</label>';
+}
+
 function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(parseFloat(v)).toFixed(2); }
 function fPct(v){ if(v==null)return'--'; return(parseFloat(v)*100).toFixed(1)+'%'; }
 function fDate(d){ if(!d)return'--'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
@@ -462,10 +491,12 @@ function sportChip(sport){
 
 function playerCell(c){
   var ss = (c.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
-  return '<div class="player-cell">'
+  return '<div style="display:flex;align-items:center;gap:10px;">'
+    + cardThumb(c, 48)
+    + '<div class="player-cell">'
     + '<div class="player-name">'+(c.player||'--')+'</div>'
     + '<div class="player-set">'+(c.year?c.year+' ':'')+ss+(c.card_no?' · #'+c.card_no:'')+(c.parallel&&c.parallel.toLowerCase()!=='base'?' · '+c.parallel:'')+'</div>'
-    + '</div>';
+    + '</div></div>';
 }
 
 function renderRawTable(cards){
@@ -698,6 +729,31 @@ function calcProfit(){
 // ──────────────────────────────────────────────────────────────────────────
 // SAVE
 // ──────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────
+// IMAGE UPLOAD
+// ──────────────────────────────────────────────────────────────────────────
+function uploadCardImage(cardId){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function(){
+    var file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024){ toast('Image must be under 5MB', true); return; }
+    var userId = (await sb.auth.getUser()).data.user.id;
+    var ext = file.name.split('.').pop() || 'jpg';
+    var path = userId + '/' + cardId + '.' + ext;
+    var { error } = await sb.storage.from('card-images').upload(path, file, { upsert: true });
+    if (error){ toast('Upload failed: ' + error.message, true); return; }
+    var { data: urlData } = sb.storage.from('card-images').getPublicUrl(path);
+    var imageUrl = urlData.publicUrl;
+    await sb.from('inventory').update({ image_url: imageUrl }).eq('id', cardId);
+    toast('Card photo uploaded!');
+    await loadCards();
+  };
+  input.click();
+}
+
 async function saveCard(){
   var id = g('edit-id').value;
   var player = g('f-player').value.trim();
