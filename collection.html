@@ -472,7 +472,7 @@ function cardThumb(c, size){
   var h = Math.round(size * 1.4);
   var imgUrl = c._scanner_image || c.image_url || null;
   if (imgUrl) {
-    return '<img src="'+imgUrl+'" style="width:'+size+'px;height:'+h+'px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;" onerror="this.style.display='none'">';
+    return '<img src="'+imgUrl+'" style="width:'+size+'px;height:'+h+'px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0;" onerror="this.style.display=&quot;none&quot;">';
   }
   // Upload placeholder
   return '<label title="Upload card photo" style="width:'+size+'px;height:'+h+'px;border-radius:6px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;background:var(--surface-2);" onclick="uploadCardImage(''+c.id+'')">'
