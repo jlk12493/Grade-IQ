@@ -5029,8 +5029,15 @@ function renderGradeIQ(){
     html+='<a href="'+mmUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128200; Verify on Market Movers</a>';
     html+='<a href="'+clUrl+'" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;">&#128269; Verify on Card Ladder</a>';
     if(CU&&CU.email===ADMIN){
-      var scpQ=encodeURIComponent([r.player,r.year,r.set_name,r.card_no?'#'+r.card_no:''].filter(Boolean).join(' '));
-      html+='<a href="https://www.sportscardspro.com/search-products?type=prices&q='+scpQ+'&go=Go" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; SCP</a>';
+      var isTCGCard=String(r.scp_id).startsWith('tcg_');
+      if(isTCGCard){
+        var pcCardNo=String(r.card_no||'').replace(/^0+/,'').replace(/^([A-Z]+-?)0+(\d+)$/i,'$1$2');
+        var pcQuery=encodeURIComponent((r.player||'')+(pcCardNo?' #'+pcCardNo:''));
+        html+='<a href="https://www.pricecharting.com/search-products?q='+pcQuery+'&type=prices" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; Price Charting</a>';
+      } else {
+        var scpQ=encodeURIComponent([r.player,r.year,r.set_name,r.card_no?'#'+r.card_no:''].filter(Boolean).join(' '));
+        html+='<a href="https://www.sportscardspro.com/search-products?type=prices&q='+scpQ+'&go=Go" target="_blank" class="btn-s" style="font-size:11px;padding:5px 12px;text-decoration:none;border-color:#f97316;color:#f97316;">&#128269; SCP</a>';
+      }
     }
     html+='</div>';
     if(CU&&CU.email===ADMIN){
