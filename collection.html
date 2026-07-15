@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#B6FF00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GradeIQ">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>My Collection — GradeIQ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared.js"></script>
+<style>
+/* ── COLLECTION PAGE STYLES ──────────────────────────────────────────── */
+
+/* Sub-tab bar */
+.sub-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;}
+.sub-tab{padding:8px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.sub-tab:hover{color:var(--text);}
+.sub-tab.active{color:var(--green);border-bottom-color:var(--green);}
+.sub-tab .tab-count{background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);font-size:9px;padding:1px 5px;border-radius:10px;margin-left:5px;}
+.sub-tab.active .tab-count{background:rgba(182,255,0,.15);border-color:rgba(182,255,0,.3);color:var(--green);}
+
+/* Portfolio summary strip */
+.portfolio-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.ps-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+.ps-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.ps-val{font-size:20px;font-weight:900;color:var(--text);}
+.ps-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+
+/* Controls bar */
+.ctrl{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.ctrl .fi{font-size:12px;padding:7px 12px;}
+.btn-add{background:var(--green);color:#000;border:none;padding:8px 16px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.btn-add:hover{opacity:.9;}
+
+/* Table */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 12px;text-align:left;font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+.tbl th:hover{color:var(--text);}
+.tbl th.sort-asc::after{content:' ↑';}
+.tbl th.sort-desc::after{content:' ↓';}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(255,255,255,.02);}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl td.green{color:var(--green);font-weight:700;}
+.tbl td.red{color:#F87171;font-weight:700;}
+.tbl td.muted{color:var(--text-muted);}
+
+/* Player cell */
+.player-cell{min-width:160px;}
+.player-name{font-weight:700;color:var(--text);}
+.player-set{font-size:10px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+
+/* Status badge */
+.status-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.status-raw{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);}
+.status-submitted{background:rgba(234,179,8,.12);color:#facc15;border:1px solid rgba(234,179,8,.25);}
+.status-graded{background:rgba(182,255,0,.1);color:var(--green);border:1px solid rgba(182,255,0,.2);}
+.status-sold{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);}
+
+/* Row actions */
+.row-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+.tbl tr:hover .row-actions{opacity:1;}
+.row-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;white-space:nowrap;}
+.row-btn:hover{border-color:var(--green);color:var(--green);}
+.row-btn.danger:hover{border-color:#F87171;color:#F87171;}
+
+/* Add/Edit modal */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-title{font-size:14px;font-weight:800;color:var(--text);}
+.modal-close{background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:0;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+
+/* Form grid */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;}
+.form-input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;outline:none;width:100%;}
+.form-input:focus{border-color:var(--green);}
+select.form-input{cursor:pointer;}
+.form-section{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);grid-column:1/-1;}
+
+/* EV preview in modal */
+.ev-preview{background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.15);border-radius:8px;padding:12px 14px;margin-top:14px;display:none;}
+.ev-preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ev-preview-item .lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.ev-preview-item .val{font-size:16px;font-weight:900;color:var(--green);}
+
+/* Sold form extras */
+.sold-section{background:rgba(148,163,184,.05);border:1px solid rgba(148,163,184,.15);border-radius:8px;padding:14px;margin-top:12px;}
+.sold-section-title{font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--text-muted);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.empty-sub{font-size:13px;margin-bottom:20px;}
+
+/* Mobile */
+@media(max-width:768px){
+  .form-grid{grid-template-columns:1fr;}
+  .form-grid.three{grid-template-columns:1fr 1fr;}
+  .portfolio-strip{grid-template-columns:repeat(2,1fr);}
+  .tbl td:nth-child(n+5){display:none;}
+  .tbl th:nth-child(n+5){display:none;}
+}
+</style>
+</head>
+<body>
+<script>buildNav('collection');</script>
+
+<div class="main">
+
+  <!-- PORTFOLIO SUMMARY -->
+  <div class="portfolio-strip" id="portfolio-strip">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- SUB-TABS -->
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-tab="raw" onclick="switchTab('raw',this)">Raw Inventory <span class="tab-count" id="count-raw">--</span></button>
+    <button class="sub-tab" data-tab="submitted" onclick="switchTab('submitted',this)">Submissions <span class="tab-count" id="count-submitted">--</span></button>
+    <button class="sub-tab" data-tab="graded" onclick="switchTab('graded',this)">Graded <span class="tab-count" id="count-graded">--</span></button>
+    <button class="sub-tab" data-tab="sold" onclick="switchTab('sold',this)">Sold <span class="tab-count" id="count-sold">--</span></button>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="ctrl">
+    <button class="btn-add" onclick="openAddModal()">+ Add Card</button>
+    <input class="fi" type="text" id="coll-search" placeholder="🔍 Search player or set..." oninput="renderCurrentTab()" style="flex:1;min-width:160px;">
+    <select class="fi" id="coll-sort" onchange="renderCurrentTab()" style="min-width:180px;">
+      <option value="date_desc">Date Added (Newest)</option>
+      <option value="date_asc">Date Added (Oldest)</option>
+      <option value="cost_desc">Total Cost (High→Low)</option>
+      <option value="cost_asc">Total Cost (Low→High)</option>
+      <option value="ev_desc">EV% (High→Low)</option>
+      <option value="player_asc">Player A→Z</option>
+    </select>
+    <select class="fi" id="coll-sport" onchange="renderCurrentTab()" style="min-width:120px;">
+      <option value="">All Sports</option>
+      <option value="Baseball">Baseball</option>
+      <option value="Basketball">Basketball</option>
+      <option value="Football">Football</option>
+      <option value="TCG">TCG</option>
+    </select>
+  </div>
+
+  <!-- TABLE AREA -->
+  <div id="tab-content">
+    <!-- populated by JS -->
+  </div>
+
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-backdrop" id="card-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Add Card</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+
+      <div class="form-grid">
+        <div class="form-section">Card Info</div>
+
+        <div class="form-group">
+          <label class="form-label">Player / Card Name</label>
+          <input class="form-input" type="text" id="f-player" placeholder="e.g. Cooper Flagg">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sport</label>
+          <select class="form-input" id="f-sport">
+            <option value="">Select sport</option>
+            <option value="Baseball">Baseball</option>
+            <option value="Basketball">Basketball</option>
+            <option value="Football">Football</option>
+            <option value="TCG">TCG</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <input class="form-input" type="number" id="f-year" placeholder="2025">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Set Name</label>
+          <input class="form-input" type="text" id="f-set" placeholder="e.g. Topps Chrome">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Card #</label>
+          <input class="form-input" type="text" id="f-cardno" placeholder="e.g. 152">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parallel</label>
+          <input class="form-input" type="text" id="f-parallel" placeholder="Base, Refractor, etc.">
+        </div>
+
+        <div class="form-section">Purchase Info</div>
+
+        <div class="form-group">
+          <label class="form-label">Date Acquired</label>
+          <input class="form-input" type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <input class="form-input" type="text" id="f-source" placeholder="eBay, COMC, etc.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purchase Price $</label>
+          <input class="form-input" type="number" step="0.01" id="f-price" placeholder="0.00" oninput="calcTotalCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shipping $</label>
+          <input class="form-input" type="number" step="0.01" id="f-ship" placeholder="0.00" oninput="calcTotalCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grading Cost $</label>
+          <input class="form-input" type="number" step="0.01" id="f-grading" placeholder="0.00" oninput="calcTotalCost()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total Cost $</label>
+          <input class="form-input" type="number" step="0.01" id="f-total" placeholder="Auto-calculated" readonly style="opacity:.6;">
+        </div>
+
+        <div class="form-section">Grading & Pricing</div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="f-status" onchange="onStatusChange()">
+            <option value="raw">Raw</option>
+            <option value="submitted">Submitted to PSA</option>
+            <option value="graded">Graded — Returned</option>
+          </select>
+        </div>
+        <div class="form-group" id="f-grade-wrap" style="display:none;">
+          <label class="form-label">PSA Grade</label>
+          <select class="form-input" id="f-grade">
+            <option value="">Select grade</option>
+            <option value="10">PSA 10</option>
+            <option value="9">PSA 9</option>
+            <option value="8">PSA 8</option>
+            <option value="7">PSA 7</option>
+            <option value="6">PSA 6</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gem Rate %</label>
+          <input class="form-input" type="number" step="0.01" id="f-gemrate" placeholder="e.g. 42" oninput="calcEV()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PSA 10 Price $</label>
+          <input class="form-input" type="number" step="0.01" id="f-psa10" placeholder="0.00" oninput="calcEV()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PSA 9 Price $</label>
+          <input class="form-input" type="number" step="0.01" id="f-psa9" placeholder="0.00" oninput="calcEV()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batch ID</label>
+          <input class="form-input" type="text" id="f-batch" placeholder="e.g. PSA-2025-001">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Notes</label>
+          <input class="form-input" type="text" id="f-notes" placeholder="Any notes...">
+        </div>
+      </div>
+
+      <!-- EV Preview -->
+      <div class="ev-preview" id="ev-preview">
+        <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Live EV Preview</div>
+        <div class="ev-preview-grid">
+          <div class="ev-preview-item"><div class="lbl">EV$</div><div class="val" id="prev-ev-dollar">--</div></div>
+          <div class="ev-preview-item"><div class="lbl">EV%</div><div class="val" id="prev-ev-pct">--</div></div>
+          <div class="ev-preview-item"><div class="lbl">Decision</div><div class="val" id="prev-decision">--</div></div>
+        </div>
+      </div>
+
+      <!-- Sold section — shown when marking as sold -->
+      <div class="sold-section" id="sold-section" style="display:none;">
+        <div class="sold-section-title">Sale Details</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Date Sold</label>
+            <input class="form-input" type="date" id="f-date-sold">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sale Price $</label>
+            <input class="form-input" type="number" step="0.01" id="f-sale-price" oninput="calcProfit()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Platform Fees $</label>
+            <input class="form-input" type="number" step="0.01" id="f-fees" oninput="calcProfit()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shipping Out $</label>
+            <input class="form-input" type="number" step="0.01" id="f-ship-out" oninput="calcProfit()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Net Proceeds $</label>
+            <input class="form-input" type="number" step="0.01" id="f-net-proceeds" readonly style="opacity:.6;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Realized Profit $</label>
+            <input class="form-input" type="number" step="0.01" id="f-realized-profit" readonly style="opacity:.6;">
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>
+      <button class="btn-add" id="modal-save-btn" onclick="saveCard()">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────────────────────
+var ALL_CARDS = [];
+var CURRENT_TAB = 'raw';
+var SORT_COL = 'created_at';
+var SORT_DIR = 'desc';
+var PLATFORM_FEE = 0.135;
+
+// ──────────────────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────────────────
+(async function init(){
+  var user = await requireAuth();
+  if (!user) return;
+
+  // Check if coming from Buy Signals with a card to add
+  try {
+    var addCard = sessionStorage.getItem('giq_add_card');
+    if (addCard && window.location.search.includes('add=1')) {
+      sessionStorage.removeItem('giq_add_card');
+      var card = JSON.parse(addCard);
+      setTimeout(function(){ openAddModal(card); }, 500);
+    }
+  } catch(e){}
+
+  await loadCards();
+})();
+
+async function loadCards(){
+  var { data, error } = await sb.from('inventory')
+    .select('*')
+    .eq('user_id', (await sb.auth.getUser()).data.user.id)
+    .order('created_at', { ascending: false });
+
+  if (error){ toast('Error loading collection: ' + error.message, true); return; }
+  ALL_CARDS = data || [];
+  updateCounts();
+  renderPortfolioStrip();
+  renderCurrentTab();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// COUNTS & PORTFOLIO
+// ──────────────────────────────────────────────────────────────────────────
+function updateCounts(){
+  var counts = { raw: 0, submitted: 0, graded: 0, sold: 0 };
+  ALL_CARDS.forEach(function(c){
+    if (c.status === 'raw') counts.raw++;
+    else if (c.status === 'submitted') counts.submitted++;
+    else if (c.status === 'graded') counts.graded++;
+    else if (c.status === 'sold') counts.sold++;
+  });
+  Object.keys(counts).forEach(function(k){
+    var el = g('count-' + k);
+    if (el) el.textContent = counts[k];
+  });
+}
+
+function renderPortfolioStrip(){
+  var active = ALL_CARDS.filter(function(c){ return c.status !== 'sold'; });
+  var sold = ALL_CARDS.filter(function(c){ return c.status === 'sold'; });
+  var totalInvested = active.reduce(function(s,c){ return s + (c.total_cost||0); }, 0);
+  var totalEVDollar = active.reduce(function(s,c){ return s + (c.ev_dollar||0); }, 0);
+  var totalProfit = sold.reduce(function(s,c){ return s + (c.realized_profit||0); }, 0);
+  var avgEVPct = active.length ? active.reduce(function(s,c){ return s + (c.ev_pct||0); }, 0) / active.length : 0;
+
+  var el = g('portfolio-strip');
+  if (!el) return;
+  el.innerHTML = [
+    { lbl: 'Cards Owned', val: active.length, sub: ALL_CARDS.length + ' total', color: 'var(--text)' },
+    { lbl: 'Total Invested', val: '$' + totalInvested.toFixed(2), sub: 'raw + grading + ship', color: 'var(--text)' },
+    { lbl: 'Expected Value', val: totalEVDollar >= 0 ? '+$' + totalEVDollar.toFixed(2) : '-$' + Math.abs(totalEVDollar).toFixed(2), sub: 'across active cards', color: totalEVDollar >= 0 ? 'var(--green)' : '#F87171' },
+    { lbl: 'Avg EV%', val: (avgEVPct * 100).toFixed(1) + '%', sub: 'active cards', color: avgEVPct >= 0.40 ? 'var(--green)' : 'var(--text)' },
+    { lbl: 'Realized P&L', val: (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toFixed(2), sub: sold.length + ' cards sold', color: totalProfit >= 0 ? 'var(--green)' : '#F87171' },
+  ].map(function(s){
+    return '<div class="ps-card"><div class="ps-lbl">'+s.lbl+'</div><div class="ps-val" style="color:'+s.color+';">'+s.val+'</div><div class="ps-sub">'+s.sub+'</div></div>';
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────────────────────────────────────
+function switchTab(tab, btn){
+  CURRENT_TAB = tab;
+  document.querySelectorAll('.sub-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderCurrentTab();
+}
+
+function renderCurrentTab(){
+  var search = ((g('coll-search')||{value:''}).value||'').toLowerCase().trim();
+  var sort = (g('coll-sort')||{value:'date_desc'}).value;
+  var sport = (g('coll-sport')||{value:''}).value;
+
+  var cards = ALL_CARDS.filter(function(c){
+    if (CURRENT_TAB === 'raw' && c.status !== 'raw') return false;
+    if (CURRENT_TAB === 'submitted' && c.status !== 'submitted') return false;
+    if (CURRENT_TAB === 'graded' && c.status !== 'graded') return false;
+    if (CURRENT_TAB === 'sold' && c.status !== 'sold') return false;
+    if (sport && c.sport !== sport) return false;
+    if (search && !(c.player||'').toLowerCase().includes(search) && !(c.set_name||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  cards.sort(function(a,b){
+    if (sort === 'date_desc') return new Date(b.created_at||0) - new Date(a.created_at||0);
+    if (sort === 'date_asc')  return new Date(a.created_at||0) - new Date(b.created_at||0);
+    if (sort === 'cost_desc') return (b.total_cost||0) - (a.total_cost||0);
+    if (sort === 'cost_asc')  return (a.total_cost||0) - (b.total_cost||0);
+    if (sort === 'ev_desc')   return (b.ev_pct||0) - (a.ev_pct||0);
+    if (sort === 'player_asc') return (a.player||'').localeCompare(b.player||'');
+    return 0;
+  });
+
+  if (CURRENT_TAB === 'raw')       renderRawTable(cards);
+  else if (CURRENT_TAB === 'submitted') renderSubmittedTable(cards);
+  else if (CURRENT_TAB === 'graded')   renderGradedTable(cards);
+  else if (CURRENT_TAB === 'sold')     renderSoldTable(cards);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// TABLE RENDERS
+// ──────────────────────────────────────────────────────────────────────────
+function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(parseFloat(v)).toFixed(2); }
+function fPct(v){ if(v==null)return'--'; return(parseFloat(v)*100).toFixed(1)+'%'; }
+function fDate(d){ if(!d)return'--'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function sportChip(sport){
+  var map={Baseball:'rgba(239,68,68,.12)|#f87171',Basketball:'rgba(249,115,22,.12)|#fb923c',Football:'rgba(16,185,129,.12)|#34d399',TCG:'rgba(168,85,247,.15)|#c084fc'};
+  var c=(map[sport]||'rgba(100,100,100,.1)|#888').split('|');
+  return '<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';">'+sport+'</span>';
+}
+
+function playerCell(c){
+  var ss = (c.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
+  return '<div class="player-cell">'
+    + '<div class="player-name">'+(c.player||'--')+'</div>'
+    + '<div class="player-set">'+(c.year?c.year+' ':'')+ss+(c.card_no?' · #'+c.card_no:'')+(c.parallel&&c.parallel.toLowerCase()!=='base'?' · '+c.parallel:'')+'</div>'
+    + '</div>';
+}
+
+function renderRawTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No raw cards yet', 'Add cards you\'ve purchased and are holding raw before grading.'); return; }
+  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Date</th><th class="num">Cost</th><th class="num">EV%</th><th class="num">EV$</th><th class="num">PSA 10</th><th></th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var evColor = c.ev_pct >= 0.40 ? ' green' : c.ev_pct >= 0.35 ? '' : ' muted';
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td class="muted">'+fDate(c.date_acquired)+'</td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
+      + '<td class="num'+evColor+'">'+f$(c.ev_dollar)+'</td>'
+      + '<td class="num">'+f$(c.psa10)+'</td>'
+      + '<td><div class="row-actions">'
+        + '<button class="row-btn" onclick="submitToGrading(\''+c.id+'\')">Submit</button>'
+        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
+        + '<button class="row-btn danger" onclick="deleteCard(\''+c.id+'\')">Delete</button>'
+      + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderSubmittedTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No active submissions', 'Cards submitted to PSA for grading will appear here.'); return; }
+  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Submitted</th><th class="num">Total Cost</th><th>Batch</th><th class="num">PSA 10</th><th></th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td class="muted">'+fDate(c.date_acquired)+'</td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="muted">'+(c.batch_id||'--')+'</td>'
+      + '<td class="num">'+f$(c.psa10)+'</td>'
+      + '<td><div class="row-actions">'
+        + '<button class="row-btn" onclick="markGraded(\''+c.id+'\')">Mark Graded</button>'
+        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
+      + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderGradedTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No graded cards yet', 'Cards returned from PSA will appear here.'); return; }
+  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Grade</th><th class="num">Total Cost</th><th class="num">EV%</th><th class="num">Market Value</th><th></th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var grade = c.psa_grade;
+    var gradeColor = grade === 10 ? 'var(--green)' : grade >= 9 ? 'var(--text)' : 'var(--text-muted)';
+    var marketVal = grade === 10 ? c.psa10 : grade === 9 ? c.psa9 : null;
+    var evColor = c.ev_pct >= 0.40 ? ' green' : '';
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td><span style="font-size:18px;font-weight:900;color:'+gradeColor+';">'+(grade?'PSA '+grade:'--')+'</span></td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
+      + '<td class="num green">'+f$(marketVal)+'</td>'
+      + '<td><div class="row-actions">'
+        + '<button class="row-btn" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
+        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
+      + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderSoldTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No sold cards yet', 'Cards you\'ve sold will appear here with full P&L.'); return; }
+  var totalProfit = cards.reduce(function(s,c){ return s + (c.realized_profit||0); }, 0);
+  var html = '<div style="background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.15);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;gap:24px;">'
+    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards Sold</div><div style="font-size:18px;font-weight:900;color:var(--text);">'+cards.length+'</div></div>'
+    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Total Profit</div><div style="font-size:18px;font-weight:900;color:'+(totalProfit>=0?'var(--green)':'#F87171')+';">'+(totalProfit>=0?'+':'')+f$(totalProfit)+'</div></div>'
+    + '</div>';
+  html += '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Date Sold</th><th class="num">Cost</th><th class="num">Sale Price</th><th class="num">Net</th><th class="num">Profit</th><th class="num">EV% Ret.</th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var profitColor = (c.realized_profit||0) >= 0 ? ' green' : ' red';
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td class="muted">'+fDate(c.date_sold)+'</td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num">'+f$(c.sale_price)+'</td>'
+      + '<td class="num">'+f$(c.net_proceeds)+'</td>'
+      + '<td class="num'+profitColor+'">'+((c.realized_profit||0)>=0?'+':'')+f$(c.realized_profit)+'</td>'
+      + '<td class="num'+profitColor+'">'+fPct(c.ev_pct_returned)+'</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function emptyState(title, sub){
+  return '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">'+title+'</div><div class="empty-sub">'+sub+'</div><button class="btn-add" onclick="openAddModal()">+ Add Card</button></div>';
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// MODAL
+// ──────────────────────────────────────────────────────────────────────────
+function openAddModal(prefill){
+  resetModal();
+  g('modal-title').textContent = 'Add Card';
+  g('modal-save-btn').textContent = 'Save Card';
+  // Set today's date
+  g('f-date').value = new Date().toISOString().split('T')[0];
+  if (prefill){
+    if(prefill.player) g('f-player').value = prefill.player;
+    if(prefill.sport)  g('f-sport').value = prefill.sport;
+    if(prefill.year)   g('f-year').value = prefill.year;
+    if(prefill.set_name) g('f-set').value = prefill.set_name;
+    if(prefill.card_no)  g('f-cardno').value = prefill.card_no;
+    if(prefill.parallel) g('f-parallel').value = prefill.parallel;
+    if(prefill.raw_price){ g('f-price').value = prefill.raw_price; calcTotalCost(); }
+    if(prefill.source) g('f-source').value = prefill.source;
+  }
+  g('card-modal').classList.add('open');
+}
+
+function openEditModal(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  resetModal();
+  g('modal-title').textContent = 'Edit Card';
+  g('modal-save-btn').textContent = 'Save Changes';
+  g('edit-id').value = id;
+  g('f-player').value = card.player||'';
+  g('f-sport').value = card.sport||'';
+  g('f-year').value = card.year||'';
+  g('f-set').value = card.set_name||'';
+  g('f-cardno').value = card.card_no||'';
+  g('f-parallel').value = card.parallel||'';
+  g('f-date').value = card.date_acquired||'';
+  g('f-source').value = card.source||'';
+  g('f-price').value = card.price||'';
+  g('f-ship').value = card.ship||'';
+  g('f-grading').value = card.grading||'';
+  g('f-total').value = card.total_cost||'';
+  g('f-status').value = card.status||'raw';
+  g('f-gemrate').value = card.gem_rate ? (card.gem_rate*100).toFixed(1) : '';
+  g('f-psa10').value = card.psa10||'';
+  g('f-psa9').value = card.psa9||'';
+  g('f-batch').value = card.batch_id||'';
+  g('f-notes').value = card.notes||'';
+  g('f-grade').value = card.psa_grade||'';
+  onStatusChange();
+  calcEV();
+  g('card-modal').classList.add('open');
+}
+
+function closeModal(){
+  g('card-modal').classList.remove('open');
+}
+
+function resetModal(){
+  ['f-player','f-sport','f-year','f-set','f-cardno','f-parallel','f-date','f-source',
+   'f-price','f-ship','f-grading','f-total','f-gemrate','f-psa10','f-psa9','f-batch',
+   'f-notes','f-grade','f-date-sold','f-sale-price','f-fees','f-ship-out',
+   'f-net-proceeds','f-realized-profit'].forEach(function(id){
+    var el = g(id); if(el) el.value='';
+  });
+  g('edit-id').value = '';
+  g('f-status').value = 'raw';
+  g('f-grade-wrap').style.display = 'none';
+  g('sold-section').style.display = 'none';
+  g('ev-preview').style.display = 'none';
+}
+
+function onStatusChange(){
+  var status = g('f-status').value;
+  g('f-grade-wrap').style.display = status === 'graded' ? 'block' : 'none';
+  g('sold-section').style.display = 'none';
+}
+
+function calcTotalCost(){
+  var price = parseFloat(g('f-price').value)||0;
+  var ship  = parseFloat(g('f-ship').value)||0;
+  var grade = parseFloat(g('f-grading').value)||0;
+  g('f-total').value = (price + ship + grade).toFixed(2);
+  calcEV();
+}
+
+function calcEV(){
+  var total = parseFloat(g('f-total').value)||0;
+  var psa10 = parseFloat(g('f-psa10').value)||0;
+  var psa9  = parseFloat(g('f-psa9').value)||0;
+  var gemRate = (parseFloat(g('f-gemrate').value)||0) / 100;
+  if (!total || !psa10 || !gemRate){ g('ev-preview').style.display='none'; return; }
+  var n10 = psa10 * (1 - PLATFORM_FEE);
+  var n9  = psa9 ? psa9 * (1 - PLATFORM_FEE) : n10 * 0.30;
+  var expRet = gemRate * n10 + (1 - gemRate) * 0.80 * n9;
+  var evDollar = expRet - total;
+  var evPct = evDollar / total;
+  var decision = evPct >= 0.40 ? 'BUY' : evPct >= 0.35 ? 'CAUTION' : 'PASS';
+  var dc = decision === 'BUY' ? 'var(--green)' : decision === 'CAUTION' ? 'var(--amber)' : '#F87171';
+  g('prev-ev-dollar').textContent = f$(evDollar);
+  g('prev-ev-pct').textContent = (evPct*100).toFixed(1)+'%';
+  g('prev-decision').textContent = decision;
+  g('prev-decision').style.color = dc;
+  g('ev-preview').style.display = 'block';
+}
+
+function calcProfit(){
+  var salePrice = parseFloat(g('f-sale-price').value)||0;
+  var fees = parseFloat(g('f-fees').value)||0;
+  var shipOut = parseFloat(g('f-ship-out').value)||0;
+  var totalCost = parseFloat(g('f-total').value)||0;
+  var netProceeds = salePrice - fees - shipOut;
+  var profit = netProceeds - totalCost;
+  g('f-net-proceeds').value = netProceeds.toFixed(2);
+  g('f-realized-profit').value = profit.toFixed(2);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// SAVE
+// ──────────────────────────────────────────────────────────────────────────
+async function saveCard(){
+  var id = g('edit-id').value;
+  var player = g('f-player').value.trim();
+  if (!player){ toast('Player name is required', true); return; }
+
+  var total = parseFloat(g('f-total').value)||0;
+  var psa10 = parseFloat(g('f-psa10').value)||0;
+  var psa9  = parseFloat(g('f-psa9').value)||0;
+  var gemRate = (parseFloat(g('f-gemrate').value)||0) / 100;
+
+  // Recalc EV
+  var evDollar = null, evPct = null, netPsa10 = null, netPsa9 = null;
+  if (total && psa10 && gemRate) {
+    netPsa10 = psa10 * (1 - PLATFORM_FEE);
+    netPsa9  = psa9 ? psa9 * (1 - PLATFORM_FEE) : netPsa10 * 0.30;
+    var expRet = gemRate * netPsa10 + (1 - gemRate) * 0.80 * netPsa9;
+    evDollar = expRet - total;
+    evPct = evDollar / total;
+  }
+
+  var user = (await sb.auth.getUser()).data.user;
+  var payload = {
+    user_id: user.id,
+    player: player,
+    sport: g('f-sport').value||null,
+    year: parseInt(g('f-year').value)||null,
+    set_name: g('f-set').value||null,
+    card_no: g('f-cardno').value||null,
+    parallel: g('f-parallel').value||null,
+    date_acquired: g('f-date').value||null,
+    source: g('f-source').value||null,
+    price: parseFloat(g('f-price').value)||null,
+    ship: parseFloat(g('f-ship').value)||null,
+    grading: parseFloat(g('f-grading').value)||null,
+    total_cost: total||null,
+    gem_rate: gemRate||null,
+    psa10: psa10||null,
+    psa9: psa9||null,
+    net_psa10: netPsa10,
+    net_psa9: netPsa9,
+    ev_dollar: evDollar !== null ? Math.round(evDollar*100)/100 : null,
+    ev_pct: evPct !== null ? Math.round(evPct*1000)/1000 : null,
+    batch_id: g('f-batch').value||null,
+    notes: g('f-notes').value||null,
+    status: g('f-status').value||'raw',
+    psa_grade: parseInt(g('f-grade').value)||null,
+  };
+
+  var res;
+  if (id) {
+    res = await sb.from('inventory').update(payload).eq('id', id);
+  } else {
+    res = await sb.from('inventory').insert(payload);
+  }
+
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast(id ? 'Card updated!' : 'Card added!');
+  closeModal();
+  await loadCards();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// QUICK ACTIONS
+// ──────────────────────────────────────────────────────────────────────────
+async function submitToGrading(id){
+  var res = await sb.from('inventory').update({ status: 'submitted' }).eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Marked as submitted!');
+  await loadCards();
+}
+
+async function markGraded(id){
+  var grade = prompt('Enter PSA grade (1-10):');
+  if (!grade || isNaN(parseInt(grade))) return;
+  var res = await sb.from('inventory').update({ status: 'graded', psa_grade: parseInt(grade) }).eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Marked as graded — PSA ' + grade + '!');
+  await loadCards();
+}
+
+async function markSold(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  openEditModal(id);
+  g('f-status').value = 'sold';
+  g('sold-section').style.display = 'block';
+  g('f-date-sold').value = new Date().toISOString().split('T')[0];
+}
+
+async function deleteCard(id){
+  if (!confirm('Delete this card? This cannot be undone.')) return;
+  var res = await sb.from('inventory').delete().eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Card deleted');
+  await loadCards();
+}
+</script>
+</body>
+</html>
