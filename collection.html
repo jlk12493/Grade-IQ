@@ -63,11 +63,13 @@
 .status-sold{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);}
 
 /* Row actions */
-.row-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s;}
-.tbl tr:hover .row-actions{opacity:1;}
-.row-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;white-space:nowrap;}
-.row-btn:hover{border-color:var(--green);color:var(--green);}
-.row-btn.danger:hover{border-color:#F87171;color:#F87171;}
+.row-actions{display:flex;gap:4px;}
+.row-btn{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.row-btn:hover{border-color:var(--green);color:var(--green);background:rgba(182,255,0,.08);}
+.row-btn.danger{color:#F87171;border-color:rgba(248,113,113,.3);}
+.row-btn.danger:hover{border-color:#F87171;background:rgba(248,113,113,.08);}
+.row-btn.primary{background:var(--green);color:#000;border-color:var(--green);}
+.row-btn.primary:hover{opacity:.88;}
 
 /* Add/Edit modal */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:center;justify-content:center;padding:20px;}
@@ -105,6 +107,28 @@ select.form-input{cursor:pointer;}
 .empty-icon{font-size:40px;margin-bottom:12px;}
 .empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
 .empty-sub{font-size:13px;margin-bottom:20px;}
+
+/* Multi-select */
+.select-col{width:36px;}
+.card-checkbox{width:16px;height:16px;accent-color:var(--green);cursor:pointer;}
+.bulk-bar{display:none;background:rgba(182,255,0,.08);border:1px solid rgba(182,255,0,.2);border-radius:8px;padding:10px 16px;margin-bottom:12px;align-items:center;gap:12px;}
+.bulk-bar.show{display:flex;}
+.bulk-count{font-size:12px;color:var(--green);font-weight:700;}
+.bulk-btn{background:var(--green);color:#000;border:none;padding:7px 14px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;}
+.bulk-btn:hover{opacity:.9;}
+.bulk-clear{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 12px;border-radius:6px;font-size:11px;cursor:pointer;}
+
+/* Batch group in submissions */
+.batch-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;}
+.batch-head{padding:12px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;cursor:pointer;}
+.batch-head-id{font-size:13px;font-weight:800;color:var(--text);}
+.batch-stat{display:flex;flex-direction:column;gap:1px;}
+.batch-stat-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;}
+.batch-stat-val{font-size:13px;font-weight:800;}
+.batch-chevron{margin-left:auto;color:var(--text-muted);font-size:12px;transition:transform .2s;}
+.batch-chevron.open{transform:rotate(90deg);}
+.batch-cards{display:none;}
+.batch-cards.open{display:block;}
 
 /* Mobile */
 @media(max-width:768px){
@@ -153,6 +177,13 @@ select.form-input{cursor:pointer;}
       <option value="Football">Football</option>
       <option value="TCG">TCG</option>
     </select>
+  </div>
+
+  <!-- BULK ACTION BAR -->
+  <div class="bulk-bar" id="bulk-bar">
+    <span class="bulk-count" id="bulk-count">0 cards selected</span>
+    <button class="bulk-btn" onclick="bulkSubmit()">Submit Selected to Grading</button>
+    <button class="bulk-clear" onclick="clearSelection()">Clear</button>
   </div>
 
   <!-- TABLE AREA -->
@@ -343,44 +374,42 @@ var PLATFORM_FEE = 0.135;
   var user = await requireAuth();
   if (!user) return;
 
-  await loadCards();
-
-  // Check if coming from Buy Signals with a card to add — after cards load
+  // Check if coming from Buy Signals with a card to add
   try {
     var addCard = sessionStorage.getItem('giq_add_card');
-    console.log('giq_add_card from sessionStorage:', addCard);
-    console.log('URL:', window.location.search);
-    if (addCard) {
+    if (addCard && window.location.search.includes('add=1')) {
       sessionStorage.removeItem('giq_add_card');
       var card = JSON.parse(addCard);
-      console.log('Opening modal with:', card);
-      setTimeout(function(){ openAddModal(card); }, 300);
+      setTimeout(function(){ openAddModal(card); }, 500);
     }
-  } catch(e){ console.error('sessionStorage error:', e); }
+  } catch(e){}
+
+  await loadCards();
 })();
 
 async function loadCards(){
   var userId = (await sb.auth.getUser()).data.user.id;
   var { data, error } = await sb.from('inventory')
-    .select('*')
+    .select('*, ev_scanner!inventory_card_id_fkey(image_url)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error){ toast('Error loading collection: ' + error.message, true); return; }
-  ALL_CARDS = data || [];
-
-  // Fetch images from ev_scanner for cards with a card_id
-  var cardIds = ALL_CARDS.filter(function(c){ return c.card_id && !c.image_url; }).map(function(c){ return c.card_id; });
-  if (cardIds.length) {
-    var { data: scannerRows } = await sb.from('ev_scanner').select('scp_id, image_url').in('scp_id', cardIds);
-    if (scannerRows) {
-      var imgMap = {};
-      scannerRows.forEach(function(r){ imgMap[r.scp_id] = r.image_url; });
-      ALL_CARDS = ALL_CARDS.map(function(c){
-        if (c.card_id && !c.image_url && imgMap[c.card_id]) c._scanner_image = imgMap[c.card_id];
-        return c;
-      });
-    }
+  if (error){
+    // Fallback without join if FK doesn't exist
+    var { data: data2, error: error2 } = await sb.from('inventory')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error2){ toast('Error loading collection: ' + error2.message, true); return; }
+    ALL_CARDS = data2 || [];
+  } else {
+    // Flatten the join
+    ALL_CARDS = (data || []).map(function(c){
+      var img = c.ev_scanner && c.ev_scanner.image_url ? c.ev_scanner.image_url : null;
+      delete c.ev_scanner;
+      c._scanner_image = img;
+      return c;
+    });
   }
   updateCounts();
   renderPortfolioStrip();
@@ -501,55 +530,76 @@ function playerCell(c){
     + '</div></div>';
 }
 
+var SELECTED_IDS = {};
+
+function toggleSelect(id, cb){
+  if (cb.checked) SELECTED_IDS[id] = true;
+  else delete SELECTED_IDS[id];
+  updateBulkBar();
+}
+
+function updateBulkBar(){
+  var count = Object.keys(SELECTED_IDS).length;
+  var bar = g('bulk-bar');
+  var countEl = g('bulk-count');
+  if (bar) bar.classList.toggle('show', count > 0);
+  if (countEl) countEl.textContent = count + ' card' + (count !== 1 ? 's' : '') + ' selected';
+}
+
+function clearSelection(){
+  SELECTED_IDS = {};
+  document.querySelectorAll('.card-checkbox').forEach(function(cb){ cb.checked = false; });
+  updateBulkBar();
+}
+
+async function bulkSubmit(){
+  var ids = Object.keys(SELECTED_IDS);
+  if (!ids.length) return;
+  var batchId = prompt('Enter PSA batch ID for these ' + ids.length + ' cards:');
+  var updates = { status: 'submitted' };
+  if (batchId && batchId.trim()) updates.batch_id = batchId.trim();
+  var res = await sb.from('inventory').update(updates).in('id', ids);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast(ids.length + ' cards submitted' + (batchId ? ' · Batch: ' + batchId : '') + '!');
+  SELECTED_IDS = {};
+  updateBulkBar();
+  await loadCards();
+}
+
 function renderRawTable(cards){
   var el = g('tab-content'); if(!el) return;
   if (!cards.length){ el.innerHTML = emptyState("No raw cards yet", "Add cards you've purchased and are holding raw before grading."); return; }
-  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    + '<th>Card</th><th>Sport</th><th>Date</th><th class="num">Cost</th><th class="num">EV%</th><th class="num">EV$</th><th class="num">PSA 10</th><th></th>'
-    + '</tr></thead><tbody>';
-  cards.forEach(function(c){
+  var rows = cards.map(function(c){
     var evColor = c.ev_pct >= 0.40 ? ' green' : c.ev_pct >= 0.35 ? '' : ' muted';
-    html += '<tr>'
-      + '<td>'+playerCell(c)+'</td>'
-      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
-      + '<td class="muted">'+fDate(c.date_acquired)+'</td>'
-      + '<td class="num">'+f$(c.total_cost)+'</td>'
-      + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
-      + '<td class="num'+evColor+'">'+f$(c.ev_dollar)+'</td>'
-      + '<td class="num">'+f$(c.psa10)+'</td>'
-      + '<td><div class="row-actions">'
-        + '<button class="row-btn" onclick="submitToGrading(\''+c.id+'\')">Submit</button>'
-        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
-        + '<button class="row-btn danger" onclick="deleteCard(\''+c.id+'\')">Delete</button>'
-      + '</div></td>'
-      + '</tr>';
-  });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
+    var chk = SELECTED_IDS[c.id] ? ' checked' : '';
+    return [
+      '<tr>',
+        '<td class="select-col"><input type="checkbox" class="card-checkbox row-cb"',
+          ' data-id="' + c.id + '"' + chk,
+          ' onchange="toggleSelect(this.dataset.id,this)"></td>',
+        '<td>' + playerCell(c) + '</td>',
+        '<td>' + (c.sport ? sportChip(c.sport) : '--') + '</td>',
+        '<td class="muted">' + fDate(c.date_acquired) + '</td>',
+        '<td class="num">' + f$(c.total_cost) + '</td>',
+        '<td class="num' + evColor + '">' + fPct(c.ev_pct) + '</td>',
+        '<td class="num' + evColor + '">' + f$(c.ev_dollar) + '</td>',
+        '<td class="num">' + f$(c.psa10) + '</td>',
+        '<td><div class="row-actions">',
+          '<button class="row-btn primary" onclick="submitToGrading(' + JSON.stringify(c.id) + ')">Submit</button>',
+          '<button class="row-btn" onclick="openEditModal(' + JSON.stringify(c.id) + ')">Edit</button>',
+          '<button class="row-btn danger" onclick="deleteCard(' + JSON.stringify(c.id) + ')">Delete</button>',
+        '</div></td>',
+      '</tr>'
+    ].join('');
+  }).join('');
 
-function renderSubmittedTable(cards){
-  var el = g('tab-content'); if(!el) return;
-  if (!cards.length){ el.innerHTML = emptyState('No active submissions', 'Cards submitted to PSA for grading will appear here.'); return; }
-  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    + '<th>Card</th><th>Sport</th><th>Submitted</th><th class="num">Total Cost</th><th>Batch</th><th class="num">PSA 10</th><th></th>'
-    + '</tr></thead><tbody>';
-  cards.forEach(function(c){
-    html += '<tr>'
-      + '<td>'+playerCell(c)+'</td>'
-      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
-      + '<td class="muted">'+fDate(c.date_acquired)+'</td>'
-      + '<td class="num">'+f$(c.total_cost)+'</td>'
-      + '<td class="muted">'+(c.batch_id||'--')+'</td>'
-      + '<td class="num">'+f$(c.psa10)+'</td>'
-      + '<td><div class="row-actions">'
-        + '<button class="row-btn" onclick="markGraded(\''+c.id+'\')">Mark Graded</button>'
-        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
-      + '</div></td>'
-      + '</tr>';
-  });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
+  var selectAllCb = '<input type="checkbox" onchange="(function(cb){document.querySelectorAll(\'.row-cb\').forEach(function(c){c.checked=cb.checked;if(cb.checked)SELECTED_IDS[c.dataset.id]=true;else delete SELECTED_IDS[c.dataset.id];});updateBulkBar();})(this)">';
+
+  el.innerHTML = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th class="select-col">' + selectAllCb + '</th>'
+    + '<th>Card</th><th>Sport</th><th>Date</th><th class="num">Cost</th>'
+    + '<th class="num">EV%</th><th class="num">EV$</th><th class="num">PSA 10</th><th>Actions</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 function renderGradedTable(cards){
@@ -571,7 +621,8 @@ function renderGradedTable(cards){
       + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
       + '<td class="num green">'+f$(marketVal)+'</td>'
       + '<td><div class="row-actions">'
-        + '<button class="row-btn" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
+        + '<button class="row-btn primary" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
+        + '<button class="row-btn" onclick="listOnEbay(\''+c.id+'\')">🛒 eBay</button>'
         + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
       + '</div></td>'
       + '</tr>';
@@ -630,23 +681,11 @@ function openAddModal(prefill){
     if(prefill.parallel) g('f-parallel').value = prefill.parallel;
     if(prefill.raw_price){ g('f-price').value = prefill.raw_price; calcTotalCost(); }
     if(prefill.source)   g('f-source').value = prefill.source;
-    if(prefill.psa10 && prefill.psa10 > 0)    g('f-psa10').value = prefill.psa10;
-    if(prefill.psa9 && prefill.psa9 > 0)      g('f-psa9').value = prefill.psa9;
-    if(prefill.gem_rate && prefill.gem_rate > 0) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
+    if(prefill.psa10)    g('f-psa10').value = prefill.psa10;
+    if(prefill.psa9)     g('f-psa9').value = prefill.psa9;
+    if(prefill.gem_rate) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
     if(prefill.image_url) g('card-modal').dataset.imageUrl = prefill.image_url;
     if(prefill.scp_id)    g('card-modal').dataset.cardId = prefill.scp_id;
-    // If pricing data missing, try to fetch from ev_scanner by scp_id
-    if (prefill.scp_id && (!prefill.psa10 || prefill.psa10 === 0)) {
-      sb.from('ev_scanner').select('psa10_price,psa9_price,actual_gem_rate,image_url').eq('scp_id', prefill.scp_id).single().then(function(res){
-        if (res.data) {
-          if (res.data.psa10_price) g('f-psa10').value = res.data.psa10_price;
-          if (res.data.psa9_price)  g('f-psa9').value  = res.data.psa9_price;
-          if (res.data.actual_gem_rate) g('f-gemrate').value = (res.data.actual_gem_rate * 100).toFixed(1);
-          if (res.data.image_url && !g('card-modal').dataset.imageUrl) g('card-modal').dataset.imageUrl = res.data.image_url;
-          calcEV();
-        }
-      });
-    }
     calcEV();
   }
   g('card-modal').classList.add('open');
@@ -867,9 +906,431 @@ async function markSold(id){
   var card = ALL_CARDS.find(function(c){ return c.id === id; });
   if (!card) return;
   openEditModal(id);
-  g('f-status').value = 'sold';
-  g('sold-section').style.display = 'block';
-  g('f-date-sold').value = new Date().toISOString().split('T')[0];
+  // Wait for modal to populate before overriding status
+  setTimeout(function(){
+    g('f-status').value = 'sold';
+    g('sold-section').style.display = 'block';
+    g('f-date-sold').value = new Date().toISOString().split('T')[0];
+    // Pre-fill total cost for profit calculation
+    if (card.total_cost) g('f-total').value = card.total_cost;
+  }, 100);
+}
+
+function listOnEbay(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  var grade = card.psa_grade || 10;
+  var title = [card.year, card.player, card.set_name, card.card_no ? '#'+card.card_no : '', card.parallel && card.parallel.toLowerCase() !== 'base' ? card.parallel : '', 'PSA '+grade].filter(Boolean).join(' ');
+  // Trim to eBay's 80 char limit
+  if (title.length > 80) title = title.substring(0, 77) + '...';
+  var q = encodeURIComponent(title);
+  var url = 'https://www.ebay.com/sell/listing/create?title='+q;
+  window.open(url, '_blank');
+}
+
+async function deleteCard(id){
+  if (!confirm('Delete this card? This cannot be undone.')) return;
+  var res = await sb.from('inventory').delete().eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Card deleted');
+  await loadCards();
+}
+</script>
+</body>
+</html>
+function toggleBatch(batchKey){
+  var cards = g('batch-cards-' + batchKey);
+  var chev = g('batch-chev-' + batchKey);
+  if (cards) cards.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+}
+
+function renderSubmittedTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No active submissions', 'Cards submitted to PSA for grading will appear here.'); return; }
+
+  // Group by batch_id
+  var batches = {}, batchOrder = [];
+  cards.forEach(function(c){
+    var key = c.batch_id || 'unbatched';
+    if (!batches[key]){ batches[key] = []; batchOrder.push(key); }
+    batches[key].push(c);
+  });
+
+  var html = '';
+  batchOrder.forEach(function(batchKey){
+    var bCards = batches[batchKey];
+    var bk = batchKey.replace(/[^a-z0-9]/gi, '_');
+    var totalCost = bCards.reduce(function(s,c){ return s+(c.total_cost||0); }, 0);
+    var avgEVD = bCards.reduce(function(s,c){ return s+(c.ev_dollar||0); }, 0) / bCards.length;
+    var avgEVP = bCards.reduce(function(s,c){ return s+(c.ev_pct||0); }, 0) / bCards.length;
+    var projProfit = bCards.reduce(function(s,c){ return s+(c.ev_dollar||0); }, 0);
+    var evColor = avgEVP >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
+    var label = batchKey === 'unbatched' ? 'No Batch ID' : 'Batch #' + batchKey;
+
+    html += '<div class="batch-group">';
+    html += '<div class="batch-head" onclick="toggleBatch('' + bk + '')">';
+    html += '<div class="batch-head-id">' + label + ' <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(' + bCards.length + ' card' + (bCards.length!==1?'s':'') + ')</span></div>';
+    html += '<div class="batch-stat"><div class="batch-stat-lbl">Total Cost</div><div class="batch-stat-val">' + f$(totalCost) + '</div></div>';
+    html += '<div class="batch-stat"><div class="batch-stat-lbl">Avg EV$</div><div class="batch-stat-val" style="color:' + evColor + ';">' + (avgEVD>=0?'+':'') + f$(avgEVD) + '</div></div>';
+    html += '<div class="batch-stat"><div class="batch-stat-lbl">Avg EV%</div><div class="batch-stat-val" style="color:' + evColor + ';">' + fPct(avgEVP) + '</div></div>';
+    html += '<div class="batch-stat"><div class="batch-stat-lbl">Proj Profit</div><div class="batch-stat-val" style="color:' + evColor + ';">' + (projProfit>=0?'+':'') + f$(projProfit) + '</div></div>';
+    html += '<span class="batch-chevron open" id="batch-chev-' + bk + '">▶</span>';
+    html += '</div>';
+
+    html += '<div class="batch-cards open" id="batch-cards-' + bk + '">';
+    html += '<table class="tbl"><thead><tr>'
+      + '<th>Card</th><th>Sport</th><th>Date</th><th class="num">Cost</th><th class="num">EV%</th><th class="num">PSA 10</th><th>Actions</th>'
+      + '</tr></thead><tbody>';
+
+    bCards.forEach(function(c){
+      var ec = c.ev_pct >= 0.40 ? ' green' : ' muted';
+      html += [
+        '<tr>',
+          '<td>' + playerCell(c) + '</td>',
+          '<td>' + (c.sport ? sportChip(c.sport) : '--') + '</td>',
+          '<td class="muted">' + fDate(c.date_acquired) + '</td>',
+          '<td class="num">' + f$(c.total_cost) + '</td>',
+          '<td class="num' + ec + '">' + fPct(c.ev_pct) + '</td>',
+          '<td class="num">' + f$(c.psa10) + '</td>',
+          '<td><div class="row-actions">',
+            '<button class="row-btn primary" onclick="markGraded(' + JSON.stringify(c.id) + ')">Mark Graded</button>',
+            '<button class="row-btn" onclick="openEditModal(' + JSON.stringify(c.id) + ')">Edit</button>',
+          '</div></td>',
+        '</tr>'
+      ].join('');
+    });
+
+    html += '</tbody></table></div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function renderGradedTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState('No graded cards yet', 'Cards returned from PSA will appear here.'); return; }
+  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Grade</th><th class="num">Total Cost</th><th class="num">EV%</th><th class="num">Market Value</th><th></th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var grade = c.psa_grade;
+    var gradeColor = grade === 10 ? 'var(--green)' : grade >= 9 ? 'var(--text)' : 'var(--text-muted)';
+    var marketVal = grade === 10 ? c.psa10 : grade === 9 ? c.psa9 : null;
+    var evColor = c.ev_pct >= 0.40 ? ' green' : '';
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td><span style="font-size:18px;font-weight:900;color:'+gradeColor+';">'+(grade?'PSA '+grade:'--')+'</span></td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
+      + '<td class="num green">'+f$(marketVal)+'</td>'
+      + '<td><div class="row-actions">'
+        + '<button class="row-btn primary" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
+        + '<button class="row-btn" onclick="listOnEbay(\''+c.id+'\')">🛒 eBay</button>'
+        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
+      + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderSoldTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState("No sold cards yet", "Cards you've sold will appear here with full P&L."); return; }
+  var totalProfit = cards.reduce(function(s,c){ return s + (c.realized_profit||0); }, 0);
+  var html = '<div style="background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.15);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;gap:24px;">'
+    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards Sold</div><div style="font-size:18px;font-weight:900;color:var(--text);">'+cards.length+'</div></div>'
+    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Total Profit</div><div style="font-size:18px;font-weight:900;color:'+(totalProfit>=0?'var(--green)':'#F87171')+';">'+(totalProfit>=0?'+':'')+f$(totalProfit)+'</div></div>'
+    + '</div>';
+  html += '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>Date Sold</th><th class="num">Cost</th><th class="num">Sale Price</th><th class="num">Net</th><th class="num">Profit</th><th class="num">EV% Ret.</th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var profitColor = (c.realized_profit||0) >= 0 ? ' green' : ' red';
+    html += '<tr>'
+      + '<td>'+playerCell(c)+'</td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td class="muted">'+fDate(c.date_sold)+'</td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num">'+f$(c.sale_price)+'</td>'
+      + '<td class="num">'+f$(c.net_proceeds)+'</td>'
+      + '<td class="num'+profitColor+'">'+((c.realized_profit||0)>=0?'+':'')+f$(c.realized_profit)+'</td>'
+      + '<td class="num'+profitColor+'">'+fPct(c.ev_pct_returned)+'</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function emptyState(title, sub){
+  return '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">'+title+'</div><div class="empty-sub">'+sub+'</div><button class="btn-add" onclick="openAddModal()">+ Add Card</button></div>';
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// MODAL
+// ──────────────────────────────────────────────────────────────────────────
+function openAddModal(prefill){
+  resetModal();
+  g('modal-title').textContent = 'Add Card';
+  g('modal-save-btn').textContent = 'Save Card';
+  // Set today's date
+  g('f-date').value = new Date().toISOString().split('T')[0];
+  if (prefill){
+    if(prefill.player)   g('f-player').value = prefill.player;
+    if(prefill.sport)    g('f-sport').value = prefill.sport;
+    if(prefill.year)     g('f-year').value = prefill.year;
+    if(prefill.set_name) g('f-set').value = prefill.set_name;
+    if(prefill.card_no)  g('f-cardno').value = prefill.card_no;
+    if(prefill.parallel) g('f-parallel').value = prefill.parallel;
+    if(prefill.raw_price){ g('f-price').value = prefill.raw_price; calcTotalCost(); }
+    if(prefill.source)   g('f-source').value = prefill.source;
+    if(prefill.psa10)    g('f-psa10').value = prefill.psa10;
+    if(prefill.psa9)     g('f-psa9').value = prefill.psa9;
+    if(prefill.gem_rate) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
+    if(prefill.image_url) g('card-modal').dataset.imageUrl = prefill.image_url;
+    if(prefill.scp_id)    g('card-modal').dataset.cardId = prefill.scp_id;
+    calcEV();
+  }
+  g('card-modal').classList.add('open');
+}
+
+function openEditModal(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  resetModal();
+  g('modal-title').textContent = 'Edit Card';
+  g('modal-save-btn').textContent = 'Save Changes';
+  g('edit-id').value = id;
+  g('f-player').value = card.player||'';
+  g('f-sport').value = card.sport||'';
+  g('f-year').value = card.year||'';
+  g('f-set').value = card.set_name||'';
+  g('f-cardno').value = card.card_no||'';
+  g('f-parallel').value = card.parallel||'';
+  g('f-date').value = card.date_acquired||'';
+  g('f-source').value = card.source||'';
+  g('f-price').value = card.price||'';
+  g('f-ship').value = card.ship||'';
+  g('f-grading').value = card.grading||'';
+  g('f-total').value = card.total_cost||'';
+  g('f-status').value = card.status||'raw';
+  g('f-gemrate').value = card.gem_rate ? (card.gem_rate*100).toFixed(1) : '';
+  g('f-psa10').value = card.psa10||'';
+  g('f-psa9').value = card.psa9||'';
+  g('f-batch').value = card.batch_id||'';
+  g('f-notes').value = card.notes||'';
+  g('f-grade').value = card.psa_grade||'';
+  onStatusChange();
+  calcEV();
+  g('card-modal').classList.add('open');
+}
+
+function closeModal(){
+  g('card-modal').classList.remove('open');
+}
+
+function resetModal(){
+  ['f-player','f-sport','f-year','f-set','f-cardno','f-parallel','f-date','f-source',
+   'f-price','f-ship','f-grading','f-total','f-gemrate','f-psa10','f-psa9','f-batch',
+   'f-notes','f-grade','f-date-sold','f-sale-price','f-fees','f-ship-out',
+   'f-net-proceeds','f-realized-profit'].forEach(function(id){
+    var el = g(id); if(el) el.value='';
+  });
+  g('edit-id').value = '';
+  g('f-status').value = 'raw';
+  g('f-grade-wrap').style.display = 'none';
+  g('sold-section').style.display = 'none';
+  g('ev-preview').style.display = 'none';
+  var modalEl = g('card-modal');
+  delete modalEl.dataset.imageUrl;
+  delete modalEl.dataset.cardId;
+}
+
+function onStatusChange(){
+  var status = g('f-status').value;
+  g('f-grade-wrap').style.display = status === 'graded' ? 'block' : 'none';
+  g('sold-section').style.display = 'none';
+}
+
+function calcTotalCost(){
+  var price = parseFloat(g('f-price').value)||0;
+  var ship  = parseFloat(g('f-ship').value)||0;
+  var grade = parseFloat(g('f-grading').value)||0;
+  g('f-total').value = (price + ship + grade).toFixed(2);
+  calcEV();
+}
+
+function calcEV(){
+  var total = parseFloat(g('f-total').value)||0;
+  var psa10 = parseFloat(g('f-psa10').value)||0;
+  var psa9  = parseFloat(g('f-psa9').value)||0;
+  var gemRate = (parseFloat(g('f-gemrate').value)||0) / 100;
+  if (!total || !psa10 || !gemRate){ g('ev-preview').style.display='none'; return; }
+  var n10 = psa10 * (1 - PLATFORM_FEE);
+  var n9  = psa9 ? psa9 * (1 - PLATFORM_FEE) : n10 * 0.30;
+  var expRet = gemRate * n10 + (1 - gemRate) * 0.80 * n9;
+  var evDollar = expRet - total;
+  var evPct = evDollar / total;
+  var decision = evPct >= 0.40 ? 'BUY' : evPct >= 0.35 ? 'CAUTION' : 'PASS';
+  var dc = decision === 'BUY' ? 'var(--green)' : decision === 'CAUTION' ? 'var(--amber)' : '#F87171';
+  g('prev-ev-dollar').textContent = f$(evDollar);
+  g('prev-ev-pct').textContent = (evPct*100).toFixed(1)+'%';
+  g('prev-decision').textContent = decision;
+  g('prev-decision').style.color = dc;
+  g('ev-preview').style.display = 'block';
+}
+
+function calcProfit(){
+  var salePrice = parseFloat(g('f-sale-price').value)||0;
+  var fees = parseFloat(g('f-fees').value)||0;
+  var shipOut = parseFloat(g('f-ship-out').value)||0;
+  var totalCost = parseFloat(g('f-total').value)||0;
+  var netProceeds = salePrice - fees - shipOut;
+  var profit = netProceeds - totalCost;
+  g('f-net-proceeds').value = netProceeds.toFixed(2);
+  g('f-realized-profit').value = profit.toFixed(2);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// SAVE
+// ──────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────
+// IMAGE UPLOAD
+// ──────────────────────────────────────────────────────────────────────────
+function uploadCardImage(cardId){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function(){
+    var file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024){ toast('Image must be under 5MB', true); return; }
+    var userId = (await sb.auth.getUser()).data.user.id;
+    var ext = file.name.split('.').pop() || 'jpg';
+    var path = userId + '/' + cardId + '.' + ext;
+    var { error } = await sb.storage.from('card-images').upload(path, file, { upsert: true });
+    if (error){ toast('Upload failed: ' + error.message, true); return; }
+    var { data: urlData } = sb.storage.from('card-images').getPublicUrl(path);
+    var imageUrl = urlData.publicUrl;
+    await sb.from('inventory').update({ image_url: imageUrl }).eq('id', cardId);
+    toast('Card photo uploaded!');
+    await loadCards();
+  };
+  input.click();
+}
+
+async function saveCard(){
+  var id = g('edit-id').value;
+  var player = g('f-player').value.trim();
+  if (!player){ toast('Player name is required', true); return; }
+
+  var total = parseFloat(g('f-total').value)||0;
+  var psa10 = parseFloat(g('f-psa10').value)||0;
+  var psa9  = parseFloat(g('f-psa9').value)||0;
+  var gemRate = (parseFloat(g('f-gemrate').value)||0) / 100;
+
+  // Recalc EV
+  var evDollar = null, evPct = null, netPsa10 = null, netPsa9 = null;
+  if (total && psa10 && gemRate) {
+    netPsa10 = psa10 * (1 - PLATFORM_FEE);
+    netPsa9  = psa9 ? psa9 * (1 - PLATFORM_FEE) : netPsa10 * 0.30;
+    var expRet = gemRate * netPsa10 + (1 - gemRate) * 0.80 * netPsa9;
+    evDollar = expRet - total;
+    evPct = evDollar / total;
+  }
+
+  var user = (await sb.auth.getUser()).data.user;
+  var modalEl = g('card-modal');
+  var payload = {
+    user_id: user.id,
+    player: player,
+    card_id: modalEl.dataset.cardId || null,
+    image_url: modalEl.dataset.imageUrl || null,
+    sport: g('f-sport').value||null,
+    year: parseInt(g('f-year').value)||null,
+    set_name: g('f-set').value||null,
+    card_no: g('f-cardno').value||null,
+    parallel: g('f-parallel').value||null,
+    date_acquired: g('f-date').value||null,
+    source: g('f-source').value||null,
+    price: parseFloat(g('f-price').value)||null,
+    ship: parseFloat(g('f-ship').value)||null,
+    grading: parseFloat(g('f-grading').value)||null,
+    total_cost: total||null,
+    gem_rate: gemRate||null,
+    psa10: psa10||null,
+    psa9: psa9||null,
+    net_psa10: netPsa10,
+    net_psa9: netPsa9,
+    ev_dollar: evDollar !== null ? Math.round(evDollar*100)/100 : null,
+    ev_pct: evPct !== null ? Math.round(evPct*1000)/1000 : null,
+    batch_id: g('f-batch').value||null,
+    notes: g('f-notes').value||null,
+    status: g('f-status').value||'raw',
+    psa_grade: parseInt(g('f-grade').value)||null,
+  };
+
+  var res;
+  if (id) {
+    res = await sb.from('inventory').update(payload).eq('id', id);
+  } else {
+    res = await sb.from('inventory').insert(payload);
+  }
+
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast(id ? 'Card updated!' : 'Card added!');
+  closeModal();
+  await loadCards();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// QUICK ACTIONS
+// ──────────────────────────────────────────────────────────────────────────
+async function submitToGrading(id){
+  var batchId = prompt('Enter PSA submission/batch ID (optional):');
+  var updates = { status: 'submitted' };
+  if (batchId && batchId.trim()) updates.batch_id = batchId.trim();
+  var res = await sb.from('inventory').update(updates).eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Marked as submitted!' + (batchId ? ' Batch: ' + batchId : ''));
+  await loadCards();
+}
+
+async function markGraded(id){
+  var grade = prompt('Enter PSA grade (1-10):');
+  if (!grade || isNaN(parseInt(grade))) return;
+  var res = await sb.from('inventory').update({ status: 'graded', psa_grade: parseInt(grade) }).eq('id', id);
+  if (res.error){ toast('Error: ' + res.error.message, true); return; }
+  toast('Marked as graded — PSA ' + grade + '!');
+  await loadCards();
+}
+
+async function markSold(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  openEditModal(id);
+  // Wait for modal to populate before overriding status
+  setTimeout(function(){
+    g('f-status').value = 'sold';
+    g('sold-section').style.display = 'block';
+    g('f-date-sold').value = new Date().toISOString().split('T')[0];
+    // Pre-fill total cost for profit calculation
+    if (card.total_cost) g('f-total').value = card.total_cost;
+  }, 100);
+}
+
+function listOnEbay(id){
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if (!card) return;
+  var grade = card.psa_grade || 10;
+  var title = [card.year, card.player, card.set_name, card.card_no ? '#'+card.card_no : '', card.parallel && card.parallel.toLowerCase() !== 'base' ? card.parallel : '', 'PSA '+grade].filter(Boolean).join(' ');
+  // Trim to eBay's 80 char limit
+  if (title.length > 80) title = title.substring(0, 77) + '...';
+  var q = encodeURIComponent(title);
+  var url = 'https://www.ebay.com/sell/listing/create?title='+q;
+  window.open(url, '_blank');
 }
 
 async function deleteCard(id){
