@@ -620,14 +620,20 @@ function openAddModal(prefill){
   // Set today's date
   g('f-date').value = new Date().toISOString().split('T')[0];
   if (prefill){
-    if(prefill.player) g('f-player').value = prefill.player;
-    if(prefill.sport)  g('f-sport').value = prefill.sport;
-    if(prefill.year)   g('f-year').value = prefill.year;
+    if(prefill.player)   g('f-player').value = prefill.player;
+    if(prefill.sport)    g('f-sport').value = prefill.sport;
+    if(prefill.year)     g('f-year').value = prefill.year;
     if(prefill.set_name) g('f-set').value = prefill.set_name;
     if(prefill.card_no)  g('f-cardno').value = prefill.card_no;
     if(prefill.parallel) g('f-parallel').value = prefill.parallel;
     if(prefill.raw_price){ g('f-price').value = prefill.raw_price; calcTotalCost(); }
-    if(prefill.source) g('f-source').value = prefill.source;
+    if(prefill.source)   g('f-source').value = prefill.source;
+    if(prefill.psa10)    g('f-psa10').value = prefill.psa10;
+    if(prefill.psa9)     g('f-psa9').value = prefill.psa9;
+    if(prefill.gem_rate) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
+    if(prefill.image_url) g('card-modal').dataset.imageUrl = prefill.image_url;
+    if(prefill.scp_id)    g('card-modal').dataset.cardId = prefill.scp_id;
+    calcEV();
   }
   g('card-modal').classList.add('open');
 }
@@ -679,6 +685,9 @@ function resetModal(){
   g('f-grade-wrap').style.display = 'none';
   g('sold-section').style.display = 'none';
   g('ev-preview').style.display = 'none';
+  var modalEl = g('card-modal');
+  delete modalEl.dataset.imageUrl;
+  delete modalEl.dataset.cardId;
 }
 
 function onStatusChange(){
@@ -775,9 +784,12 @@ async function saveCard(){
   }
 
   var user = (await sb.auth.getUser()).data.user;
+  var modalEl = g('card-modal');
   var payload = {
     user_id: user.id,
     player: player,
+    card_id: modalEl.dataset.cardId || null,
+    image_url: modalEl.dataset.imageUrl || null,
     sport: g('f-sport').value||null,
     year: parseInt(g('f-year').value)||null,
     set_name: g('f-set').value||null,
@@ -819,9 +831,12 @@ async function saveCard(){
 // QUICK ACTIONS
 // ──────────────────────────────────────────────────────────────────────────
 async function submitToGrading(id){
-  var res = await sb.from('inventory').update({ status: 'submitted' }).eq('id', id);
+  var batchId = prompt('Enter PSA submission/batch ID (optional):');
+  var updates = { status: 'submitted' };
+  if (batchId && batchId.trim()) updates.batch_id = batchId.trim();
+  var res = await sb.from('inventory').update(updates).eq('id', id);
   if (res.error){ toast('Error: ' + res.error.message, true); return; }
-  toast('Marked as submitted!');
+  toast('Marked as submitted!' + (batchId ? ' Batch: ' + batchId : ''));
   await loadCards();
 }
 
