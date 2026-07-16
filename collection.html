@@ -350,7 +350,7 @@ var PLATFORM_FEE = 0.135;
     var addCard = sessionStorage.getItem('giq_add_card');
     console.log('giq_add_card from sessionStorage:', addCard);
     console.log('URL:', window.location.search);
-    if (addCard && window.location.search.includes('add=1')) {
+    if (addCard) {
       sessionStorage.removeItem('giq_add_card');
       var card = JSON.parse(addCard);
       console.log('Opening modal with:', card);
@@ -362,26 +362,25 @@ var PLATFORM_FEE = 0.135;
 async function loadCards(){
   var userId = (await sb.auth.getUser()).data.user.id;
   var { data, error } = await sb.from('inventory')
-    .select('*, ev_scanner!inventory_card_id_fkey(image_url)')
+    .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error){
-    // Fallback without join if FK doesn't exist
-    var { data: data2, error: error2 } = await sb.from('inventory')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (error2){ toast('Error loading collection: ' + error2.message, true); return; }
-    ALL_CARDS = data2 || [];
-  } else {
-    // Flatten the join
-    ALL_CARDS = (data || []).map(function(c){
-      var img = c.ev_scanner && c.ev_scanner.image_url ? c.ev_scanner.image_url : null;
-      delete c.ev_scanner;
-      c._scanner_image = img;
-      return c;
-    });
+  if (error){ toast('Error loading collection: ' + error.message, true); return; }
+  ALL_CARDS = data || [];
+
+  // Fetch images from ev_scanner for cards with a card_id
+  var cardIds = ALL_CARDS.filter(function(c){ return c.card_id && !c.image_url; }).map(function(c){ return c.card_id; });
+  if (cardIds.length) {
+    var { data: scannerRows } = await sb.from('ev_scanner').select('scp_id, image_url').in('scp_id', cardIds);
+    if (scannerRows) {
+      var imgMap = {};
+      scannerRows.forEach(function(r){ imgMap[r.scp_id] = r.image_url; });
+      ALL_CARDS = ALL_CARDS.map(function(c){
+        if (c.card_id && !c.image_url && imgMap[c.card_id]) c._scanner_image = imgMap[c.card_id];
+        return c;
+      });
+    }
   }
   updateCounts();
   renderPortfolioStrip();
