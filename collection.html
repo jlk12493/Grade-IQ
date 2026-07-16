@@ -263,6 +263,7 @@ select.form-input{cursor:pointer;}
             <option value="raw">Raw</option>
             <option value="submitted">Submitted to PSA</option>
             <option value="graded">Graded — Returned</option>
+            <option value="sold">Sold</option>
           </select>
         </div>
         <div class="form-group" id="f-grade-wrap" style="display:none;">
@@ -721,12 +722,13 @@ function resetModal(){
   var modalEl = g('card-modal');
   delete modalEl.dataset.imageUrl;
   delete modalEl.dataset.cardId;
+  delete modalEl.dataset.forceSold;
 }
 
 function onStatusChange(){
   var status = g('f-status').value;
   g('f-grade-wrap').style.display = status === 'graded' ? 'block' : 'none';
-  g('sold-section').style.display = 'none';
+  g('sold-section').style.display = status === 'sold' ? 'block' : 'none';
 }
 
 function calcTotalCost(){
@@ -843,7 +845,7 @@ async function saveCard(){
     ev_pct: evPct !== null ? Math.round(evPct*1000)/1000 : null,
     batch_id: g('f-batch').value||null,
     notes: g('f-notes').value||null,
-    status: g('f-status').value||'raw',
+    status: g('card-modal').dataset.forceSold === 'true' ? 'sold' : (g('f-status').value||'raw'),
     psa_grade: parseInt(g('f-grade').value)||null,
     date_sold: g('f-date-sold').value||null,
     sale_price: parseFloat(g('f-sale-price').value)||null,
@@ -891,13 +893,26 @@ async function markGraded(id){
 async function markSold(id){
   var card = ALL_CARDS.find(function(c){ return c.id === id; });
   if (!card) return;
+  // Use dedicated sold modal instead of edit modal to avoid status being overwritten
   openEditModal(id);
-  setTimeout(function(){
-    g('f-status').value = 'sold';
-    g('sold-section').style.display = 'block';
-    g('f-date-sold').value = new Date().toISOString().split('T')[0];
-    if (card.total_cost) g('f-total').value = card.total_cost;
-  }, 150);
+  // Force status AFTER modal populates and override onStatusChange
+  var attempts = 0;
+  var interval = setInterval(function(){
+    attempts++;
+    var statusEl = g('f-status');
+    if (statusEl || attempts > 20) {
+      clearInterval(interval);
+      if (statusEl) {
+        statusEl.value = 'sold';
+        g('f-grade-wrap').style.display = 'none';
+        g('sold-section').style.display = 'block';
+        g('f-date-sold').value = new Date().toISOString().split('T')[0];
+        if (card.total_cost) g('f-total').value = card.total_cost;
+        // Mark modal so saveCard knows this is a sold operation
+        g('card-modal').dataset.forceSold = 'true';
+      }
+    }
+  }, 50);
 }
 
 async function deleteCard(id){
