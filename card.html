@@ -11,108 +11,184 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/shared.js"></script>
 <style>
-/* ── CARD DETAIL ─────────────────────────────────────────────────────────── */
+/* ── CARD DETAIL 2.0 ─────────────────────────────────────────────────────── */
 
-.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;background:transparent;border:none;padding:0;margin-bottom:16px;transition:color .15s;}
-.back-btn:hover{color:var(--green);}
-
-/* ── HERO BANNER ──────────────────────────────────────────────────────────── */
-.hero-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;display:flex;gap:20px;align-items:flex-start;}
-.hero-img{width:140px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.5);}
-.hero-img img{width:100%;display:block;}
-.hero-img-empty{width:140px;height:196px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);}
-.hero-info{flex:1;min-width:0;}
-.hero-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-.hero-player{font-size:22px;font-weight:900;color:var(--text);line-height:1.1;margin-bottom:2px;}
-.hero-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px;}
-.hero-prices{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;}
-.hero-price{}
-.hero-price-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
-.hero-price-val{font-size:20px;font-weight:900;}
-.hero-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.btn-hero{padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
-.btn-hero-primary{background:var(--green);color:#000;border:none;}
-.btn-hero-primary:hover{opacity:.88;}
-.btn-hero-secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
-.btn-hero-secondary:hover{border-color:var(--green);color:var(--green);}
-.btn-hero-amber{background:transparent;border:1px solid rgba(245,158,11,.4);color:var(--amber);}
-.btn-hero-amber:hover{background:rgba(245,158,11,.08);}
-
-/* ── HERO STATS ROW ──────────────────────────────────────────────────────── */
-.hero-stats-row{display:flex;gap:0;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;flex-wrap:wrap;gap:20px;}
-.hero-stat-item{}
-.hero-stat-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
-.hero-stat-val{font-size:18px;font-weight:900;}
-
-/* ── TWO COLUMN LAYOUT ───────────────────────────────────────────────────── */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
-@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
-
-/* ── PANELS ──────────────────────────────────────────────────────────────── */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
-.panel-head{padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.panel-title{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;}
-.panel-body{padding:14px;}
-
-/* ── TIER TABLE ──────────────────────────────────────────────────────────── */
-.tier-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-.tier-tbl th{padding:7px 12px;text-align:left;font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;background:var(--surface-2);border-bottom:1px solid var(--border);}
-.tier-tbl th:not(:first-child){text-align:right;}
-.tier-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);}
-.tier-tbl td:not(:first-child){text-align:right;}
-.tier-tbl tr:last-child td{border-bottom:none;}
-.tier-tbl tr.best-row td{background:rgba(182,255,0,.04);}
-.best-badge{font-size:8px;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;font-weight:800;margin-left:5px;vertical-align:middle;}
-
-/* ── PRICE HISTORY PLACEHOLDER ───────────────────────────────────────────── */
-.coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;min-height:200px;}
-.coming-soon-icon{font-size:32px;margin-bottom:10px;opacity:.4;}
-.coming-soon-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.coming-soon-sub{font-size:11px;color:var(--text-muted);max-width:260px;line-height:1.5;}
-.coming-soon-bar{display:flex;gap:4px;margin-top:14px;}
-.coming-soon-bar-item{flex:1;height:40px;background:var(--surface-2);border-radius:4px;animation:shimmer 1.5s infinite;}
-.coming-soon-bar-item:nth-child(2){height:60px;align-self:flex-end;}
-.coming-soon-bar-item:nth-child(3){height:30px;align-self:flex-end;}
-.coming-soon-bar-item:nth-child(4){height:50px;align-self:flex-end;}
-.coming-soon-bar-item:nth-child(5){height:45px;align-self:flex-end;}
-@keyframes shimmer{0%,100%{opacity:.3;}50%{opacity:.6;}}
-
-/* ── STAT CARDS ──────────────────────────────────────────────────────────── */
-.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
-.stat-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.stat-val{font-size:18px;font-weight:900;color:var(--text);}
-.stat-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
-
-/* ── EBAY SOLD SECTION ───────────────────────────────────────────────────── */
-.ebay-placeholder{padding:30px;text-align:center;color:var(--text-muted);}
-
-/* ── ADMIN EDIT ──────────────────────────────────────────────────────────── */
-.admin-edit{display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:16px;}
-.admin-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
-.edit-lbl{font-size:9px;color:var(--text-muted);display:block;margin-bottom:4px;}
-.edit-inp{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none;}
-.edit-inp:focus{border-color:var(--green);}
-
-/* ── CHIP ────────────────────────────────────────────────────────────────── */
-.chip{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px;}
-
-/* ── LOADING / NOT FOUND ─────────────────────────────────────────────────── */
-.loading-state,.not-found{text-align:center;padding:80px 20px;color:var(--text-muted);}
-.loading-icon,.nf-icon{font-size:40px;margin-bottom:12px;}
-
-@media(max-width:640px){
-  .hero-banner{flex-direction:column;}
-  .admin-edit-grid{grid-template-columns:1fr;}
-  .hero-prices{gap:14px;}
+/* Hero Banner */
+.hero-banner {
+  position: relative;
+  width: calc(100% + 32px);
+  margin: -16px -16px 0;
+  min-height: 200px;
+  overflow: hidden;
+  background: var(--surface);
 }
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  filter: blur(18px) brightness(0.35) saturate(1.4);
+  transform: scale(1.08);
+}
+.hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,.1) 0%, rgba(0,0,0,.7) 60%, var(--black) 100%);
+}
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 20px;
+  padding: 20px 16px 28px;
+  align-items: flex-end;
+}
+.hero-card-img {
+  width: 120px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.7);
+  border: 1px solid rgba(255,255,255,.15);
+  align-self: flex-end;
+}
+.hero-card-img img { width: 100%; display: block; }
+.hero-card-img-empty {
+  width: 120px;
+  height: 168px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  border: 1px dashed rgba(255,255,255,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-meta { flex: 1; min-width: 0; }
+.hero-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.hero-player { font-size: 28px; font-weight: 900; color: #fff; line-height: 1.05; margin-bottom: 2px; text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.hero-set { font-size: 12px; color: rgba(255,255,255,.6); margin-bottom: 16px; }
+.hero-prices { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.hero-price-item {}
+.hero-price-lbl { font-size: 8px; font-weight: 700; color: rgba(255,255,255,.5); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 2px; }
+.hero-price-val { font-size: 18px; font-weight: 900; color: #fff; }
+.hero-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.hbtn { padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all .15s; white-space: nowrap; }
+.hbtn-primary { background: var(--green); color: #000; border: none; }
+.hbtn-primary:hover { opacity: .88; }
+.hbtn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); backdrop-filter: blur(4px); }
+.hbtn-ghost:hover { background: rgba(255,255,255,.18); }
+.hbtn-amber { background: transparent; border: 1px solid rgba(245,158,11,.5); color: #fbbf24; }
+.hbtn-amber:hover { background: rgba(245,158,11,.1); }
+
+/* Stats strip below hero */
+.stats-strip {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--r) var(--r);
+  margin: 0 0 16px;
+  overflow: hidden;
+}
+.stat-strip-item {
+  flex: 1;
+  padding: 12px 16px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.stat-strip-item:last-child { border-right: none; }
+.ssl { font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+.ssv { font-size: 18px; font-weight: 900; }
+
+/* Main grid */
+.main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media(max-width:900px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.panel-head { padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.panel-badge { font-size: 9px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 7px; border-radius: 10px; }
+
+/* Tier table */
+.tier-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tier-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.tier-tbl th:not(:first-child) { text-align: right; }
+.tier-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+.tier-tbl td:not(:first-child) { text-align: right; }
+.tier-tbl tr:last-child td { border-bottom: none; }
+.tier-tbl tr.best-row td { background: rgba(182,255,0,.04); }
+.best-badge { font-size: 8px; background: var(--green); color: #000; padding: 1px 5px; border-radius: 3px; font-weight: 800; margin-left: 5px; vertical-align: middle; }
+
+/* Coming soon panels */
+.coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; text-align: center; }
+.cs-icon { font-size: 28px; margin-bottom: 8px; opacity: .35; }
+.cs-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+.cs-sub { font-size: 11px; color: var(--text-muted); line-height: 1.5; max-width: 260px; }
+/* Animated placeholder bars */
+.cs-bars { display: flex; gap: 5px; margin-top: 16px; align-items: flex-end; height: 60px; }
+.cs-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--surface-2); animation: cspulse 1.8s ease-in-out infinite; }
+.cs-bar:nth-child(2) { animation-delay: .15s; }
+.cs-bar:nth-child(3) { animation-delay: .3s; }
+.cs-bar:nth-child(4) { animation-delay: .45s; }
+.cs-bar:nth-child(5) { animation-delay: .6s; }
+.cs-bar:nth-child(6) { animation-delay: .75s; }
+.cs-bar:nth-child(7) { animation-delay: .9s; }
+@keyframes cspulse { 0%,100%{opacity:.25;} 50%{opacity:.55;} }
+
+/* Sales volume / pop table */
+.data-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-tbl th { padding: 7px 12px; text-align: right; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.data-tbl th:first-child { text-align: left; }
+.data-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); text-align: right; }
+.data-tbl td:first-child { text-align: left; font-weight: 600; }
+.data-tbl tr:last-child td { border-bottom: none; }
+
+/* Past listings */
+.listing-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+.ltab { padding: 8px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+.ltab.active { color: var(--green); border-bottom-color: var(--green); }
+.listing-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.listing-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.listing-tbl th:not(:first-child) { text-align: right; }
+.listing-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+.listing-tbl td:not(:first-child) { text-align: right; }
+.listing-tbl tr:last-child td { border-bottom: none; }
+.listing-tbl a { color: var(--text-muted); font-size: 11px; }
+.listing-tbl a:hover { color: var(--green); }
+
+/* Admin edit */
+.admin-edit { display: none; background: var(--surface); border: 1px solid rgba(182,255,0,.2); border-left: 3px solid var(--green); border-radius: 6px; padding: 14px; margin-bottom: 14px; }
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.edit-lbl { font-size: 9px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+.edit-inp { width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+.edit-inp:focus { border-color: var(--green); }
+
+/* Chip */
+.chip { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: .5px; }
+
+/* Back btn */
+.back-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; border: none; padding: 0; margin-bottom: 10px; transition: color .15s; }
+.back-btn:hover { color: var(--green); }
+
+/* Loading */
+.loading-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
 </style>
 </head>
 <body>
 <script>buildNav('');</script>
 
-<div class="main" id="page-content">
-  <div class="loading-state"><div class="loading-icon">⚡</div><div>Loading card data...</div></div>
+<div class="main" style="padding-top:0;max-width:1600px;margin:0 auto;">
+  <div style="padding:16px 0 0;" id="back-wrap">
+    <button class="back-btn" onclick="history.back()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back to Buy Signals
+    </button>
+  </div>
+  <div id="page-content">
+    <div class="loading-state"><div style="font-size:36px;margin-bottom:12px;">⚡</div><div>Loading card data...</div></div>
+  </div>
 </div>
 
 <script>
@@ -120,8 +196,8 @@ var CARD = null;
 var GRADING_TIERS = [];
 var ADMIN_EMAIL = 'jlk12493@gmail.com';
 var PLATFORM_FEE = 0.135;
+var ACTIVE_LISTING_TAB = 'raw';
 
-// ── INIT ──────────────────────────────────────────────────────────────────
 (async function init(){
   var user = await requireAuth();
   if (!user) return;
@@ -134,12 +210,14 @@ var PLATFORM_FEE = 0.135;
 async function loadGradingTiers(){
   var res = await sb.from('grading_tiers').select('*').eq('active',true).order('cost_per_card',{ascending:true});
   var seen = {};
-  GRADING_TIERS = (res.data||[]).filter(function(t){ if(seen[t.tier_name]) return false; seen[t.tier_name]=true; return true; });
+  GRADING_TIERS = (res.data||[]).filter(function(t){
+    if(seen[t.tier_name]) return false; seen[t.tier_name]=true; return true;
+  });
 }
 
 async function loadCard(scpId){
   var res = await sb.from('ev_scanner').select('*').eq('scp_id',scpId).single();
-  if (res.error||!res.data){ renderNotFound('Card not found or removed from scanner.'); return; }
+  if(res.error||!res.data){ renderNotFound('Card not found or removed from scanner.'); return; }
   CARD = res.data;
   document.title = (CARD.player||'Card') + ' — GradeIQ';
   renderCard();
@@ -147,22 +225,19 @@ async function loadCard(scpId){
 
 // ── EV CALC ───────────────────────────────────────────────────────────────
 function calcEVForTier(r, cost){
-  var n10 = (r.psa10_price||0)*(1-PLATFORM_FEE);
-  var n9  = r.psa9_price ? r.psa9_price*(1-PLATFORM_FEE) : n10*0.30;
-  var gem = r.actual_gem_rate||0;
-  var exp = gem*n10 + (1-gem)*0.80*n9;
-  var total = (r.raw_price||0)+cost;
-  var evD = exp-total;
-  var evP = total>0 ? evD/total : 0;
-  return {evDollar:evD, evPct:evP, expectedReturn:exp};
+  var n10=(r.psa10_price||0)*(1-PLATFORM_FEE);
+  var n9=r.psa9_price?r.psa9_price*(1-PLATFORM_FEE):n10*0.30;
+  var gem=r.actual_gem_rate||0;
+  var exp=gem*n10+(1-gem)*0.80*n9;
+  var total=(r.raw_price||0)+cost;
+  return {evDollar:exp-total, evPct:total>0?(exp-total)/total:0, expectedReturn:exp};
 }
-function calcAnn(evPct, days){ if(!days||days<=0) return null; return Math.pow(1+evPct,365/days)-1; }
+function calcAnn(evPct,days){ if(!days||days<=0)return null; return Math.pow(1+evPct,365/days)-1; }
 function getBestTier(r){
   var best=null, bestAnn=-Infinity;
   GRADING_TIERS.forEach(function(t){
     var ev=calcEVForTier(r,t.cost_per_card);
-    var days=(t.turnaround_business_days_avg||0)*1.4;
-    var ann=calcAnn(ev.evPct,days);
+    var ann=calcAnn(ev.evPct,(t.turnaround_business_days_avg||0)*1.4);
     if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){bestAnn=ann;best={tier:t,ev:ev,ann:ann};}
   });
   return best;
@@ -172,20 +247,21 @@ function getBestTier(r){
 function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(v).toFixed(2); }
 function fPct(v,d){ if(v==null)return'--'; return(v*100).toFixed(d||0)+'%'; }
 function stripSet(s){ return(s||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim(); }
+function fDate(d){ if(!d)return'--'; return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 
 function sportChip(sport){
-  var map={TCG:['rgba(168,85,247,.15)','#c084fc','TCG'],Baseball:['rgba(239,68,68,.12)','#f87171','BASEBALL'],Basketball:['rgba(249,115,22,.12)','#fb923c','BASKETBALL'],Football:['rgba(16,185,129,.12)','#34d399','FOOTBALL']};
+  var map={TCG:['rgba(168,85,247,.2)','#c084fc','TCG'],Baseball:['rgba(239,68,68,.2)','#f87171','BASEBALL'],Basketball:['rgba(249,115,22,.2)','#fb923c','BASKETBALL'],Football:['rgba(16,185,129,.2)','#34d399','FOOTBALL']};
   var c=map[sport]; if(!c)return'';
-  return '<span class="chip" style="background:'+c[0]+';color:'+c[1]+';border:1px solid '+c[1]+'33;">'+c[2]+'</span>';
+  return '<span class="chip" style="background:'+c[0]+';color:'+c[1]+';border:1px solid '+c[1]+'44;">'+c[2]+'</span>';
 }
 function parallelChip(parallel){
   if(!parallel||parallel.toLowerCase()==='base')return'';
-  var bg='rgba(239,68,68,.12)',color='#f87171';
-  if(/refractor|prizm|holo/i.test(parallel)){bg='rgba(16,185,129,.12)';color='#34d399';}
-  else if(/gold/i.test(parallel)){bg='rgba(234,179,8,.15)';color='#fbbf24';}
-  else if(/silver prizm/i.test(parallel)){bg='rgba(148,163,184,.12)';color='#94a3b8';}
-  else if(/illustration rare|art rare/i.test(parallel)){bg='rgba(59,130,246,.12)';color='#60a5fa';}
-  return '<span class="chip" style="background:'+bg+';color:'+color+';border:1px solid '+color+'33;">'+parallel+'</span>';
+  var bg='rgba(239,68,68,.2)',color='#f87171';
+  if(/refractor|prizm|holo/i.test(parallel)){bg='rgba(16,185,129,.2)';color='#34d399';}
+  else if(/gold/i.test(parallel)){bg='rgba(234,179,8,.2)';color='#fbbf24';}
+  else if(/silver prizm/i.test(parallel)){bg='rgba(148,163,184,.2)';color='#94a3b8';}
+  else if(/illustration rare|art rare/i.test(parallel)){bg='rgba(59,130,246,.2)';color='#60a5fa';}
+  return '<span class="chip" style="background:'+bg+';color:'+color+';border:1px solid '+color+'44;">'+parallel+'</span>';
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
@@ -198,114 +274,124 @@ function renderCard(){
   var sc = iq>=60?'var(--green)':'var(--text-muted)';
   var ec = evPct>=0.40?'var(--green)':'var(--text-muted)';
   var best = getBestTier(r);
+  var imgUrl = r.image_url||'';
 
   // eBay links
-  var bq = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc');
-  var ebayRaw = 'https://www.ebay.com/sch/i.html?_nkw='+bq+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
-  var bq10 = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10');
-  var ebay10 = 'https://www.ebay.com/sch/i.html?_nkw='+bq10+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
-  var vq = encodeURIComponent((r.player||'')+(r.year?' '+r.year:'')+(r.card_no?' #'+r.card_no:''));
-  var mmUrl = 'https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+vq;
-  var clUrl = 'https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+vq;
+  var bq=encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc');
+  var ebayRaw='https://www.ebay.com/sch/i.html?_nkw='+bq+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+  var bq10=encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10');
+  var ebay10='https://www.ebay.com/sch/i.html?_nkw='+bq10+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+  var vq=encodeURIComponent((r.player||'')+(r.year?' '+r.year:'')+(r.card_no?' #'+r.card_no:''));
+  var mmUrl='https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+vq;
+  var clUrl='https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+vq;
 
-  // Verify link (SCP vs PriceCharting)
-  var isTCG = String(r.scp_id).startsWith('tcg_');
-  var verifyUrl, verifyLabel;
-  if(isTCG){ var pcId=String(r.scp_id).split('_')[1]; var pcNo=String(r.card_no||'').replace(/^0+/,''); verifyUrl='https://www.pricecharting.com/search-products?q='+encodeURIComponent((r.player||'')+' #'+pcNo)+'&type=prices'; verifyLabel='Price Charting'; }
-  else { verifyUrl='https://www.sportscardspro.com/game/'+r.scp_id; verifyLabel='SCP'; }
+  // Verify link
+  var isTCG=String(r.scp_id).startsWith('tcg_');
+  var verifyUrl=isTCG?'https://www.pricecharting.com/search-products?q='+encodeURIComponent((r.player||'')+' #'+String(r.card_no||'').replace(/^0+/,''))+'&type=prices':'https://www.sportscardspro.com/game/'+r.scp_id;
+  var verifyLabel=isTCG?'Price Charting':'SCP';
 
-  // Image
-  var imgHtml = r.image_url
-    ? '<div class="hero-img"><img src="'+r.image_url+'" alt="'+r.player+'" onerror="this.style.display=\'none\'"></div>'
-    : '<div class="hero-img-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>';
-
-  // Tier table rows
-  var bestId = best ? best.tier.id : null;
-  var tierRows = GRADING_TIERS.map(function(t){
+  // Tier rows
+  var bestId=best?best.tier.id:null;
+  var tierRows=GRADING_TIERS.map(function(t){
     var ev=calcEVForTier(r,t.cost_per_card);
     var days=(t.turnaround_business_days_avg||0)*1.4;
     var ann=calcAnn(ev.evPct,days);
     var isBest=t.id===bestId;
     var evc=ev.evDollar>0?'var(--green)':'#F87171';
-    var annc=ann!==null&&ann>0?'var(--green)':'#F87171';
+    var ac=ann!==null&&ann>0?'var(--green)':'#F87171';
     return '<tr class="'+(isBest?'best-row':'')+'">'
       +'<td style="font-weight:'+(isBest?700:400)+';">'+t.tier_name+(isBest?'<span class="best-badge">BEST</span>':'')+'</td>'
       +'<td style="color:var(--text-muted);">$'+t.cost_per_card+'</td>'
       +'<td style="color:'+evc+';font-weight:600;">'+f$(ev.evDollar)+'</td>'
       +'<td style="color:'+evc+';">'+fPct(ev.evPct,1)+'</td>'
-      +'<td style="color:'+annc+';font-weight:'+(isBest?700:400)+';">'+(ann!==null?fPct(ann,0):'--')+'</td>'
+      +'<td style="color:'+ac+';font-weight:'+(isBest?700:400)+';">'+(ann!==null?fPct(ann,0):'--')+'</td>'
       +'<td style="color:var(--text-muted);">'+(t.turnaround_business_days_avg||'--')+'d</td>'
       +'</tr>';
   }).join('');
 
-  // Admin
-  var adminBtn = (CU&&CU.email===ADMIN_EMAIL) ? '<button class="btn-hero btn-hero-amber" onclick="toggleAdminEdit()">✏ Edit Prices</button>' : '';
-  var adminVerify = (CU&&CU.email===ADMIN_EMAIL) ? '<a href="'+verifyUrl+'" target="_blank" class="btn-hero btn-hero-amber">🔗 '+verifyLabel+'</a>' : '';
+  // Admin buttons
+  var adminBtns=(CU&&CU.email===ADMIN_EMAIL)
+    ? '<button class="hbtn hbtn-amber" onclick="toggleAdminEdit()">✏ Edit</button>'
+      +'<a href="'+verifyUrl+'" target="_blank" class="hbtn hbtn-amber">🔗 '+verifyLabel+'</a>'
+    : '';
+
+  // Sales volume placeholder data (will be real when we add price_snapshots)
+  var volRows=['7 Day','30 Day','90 Day'].map(function(period){
+    return '<tr><td>'+period+'</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>';
+  }).join('');
+
+  // Pop change placeholder
+  var popRows=['196','190','188','183'].map(function(p,i){
+    return '<tr><td>'+p+'</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>';
+  }).join('');
+
+  // CS bar heights
+  var barH=[40,55,35,65,50,45,60];
+  var bars=barH.map(function(h){ return '<div class="cs-bar" style="height:'+h+'px;"></div>'; }).join('');
 
   var html = `
-    <button class="back-btn" onclick="history.back()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Buy Signals
-    </button>
-
     <!-- ADMIN EDIT -->
     <div class="admin-edit" id="admin-edit">
       <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">✏ Edit Prices</div>
-      <div class="admin-edit-grid">
+      <div class="admin-grid">
         <div><label class="edit-lbl">Raw Price $</label><input class="edit-inp" type="number" step="0.01" id="edit-raw" value="${r.raw_price||0}"></div>
         <div><label class="edit-lbl">PSA 10 $</label><input class="edit-inp" type="number" step="0.01" id="edit-p10" value="${r.psa10_price||0}"></div>
         <div><label class="edit-lbl">PSA 9 $</label><input class="edit-inp" type="number" step="0.01" id="edit-p9" value="${r.psa9_price||''}"></div>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn-hero btn-hero-primary" onclick="saveEdit()">✓ Save</button>
-        <button onclick="toggleAdminEdit()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 14px;border-radius:6px;font-size:11px;cursor:pointer;">Cancel</button>
+        <button class="hbtn hbtn-primary" onclick="saveEdit()">✓ Save</button>
+        <button onclick="toggleAdminEdit()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;">Cancel</button>
       </div>
     </div>
 
     <!-- HERO BANNER -->
     <div class="hero-banner">
-      ${imgHtml}
-      <div class="hero-info">
-        <div class="hero-chips">
-          ${sportChip(r.sport||'')}
-          ${parallelChip(r.parallel||'')}
-          ${r.parallel&&/silver prizm/i.test(r.parallel)?'<span title="Silver Prizm pricing may be unreliable" style="cursor:help;font-size:14px;">⚠️</span>':''}
-        </div>
-        <div class="hero-player">${r.player||'--'}</div>
-        <div class="hero-sub">${r.year?r.year+' ':''}${ss}${r.card_no?' · #'+r.card_no:''}${r.parallel&&r.parallel.toLowerCase()!=='base'?' · '+r.parallel:''}</div>
-
-        <div class="hero-prices">
-          <div class="hero-price"><div class="hero-price-lbl">Raw</div><div class="hero-price-val">${f$(r.raw_price)}</div></div>
-          <div class="hero-price"><div class="hero-price-lbl">PSA 9</div><div class="hero-price-val" style="color:var(--text-muted);">${r.psa9_price?f$(r.psa9_price):'--'}</div></div>
-          <div class="hero-price"><div class="hero-price-lbl" style="color:var(--green);">PSA 10</div><div class="hero-price-val" style="color:var(--green);">${f$(r.psa10_price)}</div></div>
-          ${r.raw_price&&r.psa10_price?'<div class="hero-price"><div class="hero-price-lbl">Multiplier</div><div class="hero-price-val" style="color:var(--green);">'+(r.psa10_price/r.raw_price).toFixed(1)+'x</div></div>':''}
-        </div>
-
-        <div class="hero-actions">
-          <button class="btn-hero btn-hero-primary" onclick="addToInventory()">+ Add to Inventory</button>
-          <a href="${ebayRaw}" target="_blank" class="btn-hero btn-hero-secondary">🛒 Buy Raw</a>
-          <a href="${ebay10}" target="_blank" class="btn-hero btn-hero-secondary">🏆 Buy PSA 10</a>
-          <a href="${mmUrl}" target="_blank" class="btn-hero btn-hero-secondary">📈 Market Movers</a>
-          <a href="${clUrl}" target="_blank" class="btn-hero btn-hero-secondary">🔍 Card Ladder</a>
-          ${adminVerify}
-          ${adminBtn}
-        </div>
-
-        <div class="hero-stats-row">
-          <div class="hero-stat-item"><div class="hero-stat-lbl">IQ Score</div><div class="hero-stat-val" style="color:${sc};">${Math.round(iq)}</div></div>
-          <div class="hero-stat-item"><div class="hero-stat-lbl">EV%</div><div class="hero-stat-val" style="color:${ec};">${fPct(evPct,1)}</div></div>
-          <div class="hero-stat-item"><div class="hero-stat-lbl">Max Buy</div><div class="hero-stat-val" style="color:var(--green);">${f$(maxBuy)}</div></div>
-          ${best?'<div class="hero-stat-item"><div class="hero-stat-lbl">Best Tier</div><div class="hero-stat-val" style="font-size:14px;margin-top:3px;">'+best.tier.tier_name+'</div></div>':''}
-          ${best?'<div class="hero-stat-item"><div class="hero-stat-lbl">Annualized</div><div class="hero-stat-val" style="color:var(--green);">'+fPct(best.ann,0)+'</div></div>':''}
-          ${r.actual_gem_rate!=null?'<div class="hero-stat-item"><div class="hero-stat-lbl">Gem Rate</div><div class="hero-stat-val">'+fPct(r.actual_gem_rate,1)+'</div></div>':''}
-          ${r.sales_volume?'<div class="hero-stat-item"><div class="hero-stat-lbl">Sales Vol</div><div class="hero-stat-val">'+r.sales_volume+'</div></div>':''}
-          ${r.scanned_at?'<div class="hero-stat-item"><div class="hero-stat-lbl">Last Scanned</div><div class="hero-stat-val" style="font-size:12px;margin-top:3px;">'+new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div></div>':''}
+      <div class="hero-bg" id="hero-bg" ${imgUrl?'style="background-image:url('+imgUrl+')"':''}></div>
+      <div class="hero-bg-overlay"></div>
+      <div class="hero-content">
+        ${imgUrl
+          ? '<div class="hero-card-img"><img src="'+imgUrl+'" alt="'+r.player+'" onerror="this.style.display=\'none\'"></div>'
+          : '<div class="hero-card-img-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>'}
+        <div class="hero-meta">
+          <div class="hero-chips">
+            ${sportChip(r.sport||'')}
+            ${parallelChip(r.parallel||'')}
+            ${r.parallel&&/silver prizm/i.test(r.parallel)?'<span style="font-size:13px;cursor:help;" title="Silver Prizm pricing may be less reliable">⚠️</span>':''}
+          </div>
+          <div class="hero-player">${r.player||'--'}</div>
+          <div class="hero-set">${r.year?r.year+' ':''}${ss}${r.card_no?' · #'+r.card_no:''}${r.parallel&&r.parallel.toLowerCase()!=='base'?' · '+r.parallel:''}</div>
+          <div class="hero-prices">
+            <div class="hero-price-item"><div class="hero-price-lbl">Raw</div><div class="hero-price-val">${f$(r.raw_price)}</div></div>
+            <div class="hero-price-item"><div class="hero-price-lbl">PSA 9</div><div class="hero-price-val" style="color:rgba(255,255,255,.5);">${r.psa9_price?f$(r.psa9_price):'--'}</div></div>
+            <div class="hero-price-item"><div class="hero-price-lbl" style="color:var(--green);">PSA 10</div><div class="hero-price-val" style="color:var(--green);">${f$(r.psa10_price)}</div></div>
+            ${r.raw_price&&r.psa10_price?'<div class="hero-price-item"><div class="hero-price-lbl">Multiplier</div><div class="hero-price-val" style="color:var(--green);">'+(r.psa10_price/r.raw_price).toFixed(1)+'x</div></div>':''}
+            <div class="hero-price-item"><div class="hero-price-lbl">Max Buy</div><div class="hero-price-val" style="color:var(--green);">${f$(maxBuy)}</div></div>
+          </div>
+          <div class="hero-btns">
+            <button class="hbtn hbtn-primary" onclick="addToInventory()">+ Add to Inventory</button>
+            <a href="${ebayRaw}" target="_blank" class="hbtn hbtn-ghost">🛒 Buy Raw</a>
+            <a href="${ebay10}" target="_blank" class="hbtn hbtn-ghost">🏆 Buy Graded</a>
+            <a href="${mmUrl}" target="_blank" class="hbtn hbtn-ghost">📈 Market Movers</a>
+            <a href="${clUrl}" target="_blank" class="hbtn hbtn-ghost">🔍 Card Ladder</a>
+            ${adminBtns}
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- TWO COLUMN: TIER TABLE + PRICE HISTORY -->
-    <div class="two-col">
+    <!-- STATS STRIP -->
+    <div class="stats-strip">
+      <div class="stat-strip-item"><div class="ssl">IQ Score</div><div class="ssv" style="color:${sc};">${Math.round(iq)}</div></div>
+      <div class="stat-strip-item"><div class="ssl">EV%</div><div class="ssv" style="color:${ec};">${fPct(evPct,1)}</div></div>
+      ${best?'<div class="stat-strip-item"><div class="ssl">Best Tier</div><div class="ssv" style="font-size:14px;margin-top:2px;">'+best.tier.tier_name+'</div></div>':''}
+      ${best?'<div class="stat-strip-item"><div class="ssl">Annualized</div><div class="ssv" style="color:var(--green);">'+fPct(best.ann,0)+'</div></div>':''}
+      ${r.actual_gem_rate!=null?'<div class="stat-strip-item"><div class="ssl">Gem Rate</div><div class="ssv">'+fPct(r.actual_gem_rate,1)+'</div></div>':''}
+      ${r.sales_volume?'<div class="stat-strip-item"><div class="ssl">Sales Volume</div><div class="ssv">'+r.sales_volume+'</div></div>':''}
+      ${r.scanned_at?'<div class="stat-strip-item"><div class="ssl">Last Scanned</div><div class="ssv" style="font-size:12px;margin-top:3px;">'+new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div></div>':''}
+    </div>
+
+    <!-- MAIN GRID: TIER TABLE + PRICE HISTORY -->
+    <div class="main-grid">
       <div class="panel">
         <div class="panel-head"><span class="panel-title">PSA Tier Comparison</span></div>
         <table class="tier-tbl">
@@ -314,59 +400,80 @@ function renderCard(){
         </table>
       </div>
       <div class="panel">
-        <div class="panel-head"><span class="panel-title">Price History & Analytics</span><span style="font-size:9px;color:var(--text-muted);">Building...</span></div>
-        <div class="panel-body">
+        <div class="panel-head">
+          <span class="panel-title">Price History & Analytics</span>
+          <span class="panel-badge">Building</span>
+        </div>
+        <div style="padding:0 14px 8px;">
           <div class="coming-soon">
-            <div class="coming-soon-icon">📈</div>
-            <div class="coming-soon-title">Price history is building</div>
-            <div class="coming-soon-sub">GradeIQ captures a price snapshot every scanner cycle. Charts appear automatically once enough data accumulates.</div>
-            <div class="coming-soon-bar">
-              <div class="coming-soon-bar-item"></div>
-              <div class="coming-soon-bar-item"></div>
-              <div class="coming-soon-bar-item"></div>
-              <div class="coming-soon-bar-item"></div>
-              <div class="coming-soon-bar-item"></div>
-            </div>
+            <div class="cs-icon">📈</div>
+            <div class="cs-title">Price history is accumulating</div>
+            <div class="cs-sub">GradeIQ captures a price snapshot every scanner cycle. Charts appear automatically once enough data builds up — check back in 30 days.</div>
+            <div class="cs-bars">${bars}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TWO COLUMN: SALES VOLUME + POPULATION -->
-    <div class="two-col">
+    <!-- SALES VOLUME + POP CHANGE -->
+    <div class="main-grid">
       <div class="panel">
-        <div class="panel-head"><span class="panel-title">Sales Volume</span><span style="font-size:9px;color:var(--text-muted);">Coming soon</span></div>
-        <div class="panel-body">
-          <div class="coming-soon" style="min-height:140px;">
-            <div class="coming-soon-icon" style="font-size:24px;">📊</div>
-            <div class="coming-soon-sub">Sales velocity trends will track how fast this card is moving.</div>
-          </div>
-        </div>
+        <div class="panel-head"><span class="panel-title">Sales Volume</span><span class="panel-badge">Coming Soon</span></div>
+        <table class="data-tbl">
+          <thead><tr><th>Period</th><th>PSA 10</th><th>PSA 9</th><th>Raw</th></tr></thead>
+          <tbody>
+            <tr><td>7 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>30 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>90 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Sales volume data will populate as the scanner accumulates history.</div>
       </div>
       <div class="panel">
-        <div class="panel-head"><span class="panel-title">Population Change</span><span style="font-size:9px;color:var(--text-muted);">Coming soon</span></div>
-        <div class="panel-body">
-          <div class="coming-soon" style="min-height:140px;">
-            <div class="coming-soon-icon" style="font-size:24px;">👥</div>
-            <div class="coming-soon-sub">PSA population growth tracking will show gem rate trends over time.</div>
-          </div>
-        </div>
+        <div class="panel-head"><span class="panel-title">Population Change</span><span class="panel-badge">Coming Soon</span></div>
+        <table class="data-tbl">
+          <thead><tr><th>Period</th><th>PSA 10</th><th>PSA 9</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>7 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>30 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>90 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">PSA population data integration coming in a future update.</div>
       </div>
     </div>
 
-    <!-- EBAY SOLD LISTINGS -->
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title">eBay Sold Listings</span></div>
-      <div class="ebay-placeholder">
-        <div style="font-size:24px;margin-bottom:8px;opacity:.4;">🛒</div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">Live eBay sold data coming soon</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Will show recent completed listings with prices and dates.</div>
-        <a href="${ebayRaw}" target="_blank" class="btn-hero btn-hero-secondary" style="display:inline-flex;">View Raw Listings on eBay →</a>
+    <!-- PAST LISTINGS -->
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-head"><span class="panel-title">Past Listings (eBay)</span></div>
+      <div class="listing-tabs">
+        <button class="ltab active" onclick="setListingTab('raw',this)">Raw</button>
+        <button class="ltab" onclick="setListingTab('psa10',this)">PSA 10</button>
+        <button class="ltab" onclick="setListingTab('psa9',this)">PSA 9</button>
+      </div>
+      <div id="listing-content">
+        <div class="coming-soon" style="padding:24px;">
+          <div class="cs-icon" style="font-size:24px;">🛒</div>
+          <div class="cs-title">Live eBay sold data coming soon</div>
+          <div class="cs-sub">Will show recent completed listings with sale prices, dates, and listing types.</div>
+          <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
+            <a href="${ebayRaw}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View Raw Listings →</a>
+            <a href="${ebay10}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View PSA 10 Listings →</a>
+          </div>
+        </div>
       </div>
     </div>
   `;
 
   g('page-content').innerHTML = html;
+}
+
+// ── LISTING TABS ──────────────────────────────────────────────────────────
+function setListingTab(tab, btn){
+  ACTIVE_LISTING_TAB = tab;
+  document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  // Future: fetch eBay data here
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
@@ -403,8 +510,8 @@ async function saveEdit(){
   var exp=gem*n10+(1-gem)*0.80*n9;
   var evD=exp-raw, evP=raw>0?evD/raw:0;
   var res=await sb.from('ev_scanner').update({
-    raw_price:raw,psa10_price:p10,psa9_price:p9||null,
-    net_psa10:n10,net_psa9:n9,
+    raw_price:raw, psa10_price:p10, psa9_price:p9||null,
+    net_psa10:n10, net_psa9:n9,
     ev_dollar:Math.round(evD*100)/100,
     ev_pct:Math.round(evP*1000)/1000,
     max_buy_40:Math.round((exp/1.40)*100)/100
@@ -417,7 +524,7 @@ async function saveEdit(){
 }
 
 function renderNotFound(msg){
-  g('page-content').innerHTML='<button class="back-btn" onclick="history.back()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Back</button><div class="not-found"><div class="nf-icon">🔍</div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Card not found</div><div style="font-size:13px;color:var(--text-muted);">'+msg+'</div></div>';
+  g('page-content').innerHTML='<div style="text-align:center;padding:80px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Card not found</div><div style="font-size:13px;">'+msg+'</div></div>';
 }
 </script>
 </body>
