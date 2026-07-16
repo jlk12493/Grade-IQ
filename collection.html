@@ -935,9 +935,7 @@ async function deleteCard(id){
   toast('Card deleted');
   await loadCards();
 }
-</script>
-</body>
-</html>
+
 function toggleBatch(batchKey){
   var cards = g('batch-cards-' + batchKey);
   var chev = g('batch-chev-' + batchKey);
@@ -1004,63 +1002,6 @@ function renderSubmittedTable(cards){
     html += '</tbody></table></div></div>';
   });
 
-  el.innerHTML = html;
-}
-
-function renderGradedTable(cards){
-  var el = g('tab-content'); if(!el) return;
-  if (!cards.length){ el.innerHTML = emptyState('No graded cards yet', 'Cards returned from PSA will appear here.'); return; }
-  var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    + '<th>Card</th><th>Sport</th><th>Grade</th><th class="num">Total Cost</th><th class="num">EV%</th><th class="num">Market Value</th><th></th>'
-    + '</tr></thead><tbody>';
-  cards.forEach(function(c){
-    var grade = c.psa_grade;
-    var gradeColor = grade === 10 ? 'var(--green)' : grade >= 9 ? 'var(--text)' : 'var(--text-muted)';
-    var marketVal = grade === 10 ? c.psa10 : grade === 9 ? c.psa9 : null;
-    var evColor = c.ev_pct >= 0.40 ? ' green' : '';
-    html += '<tr>'
-      + '<td>'+playerCell(c)+'</td>'
-      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
-      + '<td><span style="font-size:18px;font-weight:900;color:'+gradeColor+';">'+(grade?'PSA '+grade:'--')+'</span></td>'
-      + '<td class="num">'+f$(c.total_cost)+'</td>'
-      + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
-      + '<td class="num green">'+f$(marketVal)+'</td>'
-      + '<td><div class="row-actions">'
-        + '<button class="row-btn primary" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
-        + '<button class="row-btn" onclick="listOnEbay(\''+c.id+'\')">🛒 eBay</button>'
-        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
-      + '</div></td>'
-      + '</tr>';
-  });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
-}
-
-function renderSoldTable(cards){
-  var el = g('tab-content'); if(!el) return;
-  if (!cards.length){ el.innerHTML = emptyState("No sold cards yet", "Cards you've sold will appear here with full P&L."); return; }
-  var totalProfit = cards.reduce(function(s,c){ return s + (c.realized_profit||0); }, 0);
-  var html = '<div style="background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.15);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;gap:24px;">'
-    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards Sold</div><div style="font-size:18px;font-weight:900;color:var(--text);">'+cards.length+'</div></div>'
-    + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Total Profit</div><div style="font-size:18px;font-weight:900;color:'+(totalProfit>=0?'var(--green)':'#F87171')+';">'+(totalProfit>=0?'+':'')+f$(totalProfit)+'</div></div>'
-    + '</div>';
-  html += '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    + '<th>Card</th><th>Sport</th><th>Date Sold</th><th class="num">Cost</th><th class="num">Sale Price</th><th class="num">Net</th><th class="num">Profit</th><th class="num">EV% Ret.</th>'
-    + '</tr></thead><tbody>';
-  cards.forEach(function(c){
-    var profitColor = (c.realized_profit||0) >= 0 ? ' green' : ' red';
-    html += '<tr>'
-      + '<td>'+playerCell(c)+'</td>'
-      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
-      + '<td class="muted">'+fDate(c.date_sold)+'</td>'
-      + '<td class="num">'+f$(c.total_cost)+'</td>'
-      + '<td class="num">'+f$(c.sale_price)+'</td>'
-      + '<td class="num">'+f$(c.net_proceeds)+'</td>'
-      + '<td class="num'+profitColor+'">'+((c.realized_profit||0)>=0?'+':'')+f$(c.realized_profit)+'</td>'
-      + '<td class="num'+profitColor+'">'+fPct(c.ev_pct_returned)+'</td>'
-      + '</tr>';
-  });
-  html += '</tbody></table></div>';
   el.innerHTML = html;
 }
 
