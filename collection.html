@@ -698,6 +698,11 @@ function openEditModal(id){
   g('f-batch').value = card.batch_id||'';
   g('f-notes').value = card.notes||'';
   g('f-grade').value = card.psa_grade||'';
+  // Restore image and card_id from existing card data
+  var modalEl = g('card-modal');
+  if (card.image_url) modalEl.dataset.imageUrl = card.image_url;
+  else if (card._scanner_image) modalEl.dataset.imageUrl = card._scanner_image;
+  if (card.card_id) modalEl.dataset.cardId = card.card_id;
   onStatusChange();
   calcEV();
   g('card-modal').classList.add('open');
