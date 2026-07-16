@@ -875,7 +875,11 @@ function addToInventory(idx, e){
       sport: r.sport||'',
       raw_price: r.raw_price||0,
       source: 'Buy Signals',
-      scp_id: r.scp_id||''
+      scp_id: r.scp_id||'',
+      psa10: r.psa10_price||0,
+      psa9: r.psa9_price||0,
+      gem_rate: r.actual_gem_rate||0,
+      image_url: r.image_url||''
     }));
   }catch(e2){}
   window.location.href = 'collection.html?add=1';
