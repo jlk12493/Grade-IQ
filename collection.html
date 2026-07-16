@@ -343,17 +343,20 @@ var PLATFORM_FEE = 0.135;
   var user = await requireAuth();
   if (!user) return;
 
-  // Check if coming from Buy Signals with a card to add
+  await loadCards();
+
+  // Check if coming from Buy Signals with a card to add — after cards load
   try {
     var addCard = sessionStorage.getItem('giq_add_card');
+    console.log('giq_add_card from sessionStorage:', addCard);
+    console.log('URL:', window.location.search);
     if (addCard && window.location.search.includes('add=1')) {
       sessionStorage.removeItem('giq_add_card');
       var card = JSON.parse(addCard);
-      setTimeout(function(){ openAddModal(card); }, 500);
+      console.log('Opening modal with:', card);
+      setTimeout(function(){ openAddModal(card); }, 300);
     }
-  } catch(e){}
-
-  await loadCards();
+  } catch(e){ console.error('sessionStorage error:', e); }
 })();
 
 async function loadCards(){
