@@ -179,13 +179,8 @@
 <body>
 <script>buildNav('');</script>
 
-<div class="main" style="padding-top:0;max-width:1600px;margin:0 auto;">
-  <div style="padding:16px 0 0;" id="back-wrap">
-    <button class="back-btn" onclick="history.back()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Buy Signals
-    </button>
-  </div>
+<div class="main" style="padding-top:0;padding-left:16px;padding-right:16px;max-width:1600px;margin:0 auto;">
+
   <div id="page-content">
     <div class="loading-state"><div style="font-size:36px;margin-bottom:12px;">⚡</div><div>Loading card data...</div></div>
   </div>
@@ -348,8 +343,14 @@ function renderCard(){
     <div class="hero-banner">
       <div class="hero-bg" id="hero-bg" ${imgUrl?'style="background-image:url('+imgUrl+')"':''}></div>
       <div class="hero-bg-overlay"></div>
+      <div style="position:relative;z-index:3;padding:10px 16px 0;">
+        <button class="back-btn" onclick="history.back()" style="color:rgba(255,255,255,.6);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back to Buy Signals
+        </button>
+      </div>
       <div class="hero-content">
-        ${imgUrl
+        \${imgUrl
           ? '<div class="hero-card-img"><img src="'+imgUrl+'" alt="'+r.player+'" onerror="this.style.display=\'none\'"></div>'
           : '<div class="hero-card-img-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>'}
         <div class="hero-meta">
