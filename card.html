@@ -6,116 +6,105 @@
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#B6FF00">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="GradeIQ">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Card Detail — GradeIQ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="/shared.js"></script>
 <style>
-/* ── CARD DETAIL PAGE STYLES ─────────────────────────────────────────── */
+/* ── CARD DETAIL ─────────────────────────────────────────────────────────── */
 
-/* Back button */
-.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;background:transparent;border:none;padding:0;margin-bottom:20px;transition:color .15s;}
+.back-btn{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;background:transparent;border:none;padding:0;margin-bottom:16px;transition:color .15s;}
 .back-btn:hover{color:var(--green);}
-.back-btn svg{transition:transform .15s;}
-.back-btn:hover svg{transform:translateX(-2px);}
 
-/* Hero section */
-.hero{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:flex-start;margin-bottom:24px;}
-.hero-img{width:160px;flex-shrink:0;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.5);}
+/* ── HERO BANNER ──────────────────────────────────────────────────────────── */
+.hero-banner{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;display:flex;gap:20px;align-items:flex-start;}
+.hero-img{width:140px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 4px 20px rgba(0,0,0,.5);}
 .hero-img img{width:100%;display:block;}
-.hero-img-empty{width:180px;height:252px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
-.hero-meta{min-width:0;}
-.hero-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-.hero-player{font-size:26px;font-weight:900;color:var(--text);line-height:1.05;margin-bottom:4px;}
-.hero-parallel{font-size:14px;color:var(--text-muted);margin-bottom:4px;}
-.hero-set{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
-.hero-stats{display:flex;gap:24px;flex-wrap:wrap;}
-.hero-stat{}
-.hero-stat-lbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
-.hero-stat-val{font-size:22px;font-weight:900;line-height:1;}
-.hero-stat-sub{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.hero-img-empty{width:140px;height:196px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-radius:8px;border:1px solid var(--border);}
+.hero-info{flex:1;min-width:0;}
+.hero-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.hero-player{font-size:22px;font-weight:900;color:var(--text);line-height:1.1;margin-bottom:2px;}
+.hero-sub{font-size:12px;color:var(--text-muted);margin-bottom:16px;}
+.hero-prices{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px;}
+.hero-price{}
+.hero-price-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+.hero-price-val{font-size:20px;font-weight:900;}
+.hero-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-hero{padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.btn-hero-primary{background:var(--green);color:#000;border:none;}
+.btn-hero-primary:hover{opacity:.88;}
+.btn-hero-secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.btn-hero-secondary:hover{border-color:var(--green);color:var(--green);}
+.btn-hero-amber{background:transparent;border:1px solid rgba(245,158,11,.4);color:var(--amber);}
+.btn-hero-amber:hover{background:rgba(245,158,11,.08);}
 
-/* EV Snapshot */
-.ev-snapshot{width:210px;flex-shrink:0;background:rgba(182,255,0,.05);border:1px solid rgba(182,255,0,.2);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;}
-.ev-snap-title{font-size:9px;font-weight:700;color:var(--green);letter-spacing:1.5px;text-transform:uppercase;}
-.ev-snap-row{}
-.ev-snap-lbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
-.ev-snap-val{font-size:17px;font-weight:900;color:var(--green);}
-.ev-snap-sub{font-size:10px;color:var(--text-muted);margin-top:1px;}
-.ev-snap-divider{height:1px;background:rgba(182,255,0,.15);}
-@media(max-width:900px){.ev-snapshot{display:none;}}
+/* ── HERO STATS ROW ──────────────────────────────────────────────────────── */
+.hero-stats-row{display:flex;gap:0;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;flex-wrap:wrap;gap:20px;}
+.hero-stat-item{}
+.hero-stat-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+.hero-stat-val{font-size:18px;font-weight:900;}
 
-/* Price trio */
-.price-trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;}
-.price-col{padding:16px 20px;text-align:center;}
-.price-col+.price-col{border-left:1px solid var(--border);}
-.price-col.psa10{background:rgba(182,255,0,.04);}
-.price-col-lbl{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
-.price-col-val{font-size:24px;font-weight:900;}
-.price-col-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+/* ── TWO COLUMN LAYOUT ───────────────────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
 
-/* Stat grid */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
-.stat-card-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
-.stat-card-val{font-size:20px;font-weight:900;color:var(--text);}
-.stat-card-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+/* ── PANELS ──────────────────────────────────────────────────────────────── */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.panel-head{padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;}
+.panel-body{padding:14px;}
 
-/* Section headers */
-.sec-head{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.sec-head::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* Tier table */
-.tier-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px;}
+/* ── TIER TABLE ──────────────────────────────────────────────────────────── */
 .tier-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-.tier-tbl th{padding:8px 14px;text-align:left;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--surface-2);}
+.tier-tbl th{padding:7px 12px;text-align:left;font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;background:var(--surface-2);border-bottom:1px solid var(--border);}
 .tier-tbl th:not(:first-child){text-align:right;}
-.tier-tbl td{padding:10px 14px;border-top:1px solid var(--border);color:var(--text);}
+.tier-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);}
 .tier-tbl td:not(:first-child){text-align:right;}
-.tier-tbl tr.best-row{background:rgba(182,255,0,.05);}
-.best-badge{font-size:8px;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;font-weight:800;margin-left:6px;vertical-align:middle;}
+.tier-tbl tr:last-child td{border-bottom:none;}
+.tier-tbl tr.best-row td{background:rgba(182,255,0,.04);}
+.best-badge{font-size:8px;background:var(--green);color:#000;padding:1px 5px;border-radius:3px;font-weight:800;margin-left:5px;vertical-align:middle;}
 
-/* Price history */
-.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:24px;position:relative;}
-.chart-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:8px;}
-.chart-canvas-wrap{height:220px;position:relative;}
+/* ── PRICE HISTORY PLACEHOLDER ───────────────────────────────────────────── */
+.coming-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;min-height:200px;}
+.coming-soon-icon{font-size:32px;margin-bottom:10px;opacity:.4;}
+.coming-soon-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.coming-soon-sub{font-size:11px;color:var(--text-muted);max-width:260px;line-height:1.5;}
+.coming-soon-bar{display:flex;gap:4px;margin-top:14px;}
+.coming-soon-bar-item{flex:1;height:40px;background:var(--surface-2);border-radius:4px;animation:shimmer 1.5s infinite;}
+.coming-soon-bar-item:nth-child(2){height:60px;align-self:flex-end;}
+.coming-soon-bar-item:nth-child(3){height:30px;align-self:flex-end;}
+.coming-soon-bar-item:nth-child(4){height:50px;align-self:flex-end;}
+.coming-soon-bar-item:nth-child(5){height:45px;align-self:flex-end;}
+@keyframes shimmer{0%,100%{opacity:.3;}50%{opacity:.6;}}
 
-/* Actions */
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
-.btn-primary{background:var(--green);color:#000;border:none;padding:10px 20px;border-radius:7px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
-.btn-primary:hover{opacity:.88;}
-.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:10px 16px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
-.btn-secondary:hover{border-color:var(--green);color:var(--green);}
-.btn-ebay{border-color:rgba(182,255,0,.3);color:var(--green);}
-.btn-ebay:hover{background:rgba(182,255,0,.08);}
+/* ── STAT CARDS ──────────────────────────────────────────────────────────── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+.stat-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.stat-val{font-size:18px;font-weight:900;color:var(--text);}
+.stat-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
 
-/* Admin edit */
-.admin-edit{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:8px;padding:16px;margin-bottom:20px;display:none;}
-.admin-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
-.edit-field label{font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px;}
-.edit-field input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none;}
-.edit-field input:focus{border-color:var(--green);}
+/* ── EBAY SOLD SECTION ───────────────────────────────────────────────────── */
+.ebay-placeholder{padding:30px;text-align:center;color:var(--text-muted);}
 
-/* chip */
+/* ── ADMIN EDIT ──────────────────────────────────────────────────────────── */
+.admin-edit{display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:16px;}
+.admin-edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+.edit-lbl{font-size:9px;color:var(--text-muted);display:block;margin-bottom:4px;}
+.edit-inp{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none;}
+.edit-inp:focus{border-color:var(--green);}
+
+/* ── CHIP ────────────────────────────────────────────────────────────────── */
 .chip{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px;}
 
-/* Not found */
-.not-found{text-align:center;padding:80px 20px;}
-.not-found-icon{font-size:48px;margin-bottom:16px;}
-
-/* Loading */
-.loading-state{text-align:center;padding:80px 20px;color:var(--text-muted);}
+/* ── LOADING / NOT FOUND ─────────────────────────────────────────────────── */
+.loading-state,.not-found{text-align:center;padding:80px 20px;color:var(--text-muted);}
+.loading-icon,.nf-icon{font-size:40px;margin-bottom:12px;}
 
 @media(max-width:640px){
-  .hero{grid-template-columns:1fr;}
-  .hero-img{width:120px;height:168px;}
-  .hero-player{font-size:24px;}
-  .hero-stat-val{font-size:28px;}
-  .price-trio{grid-template-columns:1fr;}
-  .price-col+.price-col{border-left:none;border-top:1px solid var(--border);}
+  .hero-banner{flex-direction:column;}
   .admin-edit-grid{grid-template-columns:1fr;}
+  .hero-prices{gap:14px;}
 }
 </style>
 </head>
@@ -123,398 +112,312 @@
 <script>buildNav('');</script>
 
 <div class="main" id="page-content">
-  <div class="loading-state">
-    <div style="font-size:32px;margin-bottom:12px;">⚡</div>
-    <div style="font-size:14px;">Loading card data...</div>
-  </div>
+  <div class="loading-state"><div class="loading-icon">⚡</div><div>Loading card data...</div></div>
 </div>
 
 <script>
-// ──────────────────────────────────────────────────────────────────────────
-// INIT
-// ──────────────────────────────────────────────────────────────────────────
 var CARD = null;
 var GRADING_TIERS = [];
 var ADMIN_EMAIL = 'jlk12493@gmail.com';
 var PLATFORM_FEE = 0.135;
 
+// ── INIT ──────────────────────────────────────────────────────────────────
 (async function init(){
   var user = await requireAuth();
   if (!user) return;
-
   var params = new URLSearchParams(window.location.search);
   var scpId = params.get('id');
   if (!scpId){ renderNotFound('No card ID provided.'); return; }
-
   await Promise.all([loadCard(scpId), loadGradingTiers()]);
 })();
 
 async function loadGradingTiers(){
-  var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost_per_card', {ascending:true});
+  var res = await sb.from('grading_tiers').select('*').eq('active',true).order('cost_per_card',{ascending:true});
   var seen = {};
-  GRADING_TIERS = (res.data || []).filter(function(t){
-    if (seen[t.tier_name]) return false;
-    seen[t.tier_name] = true;
-    return true;
-  });
+  GRADING_TIERS = (res.data||[]).filter(function(t){ if(seen[t.tier_name]) return false; seen[t.tier_name]=true; return true; });
 }
 
 async function loadCard(scpId){
-  var res = await sb.from('ev_scanner')
-    .select('*')
-    .eq('scp_id', scpId)
-    .single();
-
-  if (res.error || !res.data){
-    renderNotFound('Card not found. It may have been removed from the scanner.');
-    return;
-  }
-
+  var res = await sb.from('ev_scanner').select('*').eq('scp_id',scpId).single();
+  if (res.error||!res.data){ renderNotFound('Card not found or removed from scanner.'); return; }
   CARD = res.data;
-  // Update page title
-  document.title = (CARD.player || 'Card') + ' — GradeIQ';
+  document.title = (CARD.player||'Card') + ' — GradeIQ';
   renderCard();
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// EV CALC
-// ──────────────────────────────────────────────────────────────────────────
-function calcEVForTier(r, tierCost){
-  var net10 = (r.psa10_price || 0) * (1 - PLATFORM_FEE);
-  var net9  = r.psa9_price ? r.psa9_price * (1 - PLATFORM_FEE) : net10 * 0.30;
-  var gem   = r.actual_gem_rate || 0;
-  var expRet = gem * net10 + (1 - gem) * 0.80 * net9;
-  var totalCost = (r.raw_price || 0) + tierCost;
-  var evDollar = expRet - totalCost;
-  var evPct = totalCost > 0 ? evDollar / totalCost : 0;
-  return { evDollar: evDollar, evPct: evPct, expectedReturn: expRet };
+// ── EV CALC ───────────────────────────────────────────────────────────────
+function calcEVForTier(r, cost){
+  var n10 = (r.psa10_price||0)*(1-PLATFORM_FEE);
+  var n9  = r.psa9_price ? r.psa9_price*(1-PLATFORM_FEE) : n10*0.30;
+  var gem = r.actual_gem_rate||0;
+  var exp = gem*n10 + (1-gem)*0.80*n9;
+  var total = (r.raw_price||0)+cost;
+  var evD = exp-total;
+  var evP = total>0 ? evD/total : 0;
+  return {evDollar:evD, evPct:evP, expectedReturn:exp};
 }
-
-function calcAnnualizedReturn(evPct, calendarDays){
-  if (!calendarDays || calendarDays <= 0) return null;
-  return Math.pow(1 + evPct, 365 / calendarDays) - 1;
-}
-
+function calcAnn(evPct, days){ if(!days||days<=0) return null; return Math.pow(1+evPct,365/days)-1; }
 function getBestTier(r){
-  var best = null, bestAnn = -Infinity;
+  var best=null, bestAnn=-Infinity;
   GRADING_TIERS.forEach(function(t){
-    var ev = calcEVForTier(r, t.cost_per_card);
-    var days = (t.turnaround_business_days_avg || 0) * 1.4;
-    var ann = calcAnnualizedReturn(ev.evPct, days);
-    if (ev.evDollar > 0 && ev.evPct >= 0.40 && ann !== null && ann > bestAnn){
-      bestAnn = ann;
-      best = { tier: t, ev: ev, ann: ann };
-    }
+    var ev=calcEVForTier(r,t.cost_per_card);
+    var days=(t.turnaround_business_days_avg||0)*1.4;
+    var ann=calcAnn(ev.evPct,days);
+    if(ev.evDollar>0&&ev.evPct>=0.40&&ann!==null&&ann>bestAnn){bestAnn=ann;best={tier:t,ev:ev,ann:ann};}
   });
   return best;
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// FORMATTERS
-// ──────────────────────────────────────────────────────────────────────────
+// ── FORMATTERS ────────────────────────────────────────────────────────────
 function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(v).toFixed(2); }
-function fPct(v,dec){ if(v==null)return'--'; return(v*100).toFixed(dec||0)+'%'; }
+function fPct(v,d){ if(v==null)return'--'; return(v*100).toFixed(d||0)+'%'; }
 function stripSet(s){ return(s||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim(); }
 
 function sportChip(sport){
-  var map={
-    'TCG':['rgba(168,85,247,.15)','#c084fc','rgba(168,85,247,.3)','TCG'],
-    'Baseball':['rgba(239,68,68,.12)','#f87171','rgba(239,68,68,.25)','BASEBALL'],
-    'Basketball':['rgba(249,115,22,.12)','#fb923c','rgba(249,115,22,.25)','BASKETBALL'],
-    'Football':['rgba(16,185,129,.12)','#34d399','rgba(16,185,129,.25)','FOOTBALL'],
-    'Hockey':['rgba(59,130,246,.12)','#60a5fa','rgba(59,130,246,.25)','HOCKEY'],
-  };
+  var map={TCG:['rgba(168,85,247,.15)','#c084fc','TCG'],Baseball:['rgba(239,68,68,.12)','#f87171','BASEBALL'],Basketball:['rgba(249,115,22,.12)','#fb923c','BASKETBALL'],Football:['rgba(16,185,129,.12)','#34d399','FOOTBALL']};
   var c=map[sport]; if(!c)return'';
-  return '<span class="chip" style="background:'+c[0]+';color:'+c[1]+';border:1px solid '+c[2]+';">'+c[3]+'</span>';
+  return '<span class="chip" style="background:'+c[0]+';color:'+c[1]+';border:1px solid '+c[1]+'33;">'+c[2]+'</span>';
 }
-
 function parallelChip(parallel){
   if(!parallel||parallel.toLowerCase()==='base')return'';
-  var bg='rgba(239,68,68,.12)',color='#f87171',border='rgba(239,68,68,.25)';
-  if(/illustration rare|art rare/i.test(parallel)){bg='rgba(59,130,246,.12)';color='#60a5fa';border='rgba(59,130,246,.25)';}
-  else if(/special.*(illustration|art)|sar\b/i.test(parallel)){bg='rgba(168,85,247,.15)';color='#c084fc';border='rgba(168,85,247,.3)';}
-  else if(/shiny|shining/i.test(parallel)){bg='rgba(234,179,8,.12)';color='#facc15';border='rgba(234,179,8,.25)';}
-  else if(/full art/i.test(parallel)){bg='rgba(20,184,166,.12)';color='#2dd4bf';border='rgba(20,184,166,.25)';}
-  else if(/silver prizm/i.test(parallel)){bg='rgba(148,163,184,.12)';color='#94a3b8';border='rgba(148,163,184,.25)';}
-  else if(/gold/i.test(parallel)){bg='rgba(234,179,8,.15)';color='#fbbf24';border='rgba(234,179,8,.3)';}
-  else if(/refractor|prizm|holo/i.test(parallel)){bg='rgba(16,185,129,.12)';color='#34d399';border='rgba(16,185,129,.25)';}
-  return '<span class="chip" style="background:'+bg+';color:'+color+';border:1px solid '+border+';">'+parallel+'</span>';
+  var bg='rgba(239,68,68,.12)',color='#f87171';
+  if(/refractor|prizm|holo/i.test(parallel)){bg='rgba(16,185,129,.12)';color='#34d399';}
+  else if(/gold/i.test(parallel)){bg='rgba(234,179,8,.15)';color='#fbbf24';}
+  else if(/silver prizm/i.test(parallel)){bg='rgba(148,163,184,.12)';color='#94a3b8';}
+  else if(/illustration rare|art rare/i.test(parallel)){bg='rgba(59,130,246,.12)';color='#60a5fa';}
+  return '<span class="chip" style="background:'+bg+';color:'+color+';border:1px solid '+color+'33;">'+parallel+'</span>';
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// RENDER
-// ──────────────────────────────────────────────────────────────────────────
+// ── RENDER ────────────────────────────────────────────────────────────────
 function renderCard(){
   var r = CARD;
   var ss = stripSet(r.set_name);
-  var evPct = r.ev_pct || 0;
-  var iq = r.scc_score || 0;
-  var maxBuy = r.max_buy_40 || 0;
-  var ec = evPct >= 0.40 ? 'var(--green)' : 'var(--text-muted)';
-  var sc = iq >= 60 ? 'var(--green)' : 'var(--text-muted)';
-  var bestTierData = getBestTier(r);
+  var iq = r.scc_score||0;
+  var evPct = r.ev_pct||0;
+  var maxBuy = r.max_buy_40||0;
+  var sc = iq>=60?'var(--green)':'var(--text-muted)';
+  var ec = evPct>=0.40?'var(--green)':'var(--text-muted)';
+  var best = getBestTier(r);
 
   // eBay links
-  var ebayRawQ = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc -tag -cgc');
-  var ebayRawUrl = 'https://www.ebay.com/sch/i.html?_nkw='+ebayRawQ+'&_ipg=240&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
-  var ebayGradedQ = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10');
-  var ebayGradedUrl = 'https://www.ebay.com/sch/i.html?_nkw='+ebayGradedQ+'&_ipg=240&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
-  var verifyQ = encodeURIComponent((r.player||'')+(r.year?' '+r.year:'')+(r.card_no?' #'+r.card_no:''));
-  var mmUrl = 'https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+verifyQ;
-  var clUrl = 'https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+verifyQ;
+  var bq = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc');
+  var ebayRaw = 'https://www.ebay.com/sch/i.html?_nkw='+bq+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+  var bq10 = encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10');
+  var ebay10 = 'https://www.ebay.com/sch/i.html?_nkw='+bq10+'&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+  var vq = encodeURIComponent((r.player||'')+(r.year?' '+r.year:'')+(r.card_no?' #'+r.card_no:''));
+  var mmUrl = 'https://marketmovers.sportscardinvestor.com/dashboard?ct=sports-card&usopen=1&uss='+vq;
+  var clUrl = 'https://app.cardladder.com/sales-history?sort=date&direction=desc&q='+vq;
+
+  // Verify link (SCP vs PriceCharting)
+  var isTCG = String(r.scp_id).startsWith('tcg_');
+  var verifyUrl, verifyLabel;
+  if(isTCG){ var pcId=String(r.scp_id).split('_')[1]; var pcNo=String(r.card_no||'').replace(/^0+/,''); verifyUrl='https://www.pricecharting.com/search-products?q='+encodeURIComponent((r.player||'')+' #'+pcNo)+'&type=prices'; verifyLabel='Price Charting'; }
+  else { verifyUrl='https://www.sportscardspro.com/game/'+r.scp_id; verifyLabel='SCP'; }
 
   // Image
   var imgHtml = r.image_url
     ? '<div class="hero-img"><img src="'+r.image_url+'" alt="'+r.player+'" onerror="this.style.display=\'none\'"></div>'
-    : '<div class="hero-img-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg><div style="font-size:10px;color:var(--text-muted);">No image</div></div>';
+    : '<div class="hero-img-empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>';
 
   // Tier table rows
-  var bestTierId = bestTierData ? bestTierData.tier.id : null;
+  var bestId = best ? best.tier.id : null;
   var tierRows = GRADING_TIERS.map(function(t){
-    var ev = calcEVForTier(r, t.cost_per_card);
-    var days = (t.turnaround_business_days_avg || 0) * 1.4;
-    var ann = calcAnnualizedReturn(ev.evPct, days);
-    var isBest = t.id === bestTierId;
-    var evColor = ev.evDollar > 0 ? 'var(--green)' : '#F87171';
-    var annColor = ann !== null && ann > 0 ? 'var(--green)' : '#F87171';
+    var ev=calcEVForTier(r,t.cost_per_card);
+    var days=(t.turnaround_business_days_avg||0)*1.4;
+    var ann=calcAnn(ev.evPct,days);
+    var isBest=t.id===bestId;
+    var evc=ev.evDollar>0?'var(--green)':'#F87171';
+    var annc=ann!==null&&ann>0?'var(--green)':'#F87171';
     return '<tr class="'+(isBest?'best-row':'')+'">'
-      +'<td style="font-weight:'+(isBest?'700':'400')+';">'+t.tier_name+(isBest?'<span class="best-badge">BEST</span>':'')+'</td>'
+      +'<td style="font-weight:'+(isBest?700:400)+';">'+t.tier_name+(isBest?'<span class="best-badge">BEST</span>':'')+'</td>'
       +'<td style="color:var(--text-muted);">$'+t.cost_per_card+'</td>'
-      +'<td style="color:'+evColor+';font-weight:600;">'+f$(ev.evDollar)+'</td>'
-      +'<td style="color:'+evColor+';">'+fPct(ev.evPct,1)+'</td>'
-      +'<td style="color:'+annColor+';font-weight:'+(isBest?'700':'400')+';">'+(ann!==null?fPct(ann,0):'--')+'</td>'
-      +'<td style="color:var(--text-muted);">'+(t.turnaround_business_days_avg||'--')+'</td>'
+      +'<td style="color:'+evc+';font-weight:600;">'+f$(ev.evDollar)+'</td>'
+      +'<td style="color:'+evc+';">'+fPct(ev.evPct,1)+'</td>'
+      +'<td style="color:'+annc+';font-weight:'+(isBest?700:400)+';">'+(ann!==null?fPct(ann,0):'--')+'</td>'
+      +'<td style="color:var(--text-muted);">'+(t.turnaround_business_days_avg||'--')+'d</td>'
       +'</tr>';
   }).join('');
 
-  // Admin-only SCP link
-  var scpHtml = (CU && CU.email === ADMIN_EMAIL)
-    ? '<a href="https://www.sportscardspro.com/game/'+r.scp_id+'" target="_blank" class="btn-secondary" style="border-color:rgba(245,158,11,.3);color:var(--amber);">🔗 SCP</a>'
-    : '';
-
-  var adminEditHtml = (CU && CU.email === ADMIN_EMAIL) ? `
-    <div class="sec-head">Admin</div>
-    <div class="admin-edit" id="admin-edit-panel">
-      <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">✏ Edit Prices</div>
-      <div class="admin-edit-grid">
-        <div class="edit-field"><label>Raw Price $</label><input type="number" step="0.01" id="edit-raw" value="${r.raw_price||0}"></div>
-        <div class="edit-field"><label>PSA 10 $</label><input type="number" step="0.01" id="edit-p10" value="${r.psa10_price||0}"></div>
-        <div class="edit-field"><label>PSA 9 $ (optional)</label><input type="number" step="0.01" id="edit-p9" value="${r.psa9_price||''}"></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn-primary" style="padding:7px 16px;" onclick="saveEdit()">✓ Save Prices</button>
-        <button onclick="toggleAdminEdit()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 14px;border-radius:6px;font-size:11px;cursor:pointer;">Cancel</button>
-        <span style="font-size:10px;color:var(--text-muted);">EV% recalculates automatically</span>
-      </div>
-    </div>
-  ` : '';
+  // Admin
+  var adminBtn = (CU&&CU.email===ADMIN_EMAIL) ? '<button class="btn-hero btn-hero-amber" onclick="toggleAdminEdit()">✏ Edit Prices</button>' : '';
+  var adminVerify = (CU&&CU.email===ADMIN_EMAIL) ? '<a href="'+verifyUrl+'" target="_blank" class="btn-hero btn-hero-amber">🔗 '+verifyLabel+'</a>' : '';
 
   var html = `
-    <!-- BACK -->
     <button class="back-btn" onclick="history.back()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       Back to Buy Signals
     </button>
 
-    <!-- HERO -->
-    <div class="hero">
+    <!-- ADMIN EDIT -->
+    <div class="admin-edit" id="admin-edit">
+      <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">✏ Edit Prices</div>
+      <div class="admin-edit-grid">
+        <div><label class="edit-lbl">Raw Price $</label><input class="edit-inp" type="number" step="0.01" id="edit-raw" value="${r.raw_price||0}"></div>
+        <div><label class="edit-lbl">PSA 10 $</label><input class="edit-inp" type="number" step="0.01" id="edit-p10" value="${r.psa10_price||0}"></div>
+        <div><label class="edit-lbl">PSA 9 $</label><input class="edit-inp" type="number" step="0.01" id="edit-p9" value="${r.psa9_price||''}"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-hero btn-hero-primary" onclick="saveEdit()">✓ Save</button>
+        <button onclick="toggleAdminEdit()" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 14px;border-radius:6px;font-size:11px;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- HERO BANNER -->
+    <div class="hero-banner">
       ${imgHtml}
-      <div class="hero-meta">
+      <div class="hero-info">
         <div class="hero-chips">
           ${sportChip(r.sport||'')}
           ${parallelChip(r.parallel||'')}
-          ${r.parallel && /silver prizm/i.test(r.parallel) ? '<span title="Silver Prizm pricing may be unreliable" style="font-size:14px;cursor:help;">⚠️</span>' : ''}
+          ${r.parallel&&/silver prizm/i.test(r.parallel)?'<span title="Silver Prizm pricing may be unreliable" style="cursor:help;font-size:14px;">⚠️</span>':''}
         </div>
         <div class="hero-player">${r.player||'--'}</div>
-        ${r.parallel && r.parallel.toLowerCase()!=='base' ? '<div class="hero-parallel">'+r.parallel+'</div>' : ''}
-        <div class="hero-set">${r.year?r.year+' ':''}${ss}${r.card_no?' · #'+r.card_no:''}</div>
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <div class="hero-stat-lbl">IQ Score</div>
-            <div class="hero-stat-val" style="color:${sc};">${Math.round(iq)}</div>
+        <div class="hero-sub">${r.year?r.year+' ':''}${ss}${r.card_no?' · #'+r.card_no:''}${r.parallel&&r.parallel.toLowerCase()!=='base'?' · '+r.parallel:''}</div>
+
+        <div class="hero-prices">
+          <div class="hero-price"><div class="hero-price-lbl">Raw</div><div class="hero-price-val">${f$(r.raw_price)}</div></div>
+          <div class="hero-price"><div class="hero-price-lbl">PSA 9</div><div class="hero-price-val" style="color:var(--text-muted);">${r.psa9_price?f$(r.psa9_price):'--'}</div></div>
+          <div class="hero-price"><div class="hero-price-lbl" style="color:var(--green);">PSA 10</div><div class="hero-price-val" style="color:var(--green);">${f$(r.psa10_price)}</div></div>
+          ${r.raw_price&&r.psa10_price?'<div class="hero-price"><div class="hero-price-lbl">Multiplier</div><div class="hero-price-val" style="color:var(--green);">'+(r.psa10_price/r.raw_price).toFixed(1)+'x</div></div>':''}
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn-hero btn-hero-primary" onclick="addToInventory()">+ Add to Inventory</button>
+          <a href="${ebayRaw}" target="_blank" class="btn-hero btn-hero-secondary">🛒 Buy Raw</a>
+          <a href="${ebay10}" target="_blank" class="btn-hero btn-hero-secondary">🏆 Buy PSA 10</a>
+          <a href="${mmUrl}" target="_blank" class="btn-hero btn-hero-secondary">📈 Market Movers</a>
+          <a href="${clUrl}" target="_blank" class="btn-hero btn-hero-secondary">🔍 Card Ladder</a>
+          ${adminVerify}
+          ${adminBtn}
+        </div>
+
+        <div class="hero-stats-row">
+          <div class="hero-stat-item"><div class="hero-stat-lbl">IQ Score</div><div class="hero-stat-val" style="color:${sc};">${Math.round(iq)}</div></div>
+          <div class="hero-stat-item"><div class="hero-stat-lbl">EV%</div><div class="hero-stat-val" style="color:${ec};">${fPct(evPct,1)}</div></div>
+          <div class="hero-stat-item"><div class="hero-stat-lbl">Max Buy</div><div class="hero-stat-val" style="color:var(--green);">${f$(maxBuy)}</div></div>
+          ${best?'<div class="hero-stat-item"><div class="hero-stat-lbl">Best Tier</div><div class="hero-stat-val" style="font-size:14px;margin-top:3px;">'+best.tier.tier_name+'</div></div>':''}
+          ${best?'<div class="hero-stat-item"><div class="hero-stat-lbl">Annualized</div><div class="hero-stat-val" style="color:var(--green);">'+fPct(best.ann,0)+'</div></div>':''}
+          ${r.actual_gem_rate!=null?'<div class="hero-stat-item"><div class="hero-stat-lbl">Gem Rate</div><div class="hero-stat-val">'+fPct(r.actual_gem_rate,1)+'</div></div>':''}
+          ${r.sales_volume?'<div class="hero-stat-item"><div class="hero-stat-lbl">Sales Vol</div><div class="hero-stat-val">'+r.sales_volume+'</div></div>':''}
+          ${r.scanned_at?'<div class="hero-stat-item"><div class="hero-stat-lbl">Last Scanned</div><div class="hero-stat-val" style="font-size:12px;margin-top:3px;">'+new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div></div>':''}
+        </div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN: TIER TABLE + PRICE HISTORY -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">PSA Tier Comparison</span></div>
+        <table class="tier-tbl">
+          <thead><tr><th>Tier</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Annualized</th><th>Days</th></tr></thead>
+          <tbody>${tierRows}</tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Price History & Analytics</span><span style="font-size:9px;color:var(--text-muted);">Building...</span></div>
+        <div class="panel-body">
+          <div class="coming-soon">
+            <div class="coming-soon-icon">📈</div>
+            <div class="coming-soon-title">Price history is building</div>
+            <div class="coming-soon-sub">GradeIQ captures a price snapshot every scanner cycle. Charts appear automatically once enough data accumulates.</div>
+            <div class="coming-soon-bar">
+              <div class="coming-soon-bar-item"></div>
+              <div class="coming-soon-bar-item"></div>
+              <div class="coming-soon-bar-item"></div>
+              <div class="coming-soon-bar-item"></div>
+              <div class="coming-soon-bar-item"></div>
+            </div>
           </div>
-          <div class="hero-stat">
-            <div class="hero-stat-lbl">EV%</div>
-            <div class="hero-stat-val" style="color:${ec};">${fPct(evPct,1)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN: SALES VOLUME + POPULATION -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Sales Volume</span><span style="font-size:9px;color:var(--text-muted);">Coming soon</span></div>
+        <div class="panel-body">
+          <div class="coming-soon" style="min-height:140px;">
+            <div class="coming-soon-icon" style="font-size:24px;">📊</div>
+            <div class="coming-soon-sub">Sales velocity trends will track how fast this card is moving.</div>
           </div>
-          <div class="hero-stat">
-            <div class="hero-stat-lbl">Buy ≤</div>
-            <div class="hero-stat-val" style="color:var(--green);">${f$(maxBuy)}</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Population Change</span><span style="font-size:9px;color:var(--text-muted);">Coming soon</span></div>
+        <div class="panel-body">
+          <div class="coming-soon" style="min-height:140px;">
+            <div class="coming-soon-icon" style="font-size:24px;">👥</div>
+            <div class="coming-soon-sub">PSA population growth tracking will show gem rate trends over time.</div>
           </div>
         </div>
       </div>
-      <!-- EV SNAPSHOT -->
-      \${bestTierData ? \`
-      <div class="ev-snapshot">
-        <div class="ev-snap-title">Best Case Analysis</div>
-        <div class="ev-snap-row">
-          <div class="ev-snap-lbl">Best Tier</div>
-          <div class="ev-snap-val" style="font-size:14px;">\${bestTierData.tier.tier_name}</div>
-          <div class="ev-snap-sub">$\${bestTierData.tier.cost_per_card} grading cost</div>
-        </div>
-        <div class="ev-snap-divider"></div>
-        <div class="ev-snap-row">
-          <div class="ev-snap-lbl">Expected Return</div>
-          <div class="ev-snap-val">\${f\$(bestTierData.ev.expectedReturn)}</div>
-          <div class="ev-snap-sub">on a \${f\$(r.raw_price)} raw card</div>
-        </div>
-        <div class="ev-snap-row">
-          <div class="ev-snap-lbl">EV%</div>
-          <div class="ev-snap-val">\${fPct(bestTierData.ev.evPct,1)}</div>
-        </div>
-        <div class="ev-snap-divider"></div>
-        <div class="ev-snap-row">
-          <div class="ev-snap-lbl">Annualized Return</div>
-          <div class="ev-snap-val">\${fPct(bestTierData.ann,0)}</div>
-          <div class="ev-snap-sub">\${bestTierData.tier.turnaround_business_days_avg} business day turnaround</div>
-        </div>
-      </div>
-      \` : \`<div style="width:210px;"></div>\`}
     </div>
 
-    <!-- PRICE TRIO -->
-    <div class="price-trio">
-      <div class="price-col">
-        <div class="price-col-lbl" style="color:var(--text-muted);">Raw</div>
-        <div class="price-col-val" style="color:var(--text);">${f$(r.raw_price)}</div>
-        <div class="price-col-sub">Ungraded market price</div>
-      </div>
-      <div class="price-col">
-        <div class="price-col-lbl" style="color:var(--text-muted);">PSA 9</div>
-        <div class="price-col-val" style="color:var(--text-muted);">${r.psa9_price?f$(r.psa9_price):'--'}</div>
-        <div class="price-col-sub">Graded 9 market price</div>
-      </div>
-      <div class="price-col psa10">
-        <div class="price-col-lbl" style="color:var(--green);">PSA 10</div>
-        <div class="price-col-val" style="color:var(--green);">${f$(r.psa10_price)}</div>
-        <div class="price-col-sub">Gem mint market price</div>
+    <!-- EBAY SOLD LISTINGS -->
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">eBay Sold Listings</span></div>
+      <div class="ebay-placeholder">
+        <div style="font-size:24px;margin-bottom:8px;opacity:.4;">🛒</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">Live eBay sold data coming soon</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Will show recent completed listings with prices and dates.</div>
+        <a href="${ebayRaw}" target="_blank" class="btn-hero btn-hero-secondary" style="display:inline-flex;">View Raw Listings on eBay →</a>
       </div>
     </div>
-
-    <!-- STAT GRID -->
-    <div class="stat-grid">
-      ${r.actual_gem_rate!=null ? `<div class="stat-card"><div class="stat-card-lbl">Gem Rate</div><div class="stat-card-val" style="color:var(--green);">${fPct(r.actual_gem_rate,1)}</div><div class="stat-card-sub">of raw cards grade PSA 10</div></div>` : ''}
-      ${r.sales_volume ? `<div class="stat-card"><div class="stat-card-lbl">Sales Volume</div><div class="stat-card-val">${r.sales_volume}</div><div class="stat-card-sub">recent sales</div></div>` : ''}
-      ${r.raw_price && r.psa10_price ? `<div class="stat-card"><div class="stat-card-lbl">Multiplier</div><div class="stat-card-val" style="color:var(--green);">${(r.psa10_price/r.raw_price).toFixed(1)}x</div><div class="stat-card-sub">PSA 10 vs raw</div></div>` : ''}
-      ${bestTierData ? `<div class="stat-card"><div class="stat-card-lbl">Best Tier</div><div class="stat-card-val" style="font-size:14px;margin-top:3px;">${bestTierData.tier.tier_name}</div><div class="stat-card-sub">${fPct(bestTierData.ann,0)} annualized</div></div>` : ''}
-      ${r.ev_dollar!=null ? `<div class="stat-card"><div class="stat-card-lbl">EV$</div><div class="stat-card-val" style="color:${(r.ev_dollar||0)>=0?'var(--green)':'#F87171'};">${f$(r.ev_dollar)}</div><div class="stat-card-sub">expected profit</div></div>` : ''}
-      ${r.scanned_at ? `<div class="stat-card"><div class="stat-card-lbl">Last Updated</div><div class="stat-card-val" style="font-size:13px;margin-top:3px;">${new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div><div class="stat-card-sub">scanner cycle</div></div>` : ''}
-    </div>
-
-    <!-- ACTIONS -->
-    <div class="actions">
-      <button class="btn-primary" onclick="addToInventory()">+ Add to Inventory</button>
-      <a href="${ebayRawUrl}" target="_blank" class="btn-secondary btn-ebay">🛒 Buy Raw on eBay</a>
-      <a href="${ebayGradedUrl}" target="_blank" class="btn-secondary btn-ebay">🏆 Buy PSA 10 on eBay</a>
-      <a href="${mmUrl}" target="_blank" class="btn-secondary">📈 Market Movers</a>
-      <a href="${clUrl}" target="_blank" class="btn-secondary">🔍 Card Ladder</a>
-      ${scpHtml}
-      ${CU && CU.email === ADMIN_EMAIL ? '<button class="btn-secondary" style="border-color:var(--amber);color:var(--amber);" onclick="toggleAdminEdit()">✏ Edit Prices</button>' : ''}
-    </div>
-
-    <!-- TIER COMPARISON -->
-    <div class="sec-head">PSA Tier Comparison</div>
-    <div class="tier-wrap">
-      <table class="tier-tbl">
-        <thead><tr>
-          <th>Tier</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Annualized</th><th>Days</th>
-        </tr></thead>
-        <tbody>${tierRows}</tbody>
-      </table>
-    </div>
-
-    <!-- PRICE HISTORY -->
-    <div class="sec-head">Price History</div>
-    <div class="chart-wrap">
-      <div class="chart-placeholder" id="chart-area">
-        <div style="font-size:28px;">📈</div>
-        <div style="font-size:14px;font-weight:700;color:var(--text);">Price history is building</div>
-        <div style="font-size:12px;color:var(--text-muted);text-align:center;max-width:360px;">GradeIQ captures a price snapshot every scanner cycle. Charts will appear automatically once enough data accumulates — check back in 30 days.</div>
-      </div>
-    </div>
-
-    <!-- ADMIN EDIT -->
-    ${adminEditHtml}
   `;
 
   g('page-content').innerHTML = html;
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// ACTIONS
-// ──────────────────────────────────────────────────────────────────────────
+// ── ACTIONS ───────────────────────────────────────────────────────────────
 function addToInventory(){
-  if (!CARD) return;
-  try {
+  if(!CARD) return;
+  try{
     sessionStorage.setItem('giq_add_card', JSON.stringify({
-      player: CARD.player||'',
-      year: CARD.year||'',
-      set_name: CARD.set_name||'',
-      card_no: CARD.card_no||'',
-      parallel: CARD.parallel||'',
-      sport: CARD.sport||'',
-      raw_price: CARD.raw_price||0,
-      source: 'Buy Signals',
-      scp_id: CARD.scp_id||''
+      player:CARD.player||'', year:CARD.year||'', set_name:CARD.set_name||'',
+      card_no:CARD.card_no||'', parallel:CARD.parallel||'', sport:CARD.sport||'',
+      raw_price:CARD.raw_price||0, source:'Buy Signals', scp_id:CARD.scp_id||'',
+      psa10:CARD.psa10_price||0, psa9:CARD.psa9_price||0,
+      gem_rate:CARD.actual_gem_rate||0, image_url:CARD.image_url||''
     }));
-  } catch(e){}
-  window.location.href = 'collection.html?add=1';
+  }catch(e){}
+  window.location.href='collection.html';
 }
 
 function toggleAdminEdit(){
-  var panel = g('admin-edit-panel');
-  if (!panel) return;
-  panel.style.display = panel.style.display === 'none' || !panel.style.display ? 'block' : 'none';
+  var p=g('admin-edit');
+  if(p) p.style.display=p.style.display==='block'?'none':'block';
 }
 
 async function saveEdit(){
-  if (!CU || CU.email !== ADMIN_EMAIL) return;
-  var raw = parseFloat(g('edit-raw').value) || 0;
-  var p10 = parseFloat(g('edit-p10').value) || 0;
-  var p9v = g('edit-p9').value;
-  var p9  = p9v ? parseFloat(p9v) : 0;
-  if (!raw || !p10){ toast('Raw and PSA10 are required', true); return; }
-  if (p10 <= raw){ toast('PSA10 must exceed raw price', true); return; }
-
-  var n10 = p10 * (1 - PLATFORM_FEE);
-  var n9  = (p9 > 0 && p9 < p10) ? p9 * (1 - PLATFORM_FEE) : n10 * 0.30;
-  var gem = CARD.actual_gem_rate || 0;
-  var expRet = gem * n10 + (1 - gem) * 0.80 * n9;
-  var evDollar = expRet - raw;
-  var evPct = raw > 0 ? evDollar / raw : 0;
-  var maxBuy = expRet / 1.40;
-
-  var updates = {
-    raw_price: raw, psa10_price: p10, net_psa10: n10,
-    psa9_price: p9||null, net_psa9: p9?n9:null,
-    ev_dollar: Math.round(evDollar*100)/100,
-    ev_pct: Math.round(evPct*1000)/1000,
-    max_buy_40: Math.round(maxBuy*100)/100
-  };
-
-  var res = await sb.from('ev_scanner').update(updates).eq('scp_id', CARD.scp_id);
-  if (res.error){ toast('Error: '+res.error.message, true); return; }
-  CARD = Object.assign({}, CARD, updates);
+  if(!CU||CU.email!==ADMIN_EMAIL) return;
+  var raw=parseFloat(g('edit-raw').value)||0;
+  var p10=parseFloat(g('edit-p10').value)||0;
+  var p9v=g('edit-p9').value;
+  var p9=p9v?parseFloat(p9v):0;
+  if(!raw||!p10){toast('Raw and PSA10 required',true);return;}
+  if(p10<=raw){toast('PSA10 must exceed raw',true);return;}
+  var n10=p10*(1-PLATFORM_FEE);
+  var n9=p9>0&&p9<p10?p9*(1-PLATFORM_FEE):n10*0.30;
+  var gem=CARD.actual_gem_rate||0;
+  var exp=gem*n10+(1-gem)*0.80*n9;
+  var evD=exp-raw, evP=raw>0?evD/raw:0;
+  var res=await sb.from('ev_scanner').update({
+    raw_price:raw,psa10_price:p10,psa9_price:p9||null,
+    net_psa10:n10,net_psa9:n9,
+    ev_dollar:Math.round(evD*100)/100,
+    ev_pct:Math.round(evP*1000)/1000,
+    max_buy_40:Math.round((exp/1.40)*100)/100
+  }).eq('scp_id',CARD.scp_id);
+  if(res.error){toast('Error: '+res.error.message,true);return;}
+  CARD=Object.assign({},CARD,{raw_price:raw,psa10_price:p10,psa9_price:p9||null,ev_dollar:evD,ev_pct:evP});
   toast('Prices updated!');
   toggleAdminEdit();
   renderCard();
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// NOT FOUND
-// ──────────────────────────────────────────────────────────────────────────
 function renderNotFound(msg){
-  g('page-content').innerHTML = `
-    <button class="back-btn" onclick="history.back()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Buy Signals
-    </button>
-    <div class="not-found">
-      <div class="not-found-icon">🔍</div>
-      <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">Card not found</div>
-      <div style="font-size:13px;color:var(--text-muted);">${msg}</div>
-    </div>
-  `;
+  g('page-content').innerHTML='<button class="back-btn" onclick="history.back()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>Back</button><div class="not-found"><div class="nf-icon">🔍</div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;">Card not found</div><div style="font-size:13px;color:var(--text-muted);">'+msg+'</div></div>';
 }
 </script>
 </body>
