@@ -845,6 +845,12 @@ async function saveCard(){
     notes: g('f-notes').value||null,
     status: g('f-status').value||'raw',
     psa_grade: parseInt(g('f-grade').value)||null,
+    date_sold: g('f-date-sold').value||null,
+    sale_price: parseFloat(g('f-sale-price').value)||null,
+    fees: parseFloat(g('f-fees').value)||null,
+    ship_out: parseFloat(g('f-ship-out').value)||null,
+    net_proceeds: parseFloat(g('f-net-proceeds').value)||null,
+    realized_profit: parseFloat(g('f-realized-profit').value)||null,
   };
 
   var res;
