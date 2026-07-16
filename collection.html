@@ -609,7 +609,7 @@ function renderSoldTable(cards){
     + '<div><div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Total Profit</div><div style="font-size:18px;font-weight:900;color:'+(totalProfit>=0?'var(--green)':'#F87171')+';">'+(totalProfit>=0?'+':'')+f$(totalProfit)+'</div></div>'
     + '</div>';
   html += '<div class="tbl-wrap"><table class="tbl"><thead><tr>'
-    + '<th>Card</th><th>Sport</th><th>Date Sold</th><th class="num">Cost</th><th class="num">Sale Price</th><th class="num">Net</th><th class="num">Profit</th><th class="num">EV% Ret.</th>'
+    + '<th>Card</th><th>Sport</th><th>Date Sold</th><th class="num">Cost</th><th class="num">Sale Price</th><th class="num">Net</th><th class="num">Profit</th><th class="num">EV% Ret.</th><th>Actions</th>'
     + '</tr></thead><tbody>';
   cards.forEach(function(c){
     var profitColor = (c.realized_profit||0) >= 0 ? ' green' : ' red';
@@ -622,6 +622,7 @@ function renderSoldTable(cards){
       + '<td class="num">'+f$(c.net_proceeds)+'</td>'
       + '<td class="num'+profitColor+'">'+((c.realized_profit||0)>=0?'+':'')+f$(c.realized_profit)+'</td>'
       + '<td class="num'+profitColor+'">'+fPct(c.ev_pct_returned)+'</td>'
+      + '<td><div class="row-actions"><button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button></div></td>'
       + '</tr>';
   });
   html += '</tbody></table></div>';
