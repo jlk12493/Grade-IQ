@@ -381,26 +381,24 @@ var PLATFORM_FEE = 0.135;
 async function loadCards(){
   var userId = (await sb.auth.getUser()).data.user.id;
   var { data, error } = await sb.from('inventory')
-    .select('*, ev_scanner!inventory_card_id_fkey(image_url)')
+    .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
-
-  if (error){
-    // Fallback without join if FK doesn't exist
-    var { data: data2, error: error2 } = await sb.from('inventory')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (error2){ toast('Error loading collection: ' + error2.message, true); return; }
-    ALL_CARDS = data2 || [];
-  } else {
-    // Flatten the join
-    ALL_CARDS = (data || []).map(function(c){
-      var img = c.ev_scanner && c.ev_scanner.image_url ? c.ev_scanner.image_url : null;
-      delete c.ev_scanner;
-      c._scanner_image = img;
-      return c;
-    });
+  if (error){ toast('Error loading collection: ' + error.message, true); return; }
+  ALL_CARDS = data || [];
+  // Fetch images from ev_scanner for cards that don't have one
+  var needImg = ALL_CARDS.filter(function(c){ return c.card_id && !c.image_url; });
+  if (needImg.length) {
+    var ids = needImg.map(function(c){ return c.card_id; });
+    var { data: scanRows } = await sb.from('ev_scanner').select('scp_id,image_url').in('scp_id', ids);
+    if (scanRows) {
+      var imgMap = {};
+      scanRows.forEach(function(r){ imgMap[r.scp_id] = r.image_url; });
+      ALL_CARDS = ALL_CARDS.map(function(c){
+        if (c.card_id && !c.image_url && imgMap[c.card_id]) c.image_url = imgMap[c.card_id];
+        return c;
+      });
+    }
   }
   updateCounts();
   renderPortfolioStrip();
@@ -651,11 +649,23 @@ function openAddModal(prefill){
     if(prefill.parallel) g('f-parallel').value = prefill.parallel;
     if(prefill.raw_price){ g('f-price').value = prefill.raw_price; calcTotalCost(); }
     if(prefill.source)   g('f-source').value = prefill.source;
-    if(prefill.psa10)    g('f-psa10').value = prefill.psa10;
-    if(prefill.psa9)     g('f-psa9').value = prefill.psa9;
-    if(prefill.gem_rate) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
+    if(prefill.psa10 && prefill.psa10 > 0)      g('f-psa10').value = prefill.psa10;
+    if(prefill.psa9  && prefill.psa9  > 0)      g('f-psa9').value  = prefill.psa9;
+    if(prefill.gem_rate && prefill.gem_rate > 0) g('f-gemrate').value = (prefill.gem_rate * 100).toFixed(1);
     if(prefill.image_url) g('card-modal').dataset.imageUrl = prefill.image_url;
-    if(prefill.scp_id)    g('card-modal').dataset.cardId = prefill.scp_id;
+    if(prefill.scp_id)    g('card-modal').dataset.cardId   = prefill.scp_id;
+    // If pricing missing, fetch from ev_scanner by scp_id
+    if (prefill.scp_id && (!prefill.psa10 || prefill.psa10 === 0)) {
+      sb.from('ev_scanner').select('psa10_price,psa9_price,actual_gem_rate,image_url').eq('scp_id', prefill.scp_id).single().then(function(res){
+        if (!res.data) return;
+        if (res.data.psa10_price) g('f-psa10').value = res.data.psa10_price;
+        if (res.data.psa9_price)  g('f-psa9').value  = res.data.psa9_price;
+        if (res.data.actual_gem_rate) g('f-gemrate').value = (res.data.actual_gem_rate * 100).toFixed(1);
+        if (res.data.image_url && !g('card-modal').dataset.imageUrl) g('card-modal').dataset.imageUrl = res.data.image_url;
+        calcEV();
+      });
+    }
+    calcEV();
     calcEV();
   }
   g('card-modal').classList.add('open');
