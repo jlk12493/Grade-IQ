@@ -589,9 +589,9 @@ function renderGradedTable(cards){
       + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
       + '<td class="num green">'+f$(marketVal)+'</td>'
       + '<td><div class="row-actions">'
-        + '<button class="row-btn primary" onclick="markSold(\''+c.id+'\')">Mark Sold</button>'
-        + '<button class="row-btn" onclick="listOnEbay(\''+c.id+'\')">&#x1F6D2; eBay</button>'
-        + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
+        + '<button class="row-btn primary" data-action="sold" data-id="'+c.id+'">Mark Sold</button>'
+        + '<button class="row-btn" data-action="ebay" data-id="'+c.id+'">&#x1F6D2; eBay</button>'
+        + '<button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button>'
       + '</div></td>'
       + '</tr>';
   });
@@ -938,6 +938,22 @@ function listOnEbay(id){
   window.open('https://www.ebay.com/sell/listing/create?title='+encodeURIComponent(title),'_blank');
 }
 
+// ── EVENT DELEGATION FOR TABLE BUTTONS ──────────────────────────────────
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  var action = btn.dataset.action;
+  var id = btn.dataset.id;
+  if (!id) return;
+  e.stopPropagation();
+  if (action === 'submit')  submitToGrading(id);
+  if (action === 'edit')    openEditModal(id);
+  if (action === 'delete')  deleteCard(id);
+  if (action === 'graded')  markGraded(id);
+  if (action === 'sold')    markSold(id);
+  if (action === 'ebay')    listOnEbay(id);
+});
+
 // ── RAW TABLE WITH CHECKBOXES ─────────────────────────────────────────────
 var _origRenderRaw = renderRawTable;
 renderRawTable = function(cards){
@@ -957,9 +973,9 @@ renderRawTable = function(cards){
         '<td class="num'+ec+'">'+f$(c.ev_dollar)+'</td>',
         '<td class="num">'+f$(c.psa10)+'</td>',
         '<td><div class="row-actions">',
-          '<button class="row-btn primary" onclick="submitToGrading('+JSON.stringify(c.id)+')">Submit</button>',
-          '<button class="row-btn" onclick="openEditModal('+JSON.stringify(c.id)+')">Edit</button>',
-          '<button class="row-btn danger" onclick="deleteCard('+JSON.stringify(c.id)+')">Delete</button>',
+          '<button class="row-btn primary" data-action="submit" data-id="'+c.id+'">Submit</button>',
+          '<button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button>',
+          '<button class="row-btn danger" data-action="delete" data-id="'+c.id+'">Delete</button>',
         '</div></td>',
       '</tr>'
     ].join('');
@@ -1004,8 +1020,8 @@ renderSubmittedTable = function(cards){
         +'<td class="num'+ec2+'">'+fPct(c.ev_pct)+'</td>'
         +'<td class="num">'+f$(c.psa10)+'</td>'
         +'<td><div class="row-actions">'
-          +'<button class="row-btn primary" onclick="markGraded('+JSON.stringify(c.id)+')">Mark Graded</button>'
-          +'<button class="row-btn" onclick="openEditModal('+JSON.stringify(c.id)+')">Edit</button>'
+          +'<button class="row-btn primary" data-action="graded" data-id="'+c.id+'">Mark Graded</button>'
+          +'<button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button>'
         +'</div></td></tr>';
     });
     html+='</tbody></table></div></div>';
