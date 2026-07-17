@@ -446,7 +446,10 @@ function renderCard(){
 
     <!-- PAST LISTINGS -->
     <div class="panel" style="margin-bottom:20px;">
-      <div class="panel-head"><span class="panel-title">Past Listings (eBay)</span></div>
+      <div class="panel-head">
+        <span class="panel-title">Past Listings (eBay Sold)</span>
+        <span class="panel-badge" id="listing-cache-badge"></span>
+      </div>
       <div class="listing-tabs">
         <button class="ltab active" onclick="setListingTab('raw',this)">Raw</button>
         <button class="ltab" onclick="setListingTab('psa10',this)">PSA 10</button>
@@ -454,27 +457,121 @@ function renderCard(){
       </div>
       <div id="listing-content">
         <div class="coming-soon" style="padding:24px;">
-          <div class="cs-icon" style="font-size:24px;">🛒</div>
-          <div class="cs-title">Live eBay sold data coming soon</div>
-          <div class="cs-sub">Will show recent completed listings with sale prices, dates, and listing types.</div>
-          <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
-            <a href="${ebayRaw}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View Raw Listings →</a>
-            <a href="${ebay10}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View PSA 10 Listings →</a>
-          </div>
+          <div class="cs-icon" style="font-size:24px;">⏳</div>
+          <div class="cs-title">Loading sold listings...</div>
         </div>
       </div>
     </div>
   `;
 
   g('page-content').innerHTML = html;
+
+  // Auto-load Raw sold listings
+  setTimeout(function(){ fetchEbaySold('raw'); }, 100);
 }
 
 // ── LISTING TABS ──────────────────────────────────────────────────────────
+var LISTING_CACHE = {};
+
 function setListingTab(tab, btn){
   ACTIVE_LISTING_TAB = tab;
   document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
-  // Future: fetch eBay data here
+  fetchEbaySold(tab);
+}
+
+function buildEbayQuery(tab){
+  if(!CARD) return '';
+  var r = CARD;
+  var base = (r.player||'') + (r.year?' '+r.year:'') + (r.card_no?' #'+r.card_no:'') + (r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'');
+  if(tab==='raw') return base + ' -psa -bgs -sgc';
+  if(tab==='psa10') return base + ' PSA 10';
+  if(tab==='psa9') return base + ' PSA 9';
+  return base;
+}
+
+async function fetchEbaySold(tab){
+  var content = document.getElementById('listing-content');
+  var badge = document.getElementById('listing-cache-badge');
+  if(!content) return;
+
+  // Return from memory cache instantly if already fetched this session
+  if(LISTING_CACHE[tab]){
+    renderListings(LISTING_CACHE[tab].results, tab);
+    if(badge) badge.textContent = LISTING_CACHE[tab].cached ? 'Cached' : 'Live';
+    return;
+  }
+
+  content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Fetching sold listings...</div></div>';
+
+  var q = buildEbayQuery(tab);
+  if(!q){
+    content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-title">No card data available.</div></div>';
+    return;
+  }
+
+  try {
+    var res = await fetch('/api/ebay-sold?q=' + encodeURIComponent(q));
+    var data = await res.json();
+
+    if(data.error){
+      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon">⚠️</div><div class="cs-title">Could not load listings</div><div class="cs-sub">'+data.error+'</div></div>';
+      return;
+    }
+
+    LISTING_CACHE[tab] = data;
+    if(badge) badge.textContent = data.cached ? 'Cached' : 'Live';
+    renderListings(data.results || [], tab);
+
+  } catch(err){
+    content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon">⚠️</div><div class="cs-title">Failed to load listings</div><div class="cs-sub">'+err.message+'</div></div>';
+  }
+}
+
+function renderListings(results, tab){
+  var content = document.getElementById('listing-content');
+  if(!content) return;
+  var r = CARD;
+  var bq = tab==='raw'
+    ? encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc')
+    : tab==='psa10'
+    ? encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10')
+    : encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 9');
+  var ebayLink = 'https://www.ebay.com/sch/i.html?_nkw='+bq+'&LH_Sold=1&LH_Complete=1&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
+
+  if(!results || results.length === 0){
+    content.innerHTML = '<div class="coming-soon" style="padding:24px;">'
+      +'<div class="cs-icon">🔍</div>'
+      +'<div class="cs-title">No recent sold listings found</div>'
+      +'<div class="cs-sub">Try searching directly on eBay.</div>'
+      +'<div style="margin-top:14px;"><a href="'+ebayLink+'" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View on eBay →</a></div>'
+      +'</div>';
+    return;
+  }
+
+  var rows = results.map(function(item){
+    var titleShort = item.title && item.title.length > 60 ? item.title.substring(0,60)+'…' : (item.title||'--');
+    var priceStr = item.price ? '$'+item.price.toFixed(2) : '--';
+    var dateStr = item.dateSold || '--';
+    var typeStr = item.listingType || 'Buy It Now';
+    var titleCell = item.itemUrl
+      ? '<a href="'+item.itemUrl+'" target="_blank" title="'+((item.title||'').replace(/"/g,'&quot;'))+'">'+titleShort+'</a>'
+      : titleShort;
+    return '<tr>'
+      +'<td style="text-align:left;">'+titleCell+'</td>'
+      +'<td>'+dateStr+'</td>'
+      +'<td style="color:var(--green);font-weight:700;">'+priceStr+'</td>'
+      +'<td>'+typeStr+'</td>'
+      +'</tr>';
+  }).join('');
+
+  content.innerHTML = '<table class="listing-tbl">'
+    +'<thead><tr><th style="text-align:left;">Title</th><th style="text-align:right;">Date Sold</th><th style="text-align:right;">Price</th><th style="text-align:right;">Type</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'</table>'
+    +'<div style="padding:10px 12px;border-top:1px solid var(--border);text-align:right;">'
+    +'<a href="'+ebayLink+'" target="_blank" style="font-size:11px;color:var(--text-muted);">View all on eBay →</a>'
+    +'</div>';
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
