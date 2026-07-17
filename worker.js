@@ -76,7 +76,6 @@ export default {
 
           const body = await request.json();
 
-          // Read memories
           let memoryContext = '';
           try {
             const memRes = await fetch(`${env.SUPABASE_URL}/rest/v1/jarvis_memory?select=type,content&order=updated_at.desc&limit=20`, {
@@ -88,7 +87,6 @@ export default {
             }
           } catch (e) {}
 
-          // Call Anthropic
           const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -100,7 +98,6 @@ export default {
             return cors(new Response(JSON.stringify({ error: 'Empty response' }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
           }
 
-          // Save memories synchronously before returning
           await saveMemories(body.messages, rawText, env);
 
           return cors(new Response(rawText, { status: anthropicRes.status, headers: { 'Content-Type': 'application/json' } }));
@@ -111,20 +108,21 @@ export default {
       }
     }
 
-    // ── EBAY SOLD LISTINGS SCRAPER ─────────────────────────────────────────
+    // ── SCP SOLD LISTINGS SCRAPER ──────────────────────────────────────────
     if (url.pathname === '/api/ebay-sold') {
       if (request.method === 'OPTIONS') return cors(new Response(null));
 
-      const q = url.searchParams.get('q');
-      if (!q) return cors(new Response(JSON.stringify({ error: 'Missing q param' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+      const scpId = url.searchParams.get('scp_id');
+      const tab = url.searchParams.get('tab') || 'raw';
+      if (!scpId) return cors(new Response(JSON.stringify({ error: 'Missing scp_id param' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
 
-      const cacheKey = 'ebay_' + q.toLowerCase().replace(/\s+/g, '_').substring(0, 100);
+      const cacheKey = 'scp_' + scpId + '_' + tab;
       const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
-      // Check cache first
+      // Check Supabase cache first
       try {
         const cacheRes = await fetch(
-          `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(cacheKey)}&cached_at=gte.${sixHoursAgo}&select=results`,
+          `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(cacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
           { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
         );
         const cached = await cacheRes.json();
@@ -133,10 +131,10 @@ export default {
         }
       } catch (e) {}
 
-      // Scrape eBay completed listings
+      // Scrape SCP product page
       try {
-        const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&_sop=13&_ipg=25`;
-        const ebayRes = await fetch(ebayUrl, {
+        const scpUrl = `https://www.sportscardspro.com/game/${scpId}`;
+        const scpRes = await fetch(scpUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -144,14 +142,14 @@ export default {
           }
         });
 
-        if (!ebayRes.ok) {
-          return cors(new Response(JSON.stringify({ error: 'eBay fetch failed', status: ebayRes.status }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
+        if (!scpRes.ok) {
+          return cors(new Response(JSON.stringify({ error: 'SCP fetch failed', status: scpRes.status }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
         }
 
-        const html = await ebayRes.text();
-        const results = parseEbayListings(html);
+        const html = await scpRes.text();
+        const results = parseScpListings(html, tab);
 
-        // Save to cache (upsert)
+        // Upsert cache
         try {
           await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
             method: 'POST',
@@ -176,50 +174,98 @@ export default {
   }
 };
 
-// ── PARSE EBAY HTML ────────────────────────────────────────────────────────
-function parseEbayListings(html) {
+// ── PARSE SCP SOLD LISTINGS ────────────────────────────────────────────────
+// SCP renders sold listings in a table with class "pricehistory" or similar.
+// Each tab (Ungraded, Grade 9, PSA 10, etc) has its own table section.
+function parseScpListings(html, tab) {
   const results = [];
 
-  // Match each listing item block
-  const itemPattern = /<li[^>]+s-item[^>]*>([\s\S]*?)<\/li>/g;
-  let itemMatch;
+  // Map our tab names to SCP grade labels in the HTML
+  const gradeMap = {
+    raw: ['Ungraded', 'ungraded', 'Raw'],
+    psa10: ['PSA 10', 'Grade 10', 'PSA10', 'Gem Mint 10'],
+    psa9: ['PSA 9', 'Grade 9', 'PSA9', 'Mint 9']
+  };
+  const targetGrades = gradeMap[tab] || gradeMap['raw'];
 
-  while ((itemMatch = itemPattern.exec(html)) !== null) {
-    const block = itemMatch[1];
+  // Find the correct sold listings table section for this grade
+  // SCP uses tab panels — find the one matching our grade
+  let sectionHtml = '';
+  for (const grade of targetGrades) {
+    // Look for a section/div/table that contains this grade label
+    const sectionPattern = new RegExp(
+      '(' + escapeRegex(grade) + '[\\s\\S]{0,200}?<table[\\s\\S]*?</table>)',
+      'i'
+    );
+    const sectionMatch = html.match(sectionPattern);
+    if (sectionMatch) {
+      sectionHtml = sectionMatch[1];
+      break;
+    }
+  }
 
-    // Skip promoted/ad items
-    if (/s-item__info-sponsored|Sponsored/i.test(block) && results.length > 0) continue;
+  // If no grade-specific section, try to find any sold listings table
+  if (!sectionHtml) {
+    const tableMatch = html.match(/<table[^>]*class="[^"]*sold[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
+      || html.match(/<table[^>]*id="[^"]*sold[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
+      || html.match(/Sold Listings([\s\S]{0,100}?<table[\s\S]*?<\/table>)/i);
+    if (tableMatch) sectionHtml = tableMatch[0];
+  }
 
-    // Title
-    const titleMatch = block.match(/class="s-item__title[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
-    let title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : null;
-    if (!title || title === 'Shop on eBay') continue;
+  if (!sectionHtml) return results;
 
-    // Price
-    const priceMatch = block.match(/class="s-item__price"[^>]*>[\s\S]*?\$([0-9,]+\.?\d*)/);
-    const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : null;
-    if (!price) continue;
+  // Parse table rows: <tr> with date, title, price cells
+  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch;
+  while ((rowMatch = rowPattern.exec(sectionHtml)) !== null) {
+    const row = rowMatch[1];
+    const cells = [];
+    const cellPattern = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    let cellMatch;
+    while ((cellMatch = cellPattern.exec(row)) !== null) {
+      cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
+    }
+    if (cells.length < 2) continue;
 
-    // Date sold
-    const dateMatch = block.match(/class="s-item__ended-date[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
-    let dateSold = null;
-    if (dateMatch) {
-      dateSold = dateMatch[1].replace(/<[^>]+>/g, '').replace(/Sold\s*/i, '').trim();
+    // Try to extract date, title, price from cells
+    // SCP format is typically: Date | Title | Price
+    let dateSold = null, title = null, price = null, itemUrl = null;
+
+    // Find price cell (contains $)
+    for (const cell of cells) {
+      const priceMatch = cell.match(/\$([0-9,]+\.?\d*)/);
+      if (priceMatch) { price = parseFloat(priceMatch[1].replace(',', '')); break; }
     }
 
-    // Listing type (Buy It Now / Auction)
-    const typeMatch = block.match(/class="s-item__purchase-options-with-icon[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
-    const listingType = typeMatch ? typeMatch[1].replace(/<[^>]+>/g, '').trim() : 'Buy It Now';
+    // Find date cell (contains date pattern)
+    for (const cell of cells) {
+      if (/\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(cell)) {
+        dateSold = cell; break;
+      }
+    }
 
-    // Item URL
-    const urlMatch = block.match(/href="(https:\/\/www\.ebay\.com\/itm\/[^"?]+)/);
-    const itemUrl = urlMatch ? urlMatch[1] : null;
+    // Title — longest non-date, non-price cell
+    for (const cell of cells) {
+      if (cell === dateSold) continue;
+      if (/^\$/.test(cell)) continue;
+      if (cell.length > (title ? title.length : 0)) title = cell;
+    }
 
-    results.push({ title, price, dateSold, listingType, itemUrl });
-    if (results.length >= 20) break;
+    // Get item URL from the row
+    const urlMatch = rowMatch[0].match(/href="(https?:\/\/[^"]+ebay[^"]+)"/i);
+    if (urlMatch) itemUrl = urlMatch[1];
+
+    if (price && price > 0) {
+      results.push({ title: title || '--', price, dateSold: dateSold || '--', listingType: 'Buy It Now', itemUrl });
+    }
+    if (results.length >= 25) break;
   }
 
   return results;
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function cors(response) {
