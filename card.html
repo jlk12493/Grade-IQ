@@ -108,12 +108,12 @@
 /* Panels */
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .panel-head { padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.panel-title { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+.panel-title { font-size: 9px; font-weight: 700; color: var(--text); letter-spacing: 1.5px; text-transform: uppercase; }
 .panel-badge { font-size: 9px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 7px; border-radius: 10px; }
 
 /* Tier table */
 .tier-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.tier-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.tier-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .tier-tbl th:not(:first-child) { text-align: right; }
 .tier-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 .tier-tbl td:not(:first-child) { text-align: right; }
@@ -139,7 +139,7 @@
 
 /* Sales volume / pop table */
 .data-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.data-tbl th { padding: 7px 12px; text-align: right; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.data-tbl th { padding: 7px 12px; text-align: right; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .data-tbl th:first-child { text-align: left; }
 .data-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); text-align: right; }
 .data-tbl td:first-child { text-align: left; font-weight: 600; }
@@ -150,7 +150,7 @@
 .ltab { padding: 8px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
 .ltab.active { color: var(--green); border-bottom-color: var(--green); }
 .listing-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.listing-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.listing-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .listing-tbl th:not(:first-child) { text-align: right; }
 .listing-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 .listing-tbl td:not(:first-child) { text-align: right; }
@@ -671,60 +671,62 @@ function renderPriceChart(data, tab){
   // Build polyline points
   var points = data.map(function(d){ return px(d).toFixed(1)+','+py(d).toFixed(1); }).join(' ');
 
-  // X axis labels (first and last date)
+  // X axis labels
   var firstDate = new Date(data[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   var lastDate = new Date(data[data.length-1].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
 
-  // Y axis labels
-  var yLabels = [minP, (minP+maxP)/2, maxP].map(function(p){
-    var y = padT + (1-(p-minP)/priceRange)*chartH;
-    return '<text x="'+(padL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="var(--text-muted)">$'+Math.round(p)+'</text>';
+  // Y axis: 3 grid lines + labels
+  var yTicks = [minP, (minP+maxP)/2, maxP];
+  var yGridLines = yTicks.map(function(p){
+    var y = (padT + (1-(p-minP)/priceRange)*chartH).toFixed(1);
+    return '<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+chartW)+'" y2="'+y+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>'
+      +'<text x="'+(padL-8)+'" y="'+(parseFloat(y)+3.5)+'" text-anchor="end" font-size="8" fill="var(--text-muted)">$'+Math.round(p)+'</text>';
   }).join('');
 
-  // Dots for each data point
+  // Small clean dots
   var dots = data.map(function(d){
-    return '<circle cx="'+px(d).toFixed(1)+'" cy="'+py(d).toFixed(1)+'" r="3" fill="var(--green)" opacity="0.8">'
+    return '<circle cx="'+px(d).toFixed(1)+'" cy="'+py(d).toFixed(1)+'" r="2.5" fill="var(--surface-2)" stroke="var(--green)" stroke-width="1.5">'
       +'<title>'+d.date+': $'+d.price.toFixed(2)+'</title>'
       +'</circle>';
   }).join('');
 
   // Fill area under line
-  var fillPoints = (padL+',')+(padT+chartH)+' '+points+' '+(padL+chartW)+','+(padT+chartH);
+  var fillPoints = padL+','+(padT+chartH)+' '+points+' '+(padL+chartW)+','+(padT+chartH);
 
-  var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">'
-    // Grid lines
-    +'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+chartH)+'" stroke="var(--border)" stroke-width="1"/>'
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">'
+    // Background
+    +'<rect x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'" fill="rgba(0,0,0,0.15)" rx="2"/>'
+    // Grid lines + Y labels
+    + yGridLines
+    // Bottom axis
     +'<line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(padL+chartW)+'" y2="'+(padT+chartH)+'" stroke="var(--border)" stroke-width="1"/>'
-    +'<line x1="'+padL+'" y1="'+(padT+chartH/2)+'" x2="'+(padL+chartW)+'" y2="'+(padT+chartH/2)+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>'
-    // Fill
-    +'<polygon points="'+fillPoints+'" fill="rgba(182,255,0,0.06)"/>'
-    // Line
-    +'<polyline points="'+points+'" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
-    // Dots
+    // Fill area
+    +'<polygon points="'+fillPoints+'" fill="rgba(182,255,0,0.08)"/>'
+    // Line — slightly thinner, smoother
+    +'<polyline points="'+points+'" fill="none" stroke="rgba(182,255,0,0.85)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
+    // Dots on top
     + dots
-    // Y labels
-    + yLabels
     // X labels
-    +'<text x="'+padL+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--text-muted)">'+firstDate+'</text>'
-    +'<text x="'+(padL+chartW)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--text-muted)">'+lastDate+'</text>'
+    +'<text x="'+(padL+4)+'" y="'+(H-6)+'" text-anchor="start" font-size="8" fill="var(--text-muted)">'+firstDate+'</text>'
+    +'<text x="'+(padL+chartW-4)+'" y="'+(H-6)+'" text-anchor="end" font-size="8" fill="var(--text-muted)">'+lastDate+'</text>'
     +'</svg>';
 
   // Stat strip
   var stats = '<div style="display:flex;gap:0;border-top:1px solid var(--border);">'
     + [
-        {label:'Avg (7d)', val: avg7, n: d7.length},
-        {label:'Avg (14d)', val: avg14, n: d14.length},
-        {label:'Avg (30d)', val: avg30, n: d30.length},
-        {label:'High', val: high, n: null},
-        {label:'Low', val: low, n: null}
+        {label:'7D AVG', val: avg7, sub: d7.length ? d7.length+' sales' : null},
+        {label:'14D AVG', val: avg14, sub: d14.length ? d14.length+' sales' : null},
+        {label:'30D AVG', val: avg30, sub: d30.length ? d30.length+' sales' : null},
+        {label:'HIGH', val: high, sub: null},
+        {label:'LOW', val: low, sub: null}
       ].map(function(s, i){
         var isLast = i === 4;
-        var valStr = s.val != null ? '$'+s.val.toFixed(0) : '--';
-        var nStr = s.n != null ? '<div style="font-size:8px;color:var(--text-muted);margin-top:1px;">'+s.n+' sales</div>' : '';
-        return '<div style="flex:1;text-align:center;padding:8px 4px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
-          +'<div style="font-size:13px;font-weight:800;color:var(--green);">'+valStr+'</div>'
-          + nStr
-          +'<div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">'+s.label+'</div>'
+        var valStr = s.val != null ? '$'+Number(s.val).toFixed(0) : '--';
+        var color = i === 3 ? 'var(--green)' : i === 4 ? '#f87171' : 'var(--text)';
+        return '<div style="flex:1;text-align:center;padding:10px 4px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
+          +'<div style="font-size:14px;font-weight:800;color:'+color+';">'+valStr+'</div>'
+          +(s.sub ? '<div style="font-size:8px;color:var(--text-muted);margin-top:1px;">'+s.sub+'</div>' : '')
+          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">'+s.label+'</div>'
           +'</div>';
       }).join('')
     +'</div>';
