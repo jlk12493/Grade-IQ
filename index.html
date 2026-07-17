@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#B6FF00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>GradeIQ — Home</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared.js"></script>
+<style>
+/* ── HOME DASHBOARD ───────────────────────────────────────────────────────── */
+
+/* Welcome strip */
+.welcome{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.welcome-left h2{font-size:20px;font-weight:900;color:var(--text);margin-bottom:2px;}
+.welcome-left p{font-size:12px;color:var(--text-muted);}
+.welcome-right{display:flex;gap:8px;align-items:center;}
+.scanner-badge{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text-muted);}
+.scanner-dot{width:7px;height:7px;border-radius:50%;background:#F87171;flex-shrink:0;}
+.scanner-dot.live{background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* Portfolio strip */
+.portfolio-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
+@media(max-width:900px){.portfolio-strip{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:480px){.portfolio-strip{grid-template-columns:repeat(2,1fr);}}
+.ps-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+.ps-card:hover{border-color:rgba(182,255,0,.3);}
+.ps-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.ps-val{font-size:22px;font-weight:900;color:var(--text);line-height:1;}
+.ps-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+
+/* Section headers */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.sec-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--green);border-radius:2px;}
+.sec-link{font-size:11px;color:var(--text-muted);cursor:pointer;transition:color .15s;}
+.sec-link:hover{color:var(--green);}
+
+/* Two column layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+/* Market pulse */
+.pulse-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.pulse-card:hover{border-color:rgba(182,255,0,.3);}
+.pulse-card:last-child{margin-bottom:0;}
+.pulse-thumb{width:48px;height:67px;border-radius:5px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0;}
+.pulse-thumb img{width:100%;height:100%;object-fit:cover;}
+.pulse-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.pulse-info{flex:1;min-width:0;}
+.pulse-player{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pulse-set{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.pulse-chips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+.pulse-stats{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;}
+.pulse-iq{font-size:22px;font-weight:900;line-height:1;}
+.pulse-ev{font-size:11px;font-weight:700;}
+.pulse-buy{font-size:10px;color:var(--text-muted);}
+
+/* Top picks grid */
+.picks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.pick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.pick-card:hover{border-color:rgba(182,255,0,.3);}
+.pick-img{height:120px;overflow:hidden;background:var(--surface-2);position:relative;}
+.pick-img img{width:100%;height:100%;object-fit:cover;}
+.pick-img-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.pick-iq-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.75);color:var(--green);font-size:11px;font-weight:900;padding:2px 7px;border-radius:4px;backdrop-filter:blur(4px);}
+.pick-body{padding:10px 12px;}
+.pick-player{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pick-set{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.pick-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+.pick-ev{font-size:11px;font-weight:700;color:var(--green);}
+.pick-buy{font-size:10px;color:var(--text-muted);}
+
+/* Portfolio inventory preview */
+.inv-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.inv-row:last-child{border-bottom:none;}
+.inv-thumb{width:36px;height:50px;border-radius:4px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0;}
+.inv-thumb img{width:100%;height:100%;object-fit:cover;}
+.inv-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.inv-info{flex:1;min-width:0;}
+.inv-player{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-set{font-size:10px;color:var(--text-muted);margin-top:1px;}
+.inv-stats{text-align:right;flex-shrink:0;}
+.inv-cost{font-size:12px;font-weight:700;color:var(--text);}
+.inv-ev{font-size:10px;font-weight:700;}
+.inv-status{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+
+/* Empty states */
+.empty-dash{text-align:center;padding:40px 20px;color:var(--text-muted);}
+.empty-icon{font-size:32px;margin-bottom:10px;}
+.empty-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.empty-sub{font-size:12px;margin-bottom:14px;}
+
+/* Loading shimmer */
+.shimmer{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;animation:shim 1.5s infinite;}
+@keyframes shim{0%,100%{opacity:.5;}50%{opacity:.9;}}
+</style>
+</head>
+<body>
+<script>buildNav('home');</script>
+
+<div class="main">
+
+  <!-- WELCOME -->
+  <div class="welcome" id="welcome-strip">
+    <div class="welcome-left">
+      <h2 id="welcome-msg">Good morning ⚡</h2>
+      <p id="welcome-sub">Here's what's happening in your collection today.</p>
+    </div>
+    <div class="welcome-right">
+      <div class="scanner-badge">
+        <div class="scanner-dot" id="scanner-dot"></div>
+        <span id="scanner-status">Checking scanner...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO STRIP -->
+  <div class="portfolio-strip" id="portfolio-strip">
+    <div class="shimmer" style="height:74px;"></div>
+    <div class="shimmer" style="height:74px;opacity:.8;"></div>
+    <div class="shimmer" style="height:74px;opacity:.6;"></div>
+    <div class="shimmer" style="height:74px;opacity:.4;"></div>
+    <div class="shimmer" style="height:74px;opacity:.3;"></div>
+  </div>
+
+  <!-- TWO COLUMN: MARKET PULSE + TOP PICKS -->
+  <div class="two-col">
+
+    <!-- MARKET PULSE -->
+    <div>
+      <div class="sec-header">
+        <div class="sec-title">Market Pulse</div>
+        <span class="sec-link" onclick="goPage('signals')">View All →</span>
+      </div>
+      <div id="market-pulse">
+        <div class="shimmer" style="height:82px;"></div>
+        <div class="shimmer" style="height:82px;opacity:.7;"></div>
+        <div class="shimmer" style="height:82px;opacity:.5;"></div>
+        <div class="shimmer" style="height:82px;opacity:.3;"></div>
+        <div class="shimmer" style="height:82px;opacity:.2;"></div>
+      </div>
+    </div>
+
+    <!-- TOP PICKS -->
+    <div>
+      <div class="sec-header">
+        <div class="sec-title">Top Picks Today</div>
+        <span class="sec-link" onclick="goPage('signals')">View All →</span>
+      </div>
+      <div class="picks-grid" id="top-picks">
+        <div class="shimmer" style="height:200px;"></div>
+        <div class="shimmer" style="height:200px;opacity:.7;"></div>
+        <div class="shimmer" style="height:200px;opacity:.5;"></div>
+        <div class="shimmer" style="height:200px;opacity:.3;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PORTFOLIO INVENTORY PREVIEW -->
+  <div>
+    <div class="sec-header">
+      <div class="sec-title">My Collection</div>
+      <span class="sec-link" onclick="goPage('collection')">View All →</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0 16px;" id="inv-preview">
+      <div class="shimmer" style="height:60px;margin:0 -16px;border-radius:0;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var PLATFORM_FEE = 0.135;
+var GRADING_TIERS = [];
+
+(async function init(){
+  var user = await requireAuth();
+  if (!user) return;
+
+  setWelcome(user);
+  await Promise.all([
+    loadGradingTiers(),
+    checkScanner(),
+    loadPortfolioStrip(user),
+    loadInventoryPreview(user),
+  ]);
+  // Load signals after tiers are ready
+  loadMarketPulse();
+  loadTopPicks();
+})();
+
+// ── WELCOME ────────────────────────────────────────────────────────────────
+function setWelcome(user){
+  var hour = new Date().getHours();
+  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  var name = user.email.split('@')[0];
+  // Capitalize first letter
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  var el = g('welcome-msg');
+  if (el) el.textContent = greeting + ', ' + name + ' ⚡';
+}
+
+// ── SCANNER STATUS ─────────────────────────────────────────────────────────
+async function checkScanner(){
+  var dot = g('scanner-dot');
+  var status = g('scanner-status');
+  try {
+    var { data } = await sb.from('ev_scanner')
+      .select('scanned_at')
+      .order('scanned_at', {ascending:false})
+      .limit(1)
+      .single();
+    if (!data){ dot.classList.remove('live'); if(status) status.textContent='Scanner idle'; return; }
+    var mins = Math.floor((Date.now() - new Date(data.scanned_at).getTime()) / 60000);
+    if (mins < 5){
+      dot.classList.add('live');
+      if(status) status.textContent = 'Scanner live';
+    } else if (mins < 60){
+      dot.classList.add('live');
+      if(status) status.textContent = 'Updated ' + mins + 'm ago';
+    } else {
+      dot.classList.remove('live');
+      var hrs = Math.floor(mins/60);
+      if(status) status.textContent = 'Updated ' + hrs + 'h ago';
+    }
+  } catch(e){
+    dot.classList.remove('live');
+    if(status) status.textContent='Scanner status unknown';
+  }
+}
+
+// ── GRADING TIERS ──────────────────────────────────────────────────────────
+async function loadGradingTiers(){
+  var res = await sb.from('grading_tiers').select('*').eq('active',true).order('cost_per_card',{ascending:true});
+  var seen = {};
+  GRADING_TIERS = (res.data||[]).filter(function(t){ if(seen[t.tier_name])return false; seen[t.tier_name]=true; return true; });
+}
+
+// ── EV HELPERS ─────────────────────────────────────────────────────────────
+function getBestEV(r){
+  if(!GRADING_TIERS.length||!r.psa10_price) return {evPct:r.ev_pct||0, maxBuy:r.max_buy_40||0};
+  var bestAnn=-Infinity, bestEV={evPct:r.ev_pct||0, maxBuy:r.max_buy_40||0};
+  GRADING_TIERS.forEach(function(t){
+    var n10=(r.psa10_price||0)*(1-PLATFORM_FEE);
+    var n9=r.psa9_price?r.psa9_price*(1-PLATFORM_FEE):n10*0.30;
+    var gem=r.actual_gem_rate||0;
+    var exp=gem*n10+(1-gem)*0.80*n9;
+    var total=(r.raw_price||0)+t.cost_per_card;
+    var evP=total>0?(exp-total)/total:0;
+    var days=(t.turnaround_business_days_avg||0)*1.4;
+    var ann=days>0?Math.pow(1+evP,365/days)-1:-Infinity;
+    if(exp-total>0&&evP>=0.40&&ann>bestAnn){bestAnn=ann;bestEV={evPct:evP,maxBuy:Math.max(0,(exp/1.40)-t.cost_per_card)};}
+  });
+  return bestEV;
+}
+
+function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(v).toFixed(2); }
+function fPct(v,d){ if(v==null)return'--'; return(v*100).toFixed(d||0)+'%'; }
+function stripSet(s){ return(s||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim(); }
+
+function sportChip(sport){
+  var map={TCG:['rgba(168,85,247,.15)','#c084fc','TCG'],Baseball:['rgba(239,68,68,.12)','#f87171','BASEBALL'],Basketball:['rgba(249,115,22,.12)','#fb923c','BASKETBALL'],Football:['rgba(16,185,129,.12)','#34d399','FOOTBALL']};
+  var c=map[sport]; if(!c)return'';
+  return '<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';letter-spacing:.5px;">'+c[2]+'</span>';
+}
+
+// ── PORTFOLIO STRIP ────────────────────────────────────────────────────────
+async function loadPortfolioStrip(user){
+  var userId = user.id;
+  var { data } = await sb.from('inventory').select('total_cost,ev_dollar,realized_profit,status,sale_price').eq('user_id',userId);
+  var cards = data||[];
+  var active = cards.filter(function(c){ return c.status!=='sold'; });
+  var sold = cards.filter(function(c){ return c.status==='sold'; });
+  var totalInvested = active.reduce(function(s,c){return s+(c.total_cost||0);},0);
+  var totalEV = active.reduce(function(s,c){return s+(c.ev_dollar||0);},0);
+  var totalProfit = sold.reduce(function(s,c){return s+(c.realized_profit||0);},0);
+  var avgEVPct = active.length ? active.reduce(function(s,c){return s+((c.ev_dollar||0)/(c.total_cost||1));},0)/active.length : 0;
+
+  var items = [
+    {lbl:'Cards Owned', val:active.length, sub:cards.length+' total', color:'var(--text)', click:"goPage('collection')"},
+    {lbl:'Total Invested', val:f$(totalInvested), sub:'raw + grading + ship', color:'var(--text)', click:"goPage('collection')"},
+    {lbl:'Expected Value', val:(totalEV>=0?'+':'')+f$(totalEV), sub:'across active cards', color:totalEV>=0?'var(--green)':'#F87171', click:"goPage('collection')"},
+    {lbl:'Avg EV%', val:fPct(avgEVPct,1), sub:'active cards', color:avgEVPct>=0.40?'var(--green)':'var(--text)', click:"goPage('collection')"},
+    {lbl:'Realized P&L', val:(totalProfit>=0?'+':'')+f$(totalProfit), sub:sold.length+' cards sold', color:totalProfit>=0?'var(--green)':'#F87171', click:"goPage('collection')"},
+  ];
+
+  var el = g('portfolio-strip');
+  if(!el) return;
+  el.innerHTML = items.map(function(item){
+    return '<div class="ps-card" onclick="'+item.click+'">'
+      +'<div class="ps-lbl">'+item.lbl+'</div>'
+      +'<div class="ps-val" style="color:'+item.color+';">'+item.val+'</div>'
+      +'<div class="ps-sub">'+item.sub+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── MARKET PULSE ───────────────────────────────────────────────────────────
+async function loadMarketPulse(){
+  var { data } = await sb.from('ev_scanner')
+    .select('scp_id,player,parallel,year,set_name,card_no,sport,scc_score,ev_pct,ev_dollar,max_buy_40,raw_price,psa10_price,psa9_price,actual_gem_rate,image_url,scanned_at')
+    .eq('decision','BUY')
+    .order('scanned_at',{ascending:false})
+    .limit(5);
+
+  var el = g('market-pulse');
+  if(!el) return;
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty-dash"><div class="empty-icon">📡</div><div class="empty-title">Scanner is running</div><div class="empty-sub">New buy signals will appear here.</div></div>';
+    return;
+  }
+
+  el.innerHTML = data.map(function(r){
+    var ev = getBestEV(r);
+    var ss = stripSet(r.set_name);
+    var iq = Math.round(r.scc_score||0);
+    var sc = iq>=60?'var(--green)':'var(--text-muted)';
+    var ec = ev.evPct>=0.40?'var(--green)':'var(--text-muted)';
+    var thumb = r.image_url
+      ? '<img src="'+r.image_url+'" loading="lazy" onerror="this.style.display=\'none\'">'
+      : '<div class="pulse-thumb-empty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/></svg></div>';
+    return '<div class="pulse-card" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
+      +'<div class="pulse-thumb">'+thumb+'</div>'
+      +'<div class="pulse-info">'
+        +'<div class="pulse-player">'+(r.player||'--')+'</div>'
+        +'<div class="pulse-set">'+(r.year?r.year+' ':'')+ss+(r.card_no?' · #'+r.card_no:'')+'</div>'
+        +'<div class="pulse-chips">'+sportChip(r.sport||'')+'</div>'
+      +'</div>'
+      +'<div class="pulse-stats">'
+        +'<div class="pulse-iq" style="color:'+sc+';">'+iq+'</div>'
+        +'<div class="pulse-ev" style="color:'+ec+';">'+fPct(ev.evPct,0)+' EV</div>'
+        +'<div class="pulse-buy">Buy ≤ <strong style="color:var(--green);">'+f$(ev.maxBuy)+'</strong></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── TOP PICKS ──────────────────────────────────────────────────────────────
+async function loadTopPicks(){
+  var { data } = await sb.from('ev_scanner')
+    .select('scp_id,player,parallel,year,set_name,card_no,sport,scc_score,ev_pct,max_buy_40,raw_price,psa10_price,psa9_price,actual_gem_rate,image_url')
+    .eq('decision','BUY')
+    .order('scc_score',{ascending:false,nullsFirst:false})
+    .limit(6);
+
+  var el = g('top-picks');
+  if(!el) return;
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty-dash"><div class="empty-icon">⭐</div><div class="empty-title">No picks yet</div></div>';
+    return;
+  }
+
+  el.innerHTML = data.map(function(r){
+    var ev = getBestEV(r);
+    var ss = stripSet(r.set_name);
+    var iq = Math.round(r.scc_score||0);
+    var ec = ev.evPct>=0.40?'var(--green)':'var(--text-muted)';
+    var imgHtml = r.image_url
+      ? '<img src="'+r.image_url+'" loading="lazy" onerror="this.parentElement.style.background=\'var(--surface-3)\'">'
+      : '<div class="pick-img-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/></svg></div>';
+    return '<div class="pick-card" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
+      +'<div class="pick-img">'+imgHtml+'<div class="pick-iq-badge">'+iq+'</div></div>'
+      +'<div class="pick-body">'
+        +'<div class="pick-player">'+(r.player||'--')+'</div>'
+        +'<div class="pick-set">'+(r.year?r.year+' ':'')+ss+'</div>'
+        +'<div class="pick-footer">'
+          +'<div class="pick-ev" style="color:'+ec+';">'+fPct(ev.evPct,0)+' EV</div>'
+          +'<div class="pick-buy">≤ '+f$(ev.maxBuy)+'</div>'
+        +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── INVENTORY PREVIEW ──────────────────────────────────────────────────────
+async function loadInventoryPreview(user){
+  var { data } = await sb.from('inventory')
+    .select('id,player,year,set_name,card_no,parallel,total_cost,ev_pct,ev_dollar,status,image_url,psa_grade')
+    .eq('user_id',user.id)
+    .neq('status','sold')
+    .order('created_at',{ascending:false})
+    .limit(5);
+
+  var el = g('inv-preview');
+  if(!el) return;
+
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty-dash">'
+      +'<div class="empty-icon">📦</div>'
+      +'<div class="empty-title">Your collection is empty</div>'
+      +'<div class="empty-sub">Add cards from Buy Signals to start tracking your portfolio.</div>'
+      +'<button class="btn-p" onclick="goPage(\'signals\')">Browse Buy Signals</button>'
+      +'</div>';
+    return;
+  }
+
+  var statusMap = {
+    raw:{bg:'rgba(59,130,246,.12)',color:'#60a5fa',label:'RAW'},
+    submitted:{bg:'rgba(234,179,8,.12)',color:'#facc15',label:'SUBMITTED'},
+    graded:{bg:'rgba(182,255,0,.1)',color:'var(--green)',label:'GRADED'},
+  };
+
+  el.innerHTML = data.map(function(c){
+    var ss = stripSet(c.set_name);
+    var evPct = c.ev_pct||0;
+    var ec = evPct>=0.40?'var(--green)':'var(--text-muted)';
+    var st = statusMap[c.status]||statusMap['raw'];
+    var thumb = c.image_url
+      ? '<img src="'+c.image_url+'" loading="lazy" onerror="this.style.display=\'none\'">'
+      : '<div class="inv-thumb-empty"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/></svg></div>';
+    return '<div class="inv-row" onclick="goPage(\'collection\')" style="cursor:pointer;">'
+      +'<div class="inv-thumb">'+thumb+'</div>'
+      +'<div class="inv-info">'
+        +'<div class="inv-player">'+(c.player||'--')+(c.psa_grade?' · PSA '+c.psa_grade:'')+'</div>'
+        +'<div class="inv-set">'+(c.year?c.year+' ':'')+ss+(c.card_no?' · #'+c.card_no:'')+'</div>'
+      +'</div>'
+      +'<div class="inv-stats">'
+        +'<div class="inv-cost">'+f$(c.total_cost)+'</div>'
+        +'<div class="inv-ev" style="color:'+ec+';">'+fPct(evPct,0)+' EV</div>'
+        +'<div class="inv-status" style="background:'+st.bg+';color:'+st.color+';margin-top:3px;">'+st.label+'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+</script>
+</body>
+</html>
