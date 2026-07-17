@@ -416,33 +416,7 @@ function renderCard(){
       </div>
     </div>
 
-    <!-- SALES VOLUME + POP CHANGE -->
-    <div class="main-grid">
-      <div class="panel vol-panel">
-        <div class="panel-head"><span class="panel-title">Sales Volume</span><span class="panel-badge">Coming Soon</span></div>
-        <table class="data-tbl vol-tbl">
-          <thead><tr><th>Grade</th><th>Volume</th></tr></thead>
-          <tbody>
-            <tr><td>Raw / Ungraded</td><td style="color:var(--text-muted);">--</td></tr>
-            <tr><td>PSA 9</td><td style="color:var(--text-muted);">--</td></tr>
-            <tr><td>PSA 10</td><td style="color:var(--text-muted);">--</td></tr>
-          </tbody>
-        </table>
-        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Populated from SCP on first card load.</div>
-      </div>
-      <div class="panel pop-panel">
-        <div class="panel-head"><span class="panel-title">PSA Population</span><span class="panel-badge">Coming Soon</span></div>
-        <table class="data-tbl pop-tbl">
-          <thead><tr><th>Grade</th><th>Population</th></tr></thead>
-          <tbody>
-            <tr><td>PSA 9</td><td style="color:var(--text-muted);">--</td></tr>
-            <tr><td>PSA 10</td><td style="color:var(--text-muted);">--</td></tr>
-            <tr><td>PSA Total</td><td style="color:var(--text-muted);">--</td></tr>
-          </tbody>
-        </table>
-        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Populated from SCP on first card load.</div>
-      </div>
-    </div>
+
 
     <!-- PAST LISTINGS -->
     <div class="panel" style="margin-bottom:20px;">
@@ -512,8 +486,6 @@ async function fetchEbaySold(tab){
     if(badge) badge.textContent = data.cached ? 'Cached' : 'Live';
     renderListings(data.results || [], tab);
     // Populate sales volume and pop tables if data came back (raw tab fetch)
-    if(data.salesVolume) renderSalesVolume(data.salesVolume);
-    if(data.popData) renderPopData(data.popData);
 
   } catch(err){
     content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon">⚠️</div><div class="cs-title">Failed to load listings</div><div class="cs-sub">'+err.message+'</div></div>';
@@ -524,35 +496,23 @@ function renderSalesVolume(vol){
   var panel = document.querySelector('.vol-panel');
   if(!panel) return;
 
-  // Show velocity strings as clean stat cards
-  var items = [
-    { label: 'Raw / Ungraded', val: vol.raw },
-    { label: 'PSA 9', val: vol.psa9 },
-    { label: 'PSA 10', val: vol.psa10 }
-  ].filter(function(i){ return i.val && i.val !== 'rare'; });
-
-  if(!items.length){
-    panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>'
-      +'<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px;">No volume data available</div>';
-    return;
+  var monthRows = '';
+  if(vol.monthly && vol.monthly.length){
+    monthRows = '<div style="display:flex;gap:0;">'
+      + vol.monthly.map(function(m, i){
+          var isLast = i === vol.monthly.length - 1;
+          return '<div style="flex:1;text-align:center;padding:16px 8px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
+            +'<div style="font-size:26px;font-weight:900;color:var(--text);">'+m.count+'</div>'
+            +'<div style="font-size:9px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">'+m.label+'</div>'
+            +'</div>';
+        }).join('')
+      +'</div>'
+      +'<div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Total sales across all grades per month</div>';
+  } else {
+    monthRows = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px;">No volume data available</div>';
   }
 
-  var cards = '<div style="display:flex;gap:0;">'
-    + items.map(function(item, i){
-        var isLast = i === items.length - 1;
-        // Parse "2 sales per day" -> "2" and "per day"
-        var match = item.val.match(/^(\d+)\s+(.+)$/);
-        var num = match ? match[1] : item.val;
-        var unit = match ? match[2] : '';
-        return '<div style="flex:1;text-align:center;padding:16px 8px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
-          +'<div style="font-size:28px;font-weight:900;color:var(--green);">'+num+'</div>'
-          +(unit?'<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">'+unit+'</div>':'')
-          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:6px;">'+item.label+'</div>'
-          +'</div>';
-      }).join('')
-    +'</div>';
-
-  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>' + cards;
+  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>' + monthRows;
 }
 
 function renderPopData(pop){
@@ -595,7 +555,8 @@ function renderPopData(pop){
   }
 
   panel.innerHTML = '<div class="panel-head"><span class="panel-title">Graded Population</span></div>'
-    + statCards + cgcRow;
+    + statCards + cgcRow
+;
 }
 
 function renderListings(results, tab){
