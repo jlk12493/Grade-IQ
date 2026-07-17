@@ -117,61 +117,61 @@ export default {
       if (!scpId) return cors(new Response(JSON.stringify({ error: 'Missing scp_id param' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
 
       const cacheKey = 'scp_' + scpId + '_' + tab;
+      const metaCacheKey = 'scp_' + scpId + '_meta';
       const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
-      // Check Supabase cache first
+      // Helper: fetch meta from cache
+      async function getCachedMeta() {
+        try {
+          const res = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
+            { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
+          );
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) return data[0].results;
+        } catch (e) {}
+        return null;
+      }
+
+      // Helper: scrape meta from SCP and cache it
+      async function scrapeAndCacheMeta() {
+        try {
+          const scpRes = await fetch(`https://www.sportscardspro.com/game/${scpId}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+          });
+          if (!scpRes.ok) return null;
+          const html = await scpRes.text();
+          const meta = { salesVolume: parseScpVolume(html), popData: parseScpPop(html) };
+          // Cache it
+          await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+            method: 'POST',
+            headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+            body: JSON.stringify({ cache_key: metaCacheKey, results: meta, cached_at: new Date().toISOString() })
+          });
+          return meta;
+        } catch (e) { return null; }
+      }
+
       try {
+        // Check listings cache
         const cacheRes = await fetch(
           `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(cacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
           { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
         );
-        const cached = await cacheRes.json();
-        if (Array.isArray(cached) && cached.length > 0) {
-          let salesVolume = null, popData = null;
-          const metaCacheKey = 'scp_' + scpId + '_meta';
+        const cachedListings = await cacheRes.json();
+        const hasListingsCache = Array.isArray(cachedListings) && cachedListings.length > 0;
 
-          // Try meta cache first
-          try {
-            const metaRes = await fetch(
-              `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
-              { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
-            );
-            const metaCached = await metaRes.json();
-            if (Array.isArray(metaCached) && metaCached.length > 0) {
-              salesVolume = metaCached[0].results.salesVolume;
-              popData = metaCached[0].results.popData;
-            }
-          } catch (e) {}
-
-          // Meta cache miss — scrape SCP just for meta, cache it
-          if (!salesVolume && !popData) {
-            try {
-              const scpUrl = `https://www.sportscardspro.com/game/${scpId}`;
-              const scpRes = await fetch(scpUrl, {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-              });
-              if (scpRes.ok) {
-                const html = await scpRes.text();
-                salesVolume = parseScpVolume(html);
-                popData = parseScpPop(html);
-                // Cache it
-                await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
-                  method: 'POST',
-                  headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
-                  body: JSON.stringify({ cache_key: metaCacheKey, results: { salesVolume, popData }, cached_at: new Date().toISOString() })
-                });
-              }
-            } catch (e) {}
-          }
-
-          return cors(new Response(JSON.stringify({ results: cached[0].results, salesVolume, popData, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
+        if (hasListingsCache) {
+          // Listings cached — get meta from cache or scrape it
+          let meta = await getCachedMeta();
+          if (!meta) meta = await scrapeAndCacheMeta();
+          const salesVolume = meta ? meta.salesVolume : null;
+          const popData = meta ? meta.popData : null;
+          return cors(new Response(JSON.stringify({ results: cachedListings[0].results, salesVolume, popData, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
         }
-      } catch (e) {}
 
-      // Scrape SCP product page
-      try {
-        const scpUrl = `https://www.sportscardspro.com/game/${scpId}`;
-        const scpRes = await fetch(scpUrl, {
+        // No listings cache — scrape SCP fresh
+        const scpRes = await fetch(`https://www.sportscardspro.com/game/${scpId}`, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -185,53 +185,24 @@ export default {
 
         const html = await scpRes.text();
         const results = parseScpListings(html, tab);
+        const salesVolume = parseScpVolume(html);
+        const popData = parseScpPop(html);
 
-        // Parse page-level meta (sales volume + pop) — only on raw tab to avoid redundant work
-        let salesVolume = null;
-        let popData = null;
-        const metaCacheKey = 'scp_' + scpId + '_meta';
-        if (tab === 'raw') {
-          salesVolume = parseScpVolume(html);
-          popData = parseScpPop(html);
-          // Cache meta separately
-          try {
-            await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
-              method: 'POST',
-              headers: {
-                apikey: env.SUPABASE_KEY,
-                Authorization: `Bearer ${env.SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                Prefer: 'resolution=merge-duplicates'
-              },
-              body: JSON.stringify({ cache_key: metaCacheKey, results: { salesVolume, popData }, cached_at: new Date().toISOString() })
-            });
-          } catch (e) {}
-        } else {
-          // Try to pull meta from cache for non-raw tabs
-          try {
-            const metaRes = await fetch(
-              `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
-              { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
-            );
-            const metaCached = await metaRes.json();
-            if (Array.isArray(metaCached) && metaCached.length > 0) {
-              salesVolume = metaCached[0].results.salesVolume;
-              popData = metaCached[0].results.popData;
-            }
-          } catch (e) {}
-        }
-
-        // Upsert listings cache
+        // Cache listings
         try {
           await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
             method: 'POST',
-            headers: {
-              apikey: env.SUPABASE_KEY,
-              Authorization: `Bearer ${env.SUPABASE_KEY}`,
-              'Content-Type': 'application/json',
-              Prefer: 'resolution=merge-duplicates'
-            },
+            headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
             body: JSON.stringify({ cache_key: cacheKey, results: results, cached_at: new Date().toISOString() })
+          });
+        } catch (e) {}
+
+        // Cache meta
+        try {
+          await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+            method: 'POST',
+            headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+            body: JSON.stringify({ cache_key: metaCacheKey, results: { salesVolume, popData }, cached_at: new Date().toISOString() })
           });
         } catch (e) {}
 
@@ -242,7 +213,7 @@ export default {
       }
     }
 
-    return env.ASSETS.fetch(request);
+        return env.ASSETS.fetch(request);
   }
 };
 
