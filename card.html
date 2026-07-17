@@ -524,36 +524,23 @@ function renderSalesVolume(vol){
   var panel = document.querySelector('.vol-panel');
   if(!panel) return;
 
-  // Velocity row
-  var velRows = [
-    ['Raw / Ungraded', vol.raw],
-    ['PSA 9', vol.psa9],
-    ['PSA 10', vol.psa10]
-  ].map(function(r){
-    var val = r[1] || '--';
-    var color = (!val || val === '--' || val.toLowerCase() === 'rare') ? 'var(--text-muted)' : 'var(--green)';
-    return '<tr><td>'+r[0]+'</td><td style="color:'+color+';font-weight:600;">'+val+'</td></tr>';
-  }).join('');
-
-  // Monthly volume mini table
   var monthRows = '';
   if(vol.monthly && vol.monthly.length){
-    monthRows = '<div style="border-top:1px solid var(--border);padding:10px 14px 6px;">'
-      +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Monthly Sales (All Grades)</div>'
-      +'<div style="display:flex;gap:0;">'
-      + vol.monthly.map(function(m){
-          return '<div style="flex:1;text-align:center;padding:8px 4px;border-right:1px solid var(--border);">'
-            +'<div style="font-size:18px;font-weight:900;color:var(--text);">'+m.count+'</div>'
-            +'<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">'+m.label+'</div>'
+    monthRows = '<div style="display:flex;gap:0;">'
+      + vol.monthly.map(function(m, i){
+          var isLast = i === vol.monthly.length - 1;
+          return '<div style="flex:1;text-align:center;padding:16px 8px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
+            +'<div style="font-size:26px;font-weight:900;color:var(--text);">'+m.count+'</div>'
+            +'<div style="font-size:9px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">'+m.label+'</div>'
             +'</div>';
         }).join('')
-      +'</div></div>';
+      +'</div>'
+      +'<div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Total sales across all grades per month</div>';
+  } else {
+    monthRows = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px;">No volume data available</div>';
   }
 
-  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>'
-    +'<table class="data-tbl vol-tbl"><thead><tr><th>Grade</th><th style="text-align:right;">Velocity</th></tr></thead>'
-    +'<tbody>'+velRows+'</tbody></table>'
-    + monthRows;
+  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>' + monthRows;
 }
 
 function renderPopData(pop){
@@ -597,7 +584,7 @@ function renderPopData(pop){
 
   panel.innerHTML = '<div class="panel-head"><span class="panel-title">Graded Population</span></div>'
     + statCards + cgcRow
-    + '<div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Source: SCP · Updated with each page load</div>';
+;
 }
 
 function renderListings(results, tab){
