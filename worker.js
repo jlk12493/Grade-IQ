@@ -127,9 +127,10 @@ export default {
         );
         const cached = await cacheRes.json();
         if (Array.isArray(cached) && cached.length > 0) {
-          // Also fetch meta (salesVolume + popData) from its own cache key
           let salesVolume = null, popData = null;
           const metaCacheKey = 'scp_' + scpId + '_meta';
+
+          // Try meta cache first
           try {
             const metaRes = await fetch(
               `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
@@ -141,6 +142,28 @@ export default {
               popData = metaCached[0].results.popData;
             }
           } catch (e) {}
+
+          // Meta cache miss — scrape SCP just for meta, cache it
+          if (!salesVolume && !popData) {
+            try {
+              const scpUrl = `https://www.sportscardspro.com/game/${scpId}`;
+              const scpRes = await fetch(scpUrl, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+              });
+              if (scpRes.ok) {
+                const html = await scpRes.text();
+                salesVolume = parseScpVolume(html);
+                popData = parseScpPop(html);
+                // Cache it
+                await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+                  method: 'POST',
+                  headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+                  body: JSON.stringify({ cache_key: metaCacheKey, results: { salesVolume, popData }, cached_at: new Date().toISOString() })
+                });
+              }
+            } catch (e) {}
+          }
+
           return cors(new Response(JSON.stringify({ results: cached[0].results, salesVolume, popData, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
         }
       } catch (e) {}
