@@ -280,27 +280,46 @@ function parseScpListings(html, tab) {
 
 
 // ── PARSE SCP SALES VOLUME ────────────────────────────────────────────────
-// Pulls volume strings from the sales_volume row in the price table
-// e.g. "2 sales per day", "3 sales per week", "rare"
+// Pulls velocity strings AND monthly volume data from the page
 function parseScpVolume(html) {
-  const volume = { raw: null, psa9: null, psa10: null };
+  const volume = { raw: null, psa9: null, psa10: null, monthly: null };
 
+  // Velocity strings — find first occurrence of each tab's data-show-tab
+  // Use split approach to avoid duplicate matches from mobile section
   const tabMap = [
     { key: 'raw', tab: 'completed-auctions-used' },
     { key: 'psa9', tab: 'completed-auctions-graded' },
     { key: 'psa10', tab: 'completed-auctions-manual-only' }
   ];
 
+  // Only look in the sales_volume row section (before the tab-frame div)
+  const priceTableEnd = html.indexOf('<div id="price_comparison">');
+  const priceSection = priceTableEnd > -1 ? html.slice(0, priceTableEnd) : html;
+
   for (const { key, tab } of tabMap) {
-    // Find <td class="js-show-tab" data-show-tab="completed-auctions-used">...<a>TEXT</a>
-    const pattern = new RegExp(
-      'data-show-tab="' + tab + '"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>',
-      'i'
-    );
-    const match = html.match(pattern);
-    if (match) {
-      volume[key] = match[1].trim();
-    }
+    const marker = 'data-show-tab="' + tab + '"';
+    const idx = priceSection.indexOf(marker);
+    if (idx === -1) continue;
+    const chunk = priceSection.slice(idx, idx + 300);
+    const aMatch = chunk.match(/<a[^>]*>([^<]+)<\/a>/i);
+    if (aMatch) volume[key] = aMatch[1].trim();
+  }
+
+  // Monthly volume array from VGPC.volume_data
+  const volMatch = html.match(/VGPC\.volume_data\s*=\s*(\{[\s\S]*?\});/);
+  if (volMatch) {
+    try {
+      const vd = JSON.parse(volMatch[1]);
+      if (vd.volume && Array.isArray(vd.volume)) {
+        // Each entry is [timestamp_ms, volume]. Take last 3 months.
+        const entries = vd.volume.slice(-3);
+        volume.monthly = entries.map(function(e) {
+          const date = new Date(e[0]);
+          const label = date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+          return { label, count: e[1] };
+        });
+      }
+    } catch(e) {}
   }
 
   return volume;
@@ -311,18 +330,19 @@ function parseScpVolume(html) {
 // Format: {"psa":[0,0,0,0,0,0,0,0,0,0],"cgc":[...]}
 // Index = grade - 1, so index 8 = PSA 9, index 9 = PSA 10
 function parseScpPop(html) {
-  const match = html.match(/VGPC\.pop_data\s*=\s*(\{[^;]+\});/);
+  const match = html.match(/VGPC\.pop_data\s*=\s*(\{[\s\S]*?\});/);
   if (!match) return null;
 
   try {
     const raw = JSON.parse(match[1]);
-    // PSA array: index 8 = grade 9, index 9 = grade 10
     const psa = raw.psa || [];
+    const cgc = raw.cgc || [];
     return {
       psa9: psa[8] || 0,
       psa10: psa[9] || 0,
-      psaTotal: psa.reduce((a, b) => a + b, 0),
-      raw: raw
+      psaTotal: psa.reduce(function(a,b){return a+b;}, 0),
+      cgc10: cgc[9] || 0,
+      cgcTotal: cgc.reduce(function(a,b){return a+b;}, 0)
     };
   } catch (e) {
     return null;
