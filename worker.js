@@ -205,6 +205,35 @@ export default {
       }
     }
 
+    // ── DEBUG ROUTE ────────────────────────────────────────────────────────
+    if (url.pathname === '/api/debug-scp') {
+      const scpId = url.searchParams.get('scp_id') || '11484611';
+      const scpRes = await fetch(`https://www.sportscardspro.com/game/${scpId}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+      });
+      const html = await scpRes.text();
+
+      const volKey = 'VGPC.volume_data = ';
+      const volIdx = html.indexOf(volKey);
+      const popKey = 'VGPC.pop_data = ';
+      const popIdx = html.indexOf(popKey);
+
+      const volSnippet = volIdx > -1 ? html.slice(volIdx, volIdx + 200) : 'NOT FOUND';
+      const popSnippet = popIdx > -1 ? html.slice(popIdx, popIdx + 200) : 'NOT FOUND';
+
+      const vol = parseScpVolume(html);
+      const pop = parseScpPop(html);
+
+      return cors(new Response(JSON.stringify({
+        volKeyFound: volIdx > -1,
+        popKeyFound: popIdx > -1,
+        volSnippet,
+        popSnippet,
+        vol,
+        pop
+      }, null, 2), { headers: { 'Content-Type': 'application/json' } }));
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
