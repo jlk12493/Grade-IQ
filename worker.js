@@ -131,31 +131,41 @@ export default {
         }
       } catch (e) {}
 
-      // Scrape SCP
+      // TCG cards use PriceCharting, sports cards use SCP
+      const isTCG = scpId.startsWith('tcg_');
+      const pcId = isTCG ? scpId.split('_')[1] : null;
+
       try {
-        const scpRes = await fetch(`https://www.sportscardspro.com/game/${scpId}`, {
+        const scrapeUrl = isTCG
+          ? `https://www.pricecharting.com/game/pokemon-cards/${pcId}`
+          : `https://www.sportscardspro.com/game/${scpId}`;
+
+        const scpRes = await fetch(scrapeUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': isTCG ? 'https://www.pricecharting.com/' : 'https://www.sportscardspro.com/',
           }
         });
 
         if (!scpRes.ok) {
-          return cors(new Response(JSON.stringify({ error: 'SCP fetch failed', status: scpRes.status }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
+          return cors(new Response(JSON.stringify({ error: (isTCG ? 'PriceCharting' : 'SCP') + ' fetch failed', status: scpRes.status }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
         }
 
         const html = await scpRes.text();
-        const results = parseScpListings(html, tab);
+        const results = isTCG ? parsePCListings(html, tab) : parseScpListings(html, tab);
 
-        // Cache results
-        try {
-          await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
-            method: 'POST',
-            headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
-            body: JSON.stringify({ cache_key: cacheKey, results: results, cached_at: new Date().toISOString() })
-          });
-        } catch (e) {}
+        // Only cache if we got actual results — don't cache empty (blocked) responses
+        if (results.length > 0) {
+          try {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+              method: 'POST',
+              headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+              body: JSON.stringify({ cache_key: cacheKey, results: results, cached_at: new Date().toISOString() })
+            });
+          } catch (e) {}
+        }
 
         return cors(new Response(JSON.stringify({ results, cached: false }), { headers: { 'Content-Type': 'application/json' } }));
 
@@ -191,9 +201,28 @@ function parseScpListings(html, tab) {
   const tabClass = tabClassMap[tab] || tabClassMap['raw'];
 
   // Find the position of the div for this tab, then extract the table inside it
+  // Find the content div — must match exactly as a standalone class (not part of tab bar)
+  // Tab bar has: <div class="tab selected completed-auctions-used">
+  // Content div has: <div class="completed-auctions-used"> or <div class="completed-auctions-used" style=...>
+  // We find ALL occurrences and pick the one followed by a table
   const divMarker = '<div class="' + tabClass + '"';
-  // Note: no closing > since SCP adds style="display:block" on the active tab
-  const divIdx = html.indexOf(divMarker);
+  let divIdx = -1;
+  let searchFrom = 0;
+  while(true) {
+    const idx = html.indexOf(divMarker, searchFrom);
+    if(idx === -1) break;
+    // Make sure the char after the class name is either > or space (not another class)
+    const afterMarker = html[idx + divMarker.length];
+    if(afterMarker === '>' || afterMarker === ' ') {
+      // Check it's not the tab bar div (which has "tab " before the class)
+      const before = html.slice(Math.max(0, idx - 20), idx);
+      if(before.indexOf('"tab ') === -1 && before.indexOf(' tab"') === -1) {
+        divIdx = idx;
+        break;
+      }
+    }
+    searchFrom = idx + 1;
+  }
   if (divIdx === -1) return results;
 
   // From that position, find the first hoverable-rows table
@@ -237,6 +266,14 @@ function parseScpListings(html, tab) {
   return results;
 }
 
+
+// ── PARSE PRICECHARTING SOLD LISTINGS (TCG) ───────────────────────────────
+// PriceCharting uses same structure as SCP since they're the same company
+// Grade tabs: completed-auctions-used=Ungraded, completed-auctions-graded=Grade9, completed-auctions-manual-only=PSA10
+function parsePCListings(html, tab) {
+  // PriceCharting uses identical HTML structure to SCP — reuse the same parser
+  return parseScpListings(html, tab);
+}
 
 // ── PARSE SCP SALES VOLUME ────────────────────────────────────────────────
 function parseScpVolume(html) {
