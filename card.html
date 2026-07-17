@@ -199,7 +199,8 @@ var ACTIVE_LISTING_TAB = 'raw';
   var params = new URLSearchParams(window.location.search);
   var scpId = params.get('id');
   if (!scpId){ renderNotFound('No card ID provided.'); return; }
-  await Promise.all([loadCard(scpId), loadGradingTiers()]);
+  await loadGradingTiers();
+  await loadCard(scpId);
 })();
 
 async function loadGradingTiers(){
@@ -216,6 +217,11 @@ async function loadCard(scpId){
   CARD = res.data;
   document.title = (CARD.player||'Card') + ' — GradeIQ';
   renderCard();
+}
+
+async function loadGradingTiersAndRender(){
+  await loadGradingTiers();
+  if(CARD) renderCard();
 }
 
 // ── EV CALC ───────────────────────────────────────────────────────────────
