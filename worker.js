@@ -136,9 +136,24 @@ export default {
       const pcId = isTCG ? scpId.split('_')[1] : null;
 
       try {
-        const scrapeUrl = isTCG
-          ? `https://www.pricecharting.com/game/pokemon-cards/${pcId}`
-          : `https://www.sportscardspro.com/game/${scpId}`;
+        let scrapeUrl;
+        if (isTCG) {
+          // Fetch PC product metadata to get console-name and product-name for URL construction
+          const pcApiRes = await fetch(`https://www.pricecharting.com/api/product?t=d68a9ddf284df9aef761709aab4ac8b30f63135a&id=${pcId}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+          });
+          if (!pcApiRes.ok) return cors(new Response(JSON.stringify({ error: 'PC API failed' }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
+          const pcData = await pcApiRes.json();
+          const consoleName = pcData['console-name'] || '';
+          const productName = pcData['product-name'] || '';
+          // Slugify: lowercase, spaces→dashes, remove # and special chars
+          const consoleSlug = consoleName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          const productSlug = productName.toLowerCase().replace('#', '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          scrapeUrl = `https://www.pricecharting.com/game/${consoleSlug}/${productSlug}`;
+          console.log(`TCG scrape URL: ${scrapeUrl}`);
+        } else {
+          scrapeUrl = `https://www.sportscardspro.com/game/${scpId}`;
+        }
 
         const scpRes = await fetch(scrapeUrl, {
           headers: {
