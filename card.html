@@ -418,7 +418,7 @@ function renderCard(){
 
     <!-- SALES VOLUME + POP CHANGE -->
     <div class="main-grid">
-      <div class="panel">
+      <div class="panel vol-panel">
         <div class="panel-head"><span class="panel-title">Sales Volume</span><span class="panel-badge">Coming Soon</span></div>
         <table class="data-tbl vol-tbl">
           <thead><tr><th>Grade</th><th>Volume</th></tr></thead>
@@ -430,7 +430,7 @@ function renderCard(){
         </table>
         <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Populated from SCP on first card load.</div>
       </div>
-      <div class="panel">
+      <div class="panel pop-panel">
         <div class="panel-head"><span class="panel-title">PSA Population</span><span class="panel-badge">Coming Soon</span></div>
         <table class="data-tbl pop-tbl">
           <thead><tr><th>Grade</th><th>Population</th></tr></thead>
@@ -521,45 +521,83 @@ async function fetchEbaySold(tab){
 }
 
 function renderSalesVolume(vol){
-  // vol = { raw: "2 sales per day", psa9: "3 sales per week", psa10: "3 sales per week" }
-  var rows = [
+  var panel = document.querySelector('.vol-panel');
+  if(!panel) return;
+
+  // Velocity row
+  var velRows = [
     ['Raw / Ungraded', vol.raw],
     ['PSA 9', vol.psa9],
     ['PSA 10', vol.psa10]
-  ];
-  var tbody = document.querySelector('.data-tbl.vol-tbl tbody');
-  if(!tbody) return;
-  tbody.innerHTML = rows.map(function(r){
+  ].map(function(r){
     var val = r[1] || '--';
-    var color = val === '--' || val === 'rare' ? 'var(--text-muted)' : 'var(--text)';
-    return '<tr><td>'+r[0]+'</td><td style="color:'+color+';">'+val+'</td></tr>';
+    var color = (!val || val === '--' || val.toLowerCase() === 'rare') ? 'var(--text-muted)' : 'var(--green)';
+    return '<tr><td>'+r[0]+'</td><td style="color:'+color+';font-weight:600;">'+val+'</td></tr>';
   }).join('');
-  // Remove coming soon badge
-  var panel = tbody.closest('.panel');
-  if(panel){
-    var badge = panel.querySelector('.panel-badge');
-    if(badge) badge.remove();
+
+  // Monthly volume mini table
+  var monthRows = '';
+  if(vol.monthly && vol.monthly.length){
+    monthRows = '<div style="border-top:1px solid var(--border);padding:10px 14px 6px;">'
+      +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Monthly Sales (All Grades)</div>'
+      +'<div style="display:flex;gap:0;">'
+      + vol.monthly.map(function(m){
+          return '<div style="flex:1;text-align:center;padding:8px 4px;border-right:1px solid var(--border);">'
+            +'<div style="font-size:18px;font-weight:900;color:var(--text);">'+m.count+'</div>'
+            +'<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">'+m.label+'</div>'
+            +'</div>';
+        }).join('')
+      +'</div></div>';
   }
+
+  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>'
+    +'<table class="data-tbl vol-tbl"><thead><tr><th>Grade</th><th style="text-align:right;">Velocity</th></tr></thead>'
+    +'<tbody>'+velRows+'</tbody></table>'
+    + monthRows;
 }
 
 function renderPopData(pop){
-  // pop = { psa9: N, psa10: N, psaTotal: N }
-  var tbody = document.querySelector('.data-tbl.pop-tbl tbody');
-  if(!tbody) return;
-  tbody.innerHTML = [
-    ['PSA 9', pop.psa9],
-    ['PSA 10', pop.psa10],
-    ['PSA Total', pop.psaTotal]
-  ].map(function(r){
-    var val = r[1] != null ? r[1].toLocaleString() : '--';
-    return '<tr><td>'+r[0]+'</td><td style="color:var(--text);">'+val+'</td></tr>';
-  }).join('');
-  // Remove coming soon badge
-  var panel = tbody.closest('.panel');
-  if(panel){
-    var badge = panel.querySelector('.panel-badge');
-    if(badge) badge.remove();
+  var panel = document.querySelector('.pop-panel');
+  if(!panel) return;
+
+  // Grade bars — show PSA 9 and PSA 10 as large stat cards
+  var total = pop.psaTotal || 1;
+  var pct9 = total > 0 ? ((pop.psa9 / total) * 100).toFixed(1) : 0;
+  var pct10 = total > 0 ? ((pop.psa10 / total) * 100).toFixed(1) : 0;
+
+  var statCards = '<div style="display:flex;gap:0;">'
+    + [
+        {label:'PSA 9', val:pop.psa9, pct:pct9, color:'rgba(59,130,246,.8)'},
+        {label:'PSA 10', val:pop.psa10, pct:pct10, color:'var(--green)'},
+        {label:'PSA Total', val:pop.psaTotal, pct:null, color:'var(--text)'}
+      ].map(function(s){
+        return '<div style="flex:1;padding:14px 12px;border-right:1px solid var(--border);text-align:center;">'
+          +'<div style="font-size:22px;font-weight:900;color:'+s.color+';">'+s.val.toLocaleString()+'</div>'
+          +(s.pct!=null?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+s.pct+'% of total</div>':'')
+          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">'+s.label+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>';
+
+  // CGC row if present
+  var cgcRow = '';
+  if(pop.cgc10 || pop.cgcTotal){
+    cgcRow = '<div style="border-top:1px solid var(--border);display:flex;gap:0;">'
+      +[
+        {label:'CGC 10', val:pop.cgc10},
+        {label:'CGC Total', val:pop.cgcTotal}
+      ].map(function(s){
+        return '<div style="flex:1;padding:10px 12px;border-right:1px solid var(--border);text-align:center;">'
+          +'<div style="font-size:15px;font-weight:700;color:var(--text);">'+(s.val||0).toLocaleString()+'</div>'
+          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">'+s.label+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>';
   }
+
+  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Graded Population</span></div>'
+    + statCards + cgcRow
+    + '<div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Source: SCP · Updated with each page load</div>';
 }
 
 function renderListings(results, tab){
