@@ -306,7 +306,7 @@ function parseScpVolume(html) {
   }
 
   // Monthly volume array from VGPC.volume_data
-  const volMatch = html.match(/VGPC\.volume_data\s*=\s*(\{[\s\S]*?\});/);
+  const volMatch = html.match(/VGPC\.volume_data\s*=\s*(\{[^}]+\});/);
   if (volMatch) {
     try {
       const vd = JSON.parse(volMatch[1]);
