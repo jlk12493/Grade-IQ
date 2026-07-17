@@ -149,7 +149,42 @@ export default {
         const html = await scpRes.text();
         const results = parseScpListings(html, tab);
 
-        // Upsert cache
+        // Parse page-level meta (sales volume + pop) — only on raw tab to avoid redundant work
+        let salesVolume = null;
+        let popData = null;
+        const metaCacheKey = 'scp_' + scpId + '_meta';
+        if (tab === 'raw') {
+          salesVolume = parseScpVolume(html);
+          popData = parseScpPop(html);
+          // Cache meta separately
+          try {
+            await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+              method: 'POST',
+              headers: {
+                apikey: env.SUPABASE_KEY,
+                Authorization: `Bearer ${env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                Prefer: 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify({ cache_key: metaCacheKey, results: { salesVolume, popData }, cached_at: new Date().toISOString() })
+            });
+          } catch (e) {}
+        } else {
+          // Try to pull meta from cache for non-raw tabs
+          try {
+            const metaRes = await fetch(
+              `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
+              { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
+            );
+            const metaCached = await metaRes.json();
+            if (Array.isArray(metaCached) && metaCached.length > 0) {
+              salesVolume = metaCached[0].results.salesVolume;
+              popData = metaCached[0].results.popData;
+            }
+          } catch (e) {}
+        }
+
+        // Upsert listings cache
         try {
           await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
             method: 'POST',
@@ -163,7 +198,7 @@ export default {
           });
         } catch (e) {}
 
-        return cors(new Response(JSON.stringify({ results, cached: false }), { headers: { 'Content-Type': 'application/json' } }));
+        return cors(new Response(JSON.stringify({ results, salesVolume, popData, cached: false }), { headers: { 'Content-Type': 'application/json' } }));
 
       } catch (err) {
         return cors(new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
@@ -243,6 +278,56 @@ function parseScpListings(html, tab) {
   return results;
 }
 
+
+// ── PARSE SCP SALES VOLUME ────────────────────────────────────────────────
+// Pulls volume strings from the sales_volume row in the price table
+// e.g. "2 sales per day", "3 sales per week", "rare"
+function parseScpVolume(html) {
+  const volume = { raw: null, psa9: null, psa10: null };
+
+  const tabMap = [
+    { key: 'raw', tab: 'completed-auctions-used' },
+    { key: 'psa9', tab: 'completed-auctions-graded' },
+    { key: 'psa10', tab: 'completed-auctions-manual-only' }
+  ];
+
+  for (const { key, tab } of tabMap) {
+    // Find <td class="js-show-tab" data-show-tab="completed-auctions-used">...<a>TEXT</a>
+    const pattern = new RegExp(
+      'data-show-tab="' + tab + '"[^>]*>[\s\S]*?<a[^>]*>([^<]+)<\/a>',
+      'i'
+    );
+    const match = html.match(pattern);
+    if (match) {
+      volume[key] = match[1].trim();
+    }
+  }
+
+  return volume;
+}
+
+// ── PARSE SCP POP DATA ─────────────────────────────────────────────────────
+// Pulls VGPC.pop_data from the embedded JS on the page
+// Format: {"psa":[0,0,0,0,0,0,0,0,0,0],"cgc":[...]}
+// Index = grade - 1, so index 8 = PSA 9, index 9 = PSA 10
+function parseScpPop(html) {
+  const match = html.match(/VGPC\.pop_data\s*=\s*(\{[^;]+\});/);
+  if (!match) return null;
+
+  try {
+    const raw = JSON.parse(match[1]);
+    // PSA array: index 8 = grade 9, index 9 = grade 10
+    const psa = raw.psa || [];
+    return {
+      psa9: psa[8] || 0,
+      psa10: psa[9] || 0,
+      psaTotal: psa.reduce((a, b) => a + b, 0),
+      raw: raw
+    };
+  } catch (e) {
+    return null;
+  }
+}
 
 function cors(response) {
   const r = new Response(response.body, response);
