@@ -466,6 +466,14 @@ function setListingTab(tab, btn){
   document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   fetchEbaySold(tab);
+  // Sync chart tab
+  var chartBtn = document.querySelector('.chart-tab[onclick*="' + tab + '"]');
+  if(chartBtn && !chartBtn.classList.contains('active')){
+    document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
+    chartBtn.classList.add('active');
+    ACTIVE_CHART_TAB = tab;
+    renderPriceChart(CHART_DATA[tab], tab);
+  }
 }
 
 async function fetchEbaySold(tab){
@@ -613,6 +621,13 @@ function setChartTab(tab, btn){
   document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   renderPriceChart(CHART_DATA[tab], tab);
+  // Sync listing tab
+  var listingBtn = document.querySelector('.ltab[onclick*="' + tab + '"]');
+  if(listingBtn && !listingBtn.classList.contains('active')){
+    document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
+    listingBtn.classList.add('active');
+    fetchEbaySold(tab);
+  }
 }
 
 function storeChartData(results, tab){
