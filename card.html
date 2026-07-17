@@ -174,6 +174,10 @@
 
 /* Loading */
 .loading-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+
+/* Chart tabs */
+.chart-tab { padding: 3px 8px; font-size: 9px; font-weight: 700; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all .15s; }
+.chart-tab.active { background: var(--green); color: #000; border-color: var(--green); }
 </style>
 </head>
 <body>
@@ -406,16 +410,20 @@ function renderCard(){
           <tbody>${tierRows}</tbody>
         </table>
       </div>
-      <div class="panel">
+      <div class="panel" id="price-history-panel">
         <div class="panel-head">
           <span class="panel-title">Price History & Analytics</span>
-          <span class="panel-badge">Building</span>
+          <div style="display:flex;gap:4px;" id="chart-tab-bar">
+            <button class="chart-tab active" onclick="setChartTab('raw',this)">Raw</button>
+            <button class="chart-tab" onclick="setChartTab('psa9',this)">PSA 9</button>
+            <button class="chart-tab" onclick="setChartTab('psa10',this)">PSA 10</button>
+          </div>
         </div>
-        <div style="padding:0 14px 8px;">
+        <div id="price-chart-container" style="padding:14px;">
           <div class="coming-soon">
             <div class="cs-icon">📈</div>
             <div class="cs-title">Price history is accumulating</div>
-            <div class="cs-sub">GradeIQ captures a price snapshot every scanner cycle. Charts appear automatically once enough data builds up — check back in 30 days.</div>
+            <div class="cs-sub">Load sold listings to see price chart.</div>
             <div class="cs-bars">${bars}</div>
           </div>
         </div>
@@ -446,8 +454,8 @@ function renderCard(){
 
   g('page-content').innerHTML = html;
 
-  // Auto-load Raw sold listings
-  setTimeout(function(){ fetchEbaySold('raw'); }, 100);
+  // Auto-load Raw sold listings — delay ensures page is fully settled
+  setTimeout(function(){ fetchEbaySold('raw'); }, 1500);
 }
 
 // ── LISTING TABS ──────────────────────────────────────────────────────────
@@ -469,6 +477,7 @@ async function fetchEbaySold(tab){
   if(LISTING_CACHE[tab]){
     renderListings(LISTING_CACHE[tab].results, tab);
     if(badge) badge.textContent = LISTING_CACHE[tab].cached ? 'Cached' : 'Live';
+    storeChartData(LISTING_CACHE[tab].results || [], tab);
     return;
   }
 
@@ -488,25 +497,39 @@ async function fetchEbaySold(tab){
       return;
     }
 
-    // If not cached and no results, SCP may have been slow — retry once after 3s
+    // If not cached and no results, SCP may be flaky — retry up to 3 times
     if(!data.cached && (!data.results || data.results.length === 0)){
-      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Loading sold listings...</div><div class="cs-sub" style="margin-top:8px;">Fetching from SCP...</div></div>';
-      setTimeout(async function(){
-        try {
-          var res2 = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
-          var data2 = await res2.json();
-          LISTING_CACHE[tab] = data2;
-          if(badge) badge.textContent = data2.cached ? 'Cached' : 'Live';
-          renderListings(data2.results || [], tab);
-        } catch(e) {
-          renderListings([], tab);
-        }
-      }, 3000);
+      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Loading sold listings...</div><div class="cs-sub" style="margin-top:8px;">Connecting to SCP...</div></div>';
+      var retryCount = 0;
+      var maxRetries = 3;
+      function retry(){
+        retryCount++;
+        setTimeout(async function(){
+          try {
+            var res2 = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
+            var data2 = await res2.json();
+            if(data2.results && data2.results.length > 0){
+              LISTING_CACHE[tab] = data2;
+              if(badge) badge.textContent = data2.cached ? 'Cached' : 'Live';
+              renderListings(data2.results, tab);
+            } else if(retryCount < maxRetries){
+              retry();
+            } else {
+              renderListings([], tab);
+            }
+          } catch(e) {
+            if(retryCount < maxRetries) retry();
+            else renderListings([], tab);
+          }
+        }, 2000);
+      }
+      retry();
       return;
     }
     LISTING_CACHE[tab] = data;
     if(badge) badge.textContent = data.cached ? 'Cached' : 'Live';
     renderListings(data.results || [], tab);
+    storeChartData(data.results || [], tab);
     // Populate sales volume and pop tables if data came back (raw tab fetch)
 
   } catch(err){
@@ -579,6 +602,139 @@ function renderPopData(pop){
   panel.innerHTML = '<div class="panel-head"><span class="panel-title">Graded Population</span></div>'
     + statCards + cgcRow
 ;
+}
+
+// ── PRICE CHART ───────────────────────────────────────────────────────────
+var CHART_DATA = { raw: [], psa9: [], psa10: [] };
+var ACTIVE_CHART_TAB = 'raw';
+
+function setChartTab(tab, btn){
+  ACTIVE_CHART_TAB = tab;
+  document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderPriceChart(CHART_DATA[tab], tab);
+}
+
+function storeChartData(results, tab){
+  if(!results || !results.length) return;
+  CHART_DATA[tab] = results.filter(function(r){ return r.price && r.dateSold; })
+    .map(function(r){ return { date: r.dateSold, price: r.price }; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); });
+  if(tab === ACTIVE_CHART_TAB) renderPriceChart(CHART_DATA[tab], tab);
+}
+
+function renderPriceChart(data, tab){
+  var container = document.getElementById('price-chart-container');
+  if(!container) return;
+
+  if(!data || data.length < 2){
+    container.innerHTML = '<div class="coming-soon" style="padding:28px 20px;">'
+      +'<div class="cs-icon">📈</div>'
+      +'<div class="cs-title">Not enough data</div>'
+      +'<div class="cs-sub">Need at least 2 sold listings to draw a chart.</div>'
+      +'</div>';
+    return;
+  }
+
+  // Calculate stats
+  var prices = data.map(function(d){ return d.price; });
+  var avg = prices.reduce(function(a,b){return a+b;},0) / prices.length;
+  var high = Math.max.apply(null, prices);
+  var low = Math.min.apply(null, prices);
+  var now = new Date();
+
+  var d7 = data.filter(function(d){ return daysDiff(d.date, now) <= 7; });
+  var d14 = data.filter(function(d){ return daysDiff(d.date, now) <= 14; });
+  var d30 = data.filter(function(d){ return daysDiff(d.date, now) <= 30; });
+
+  var avg7 = d7.length ? (d7.reduce(function(a,b){return a+b.price;},0)/d7.length) : null;
+  var avg14 = d14.length ? (d14.reduce(function(a,b){return a+b.price;},0)/d14.length) : null;
+  var avg30 = d30.length ? (d30.reduce(function(a,b){return a+b.price;},0)/d30.length) : null;
+
+  // Draw SVG line chart
+  var W = 500, H = 160, padL = 50, padR = 16, padT = 16, padB = 32;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+
+  var minP = low * 0.92;
+  var maxP = high * 1.08;
+  var priceRange = maxP - minP || 1;
+
+  var dates = data.map(function(d){ return new Date(d.date).getTime(); });
+  var minD = Math.min.apply(null, dates);
+  var maxD = Math.max.apply(null, dates);
+  var dateRange = maxD - minD || 1;
+
+  function px(d){ return padL + ((new Date(d.date).getTime() - minD) / dateRange) * chartW; }
+  function py(d){ return padT + (1 - (d.price - minP) / priceRange) * chartH; }
+
+  // Build polyline points
+  var points = data.map(function(d){ return px(d).toFixed(1)+','+py(d).toFixed(1); }).join(' ');
+
+  // X axis labels (first and last date)
+  var firstDate = new Date(data[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  var lastDate = new Date(data[data.length-1].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  // Y axis labels
+  var yLabels = [minP, (minP+maxP)/2, maxP].map(function(p){
+    var y = padT + (1-(p-minP)/priceRange)*chartH;
+    return '<text x="'+(padL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="9" fill="var(--text-muted)">$'+Math.round(p)+'</text>';
+  }).join('');
+
+  // Dots for each data point
+  var dots = data.map(function(d){
+    return '<circle cx="'+px(d).toFixed(1)+'" cy="'+py(d).toFixed(1)+'" r="3" fill="var(--green)" opacity="0.8">'
+      +'<title>'+d.date+': $'+d.price.toFixed(2)+'</title>'
+      +'</circle>';
+  }).join('');
+
+  // Fill area under line
+  var fillPoints = (padL+',')+(padT+chartH)+' '+points+' '+(padL+chartW)+','+(padT+chartH);
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">'
+    // Grid lines
+    +'<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(padT+chartH)+'" stroke="var(--border)" stroke-width="1"/>'
+    +'<line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(padL+chartW)+'" y2="'+(padT+chartH)+'" stroke="var(--border)" stroke-width="1"/>'
+    +'<line x1="'+padL+'" y1="'+(padT+chartH/2)+'" x2="'+(padL+chartW)+'" y2="'+(padT+chartH/2)+'" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>'
+    // Fill
+    +'<polygon points="'+fillPoints+'" fill="rgba(182,255,0,0.06)"/>'
+    // Line
+    +'<polyline points="'+points+'" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'
+    // Dots
+    + dots
+    // Y labels
+    + yLabels
+    // X labels
+    +'<text x="'+padL+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--text-muted)">'+firstDate+'</text>'
+    +'<text x="'+(padL+chartW)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--text-muted)">'+lastDate+'</text>'
+    +'</svg>';
+
+  // Stat strip
+  var stats = '<div style="display:flex;gap:0;border-top:1px solid var(--border);">'
+    + [
+        {label:'Avg (7d)', val: avg7, n: d7.length},
+        {label:'Avg (14d)', val: avg14, n: d14.length},
+        {label:'Avg (30d)', val: avg30, n: d30.length},
+        {label:'High', val: high, n: null},
+        {label:'Low', val: low, n: null}
+      ].map(function(s, i){
+        var isLast = i === 4;
+        var valStr = s.val != null ? '$'+s.val.toFixed(0) : '--';
+        var nStr = s.n != null ? '<div style="font-size:8px;color:var(--text-muted);margin-top:1px;">'+s.n+' sales</div>' : '';
+        return '<div style="flex:1;text-align:center;padding:8px 4px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
+          +'<div style="font-size:13px;font-weight:800;color:var(--green);">'+valStr+'</div>'
+          + nStr
+          +'<div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;">'+s.label+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>';
+
+  container.innerHTML = '<div style="padding:4px 0 0;">' + svg + '</div>' + stats;
+}
+
+function daysDiff(dateStr, now){
+  var d = new Date(dateStr);
+  return (now - d) / (1000 * 60 * 60 * 24);
 }
 
 function renderListings(results, tab){
