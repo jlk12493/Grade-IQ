@@ -175,98 +175,81 @@ export default {
 };
 
 // ── PARSE SCP SOLD LISTINGS ────────────────────────────────────────────────
-// SCP renders sold listings in a table with class "pricehistory" or similar.
-// Each tab (Ungraded, Grade 9, PSA 10, etc) has its own table section.
+// SCP structure:
+// - Rows: <tr id="ebay-ITEMID">
+// - Date: <td class="date">2026-07-17</td>
+// - Title: <a class="js-ebay-completed-sale" href="...">TITLE</a>
+// - Price: first <span class="js-price">$28.00</span> in the row
+// - Grade tabs: completed-auctions-used=Ungraded, completed-auctions-graded=Grade9, completed-auctions-manual-only=PSA10
+//
+// All tabs are server-rendered in the same page. We find the correct
+// tab section by its div class, then grab the table inside it.
 function parseScpListings(html, tab) {
   const results = [];
 
-  // Map our tab names to SCP grade labels in the HTML
-  const gradeMap = {
-    raw: ['Ungraded', 'ungraded', 'Raw'],
-    psa10: ['PSA 10', 'Grade 10', 'PSA10', 'Gem Mint 10'],
-    psa9: ['PSA 9', 'Grade 9', 'PSA9', 'Mint 9']
+  // Map our tab to SCP's div class
+  const tabClassMap = {
+    raw: 'completed-auctions-used',
+    psa9: 'completed-auctions-graded',
+    psa10: 'completed-auctions-manual-only'
   };
-  const targetGrades = gradeMap[tab] || gradeMap['raw'];
+  const tabClass = tabClassMap[tab] || tabClassMap['raw'];
 
-  // Find the correct sold listings table section for this grade
-  // SCP uses tab panels — find the one matching our grade
-  let sectionHtml = '';
-  for (const grade of targetGrades) {
-    // Look for a section/div/table that contains this grade label
-    const sectionPattern = new RegExp(
-      '(' + escapeRegex(grade) + '[\\s\\S]{0,200}?<table[\\s\\S]*?</table>)',
+  // Find the section div for this tab — it wraps the table
+  // SCP structure: <div id="TAB_CLASS_section"> ... <table> ... </table> ... </div>
+  const sectionPattern = new RegExp(
+    'id="' + tabClass + '_section"[\s\S]*?(<table[\s\S]*?<\/table>)',
+    'i'
+  );
+  let sectionMatch = html.match(sectionPattern);
+
+  // Fallback: find by class on a sibling div near the tab label
+  if (!sectionMatch) {
+    const altPattern = new RegExp(
+      tabClass + '[\s\S]{0,2000}?(<table class="hoverable-rows[\s\S]*?<\/table>)',
       'i'
     );
-    const sectionMatch = html.match(sectionPattern);
-    if (sectionMatch) {
-      sectionHtml = sectionMatch[1];
-      break;
-    }
+    sectionMatch = html.match(altPattern);
   }
 
-  // If no grade-specific section, try to find any sold listings table
-  if (!sectionHtml) {
-    const tableMatch = html.match(/<table[^>]*class="[^"]*sold[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-      || html.match(/<table[^>]*id="[^"]*sold[^"]*"[^>]*>([\s\S]*?)<\/table>/i)
-      || html.match(/Sold Listings([\s\S]{0,100}?<table[\s\S]*?<\/table>)/i);
-    if (tableMatch) sectionHtml = tableMatch[0];
+  // Last resort: grab the first hoverable-rows table (which is the Ungraded/Raw tab by default)
+  if (!sectionMatch) {
+    sectionMatch = html.match(/(<table class="hoverable-rows sortable"[\s\S]*?<\/table>)/i);
   }
 
-  if (!sectionHtml) return results;
+  if (!sectionMatch) return results;
+  const tableHtml = sectionMatch[1];
 
-  // Parse table rows: <tr> with date, title, price cells
-  const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  // Match each ebay row by id pattern
+  const rowPattern = /<tr id="ebay-\d+"[^>]*>([\s\S]*?)<\/tr>/gi;
   let rowMatch;
-  while ((rowMatch = rowPattern.exec(sectionHtml)) !== null) {
-    const row = rowMatch[1];
-    const cells = [];
-    const cellPattern = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-    let cellMatch;
-    while ((cellMatch = cellPattern.exec(row)) !== null) {
-      cells.push(cellMatch[1].replace(/<[^>]+>/g, '').trim());
-    }
-    if (cells.length < 2) continue;
 
-    // Try to extract date, title, price from cells
-    // SCP format is typically: Date | Title | Price
-    let dateSold = null, title = null, price = null, itemUrl = null;
+  while ((rowMatch = rowPattern.exec(tableHtml)) !== null) {
+    const row = rowMatch[0];
 
-    // Find price cell (contains $)
-    for (const cell of cells) {
-      const priceMatch = cell.match(/\$([0-9,]+\.?\d*)/);
-      if (priceMatch) { price = parseFloat(priceMatch[1].replace(',', '')); break; }
-    }
+    // Date: <td class="date">2026-07-17</td>
+    const dateMatch = row.match(/<td class="date">([^<]+)<\/td>/i);
+    const dateSold = dateMatch ? dateMatch[1].trim() : '--';
 
-    // Find date cell (contains date pattern)
-    for (const cell of cells) {
-      if (/\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i.test(cell)) {
-        dateSold = cell; break;
-      }
-    }
+    // Title + URL: <a class="js-ebay-completed-sale" href="...">TITLE</a>
+    const titleMatch = row.match(/<a[^>]+class="js-ebay-completed-sale"[^>]+href="([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/a>/i);
+    const itemUrl = titleMatch ? titleMatch[1].replace(/&amp;/g, '&') : null;
+    const title = titleMatch ? titleMatch[2].replace(/<[^>]+>/g, '').trim() : '--';
 
-    // Title — longest non-date, non-price cell
-    for (const cell of cells) {
-      if (cell === dateSold) continue;
-      if (/^\$/.test(cell)) continue;
-      if (cell.length > (title ? title.length : 0)) title = cell;
-    }
-
-    // Get item URL from the row
-    const urlMatch = rowMatch[0].match(/href="(https?:\/\/[^"]+ebay[^"]+)"/i);
-    if (urlMatch) itemUrl = urlMatch[1];
+    // Price: first <span class="js-price">$28.00</span>
+    const priceMatch = row.match(/<span class="js-price"[^>]*>\s*\$([0-9,]+\.?\d*)\s*<\/span>/i);
+    const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : null;
 
     if (price && price > 0) {
-      results.push({ title: title || '--', price, dateSold: dateSold || '--', listingType: 'Buy It Now', itemUrl });
+      results.push({ title, price, dateSold, listingType: 'Buy It Now', itemUrl });
     }
+
     if (results.length >= 25) break;
   }
 
   return results;
 }
 
-function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 function cors(response) {
   const r = new Response(response.body, response);
