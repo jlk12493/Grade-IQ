@@ -127,7 +127,21 @@ export default {
         );
         const cached = await cacheRes.json();
         if (Array.isArray(cached) && cached.length > 0) {
-          return cors(new Response(JSON.stringify({ results: cached[0].results, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
+          // Also fetch meta (salesVolume + popData) from its own cache key
+          let salesVolume = null, popData = null;
+          const metaCacheKey = 'scp_' + scpId + '_meta';
+          try {
+            const metaRes = await fetch(
+              `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(metaCacheKey)}&cached_at=gte.${encodeURIComponent(sixHoursAgo)}&select=results`,
+              { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
+            );
+            const metaCached = await metaRes.json();
+            if (Array.isArray(metaCached) && metaCached.length > 0) {
+              salesVolume = metaCached[0].results.salesVolume;
+              popData = metaCached[0].results.popData;
+            }
+          } catch (e) {}
+          return cors(new Response(JSON.stringify({ results: cached[0].results, salesVolume, popData, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
         }
       } catch (e) {}
 
