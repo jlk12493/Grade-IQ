@@ -111,9 +111,116 @@ export default {
       }
     }
 
+    // ── EBAY SOLD LISTINGS SCRAPER ─────────────────────────────────────────
+    if (url.pathname === '/api/ebay-sold') {
+      if (request.method === 'OPTIONS') return cors(new Response(null));
+
+      const q = url.searchParams.get('q');
+      if (!q) return cors(new Response(JSON.stringify({ error: 'Missing q param' }), { status: 400, headers: { 'Content-Type': 'application/json' } }));
+
+      const cacheKey = 'ebay_' + q.toLowerCase().replace(/\s+/g, '_').substring(0, 100);
+      const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+
+      // Check cache first
+      try {
+        const cacheRes = await fetch(
+          `${env.SUPABASE_URL}/rest/v1/ebay_sold_cache?cache_key=eq.${encodeURIComponent(cacheKey)}&cached_at=gte.${sixHoursAgo}&select=results`,
+          { headers: { apikey: env.SUPABASE_KEY, Authorization: `Bearer ${env.SUPABASE_KEY}` } }
+        );
+        const cached = await cacheRes.json();
+        if (Array.isArray(cached) && cached.length > 0) {
+          return cors(new Response(JSON.stringify({ results: cached[0].results, cached: true }), { headers: { 'Content-Type': 'application/json' } }));
+        }
+      } catch (e) {}
+
+      // Scrape eBay completed listings
+      try {
+        const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&_sop=13&_ipg=25`;
+        const ebayRes = await fetch(ebayUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+          }
+        });
+
+        if (!ebayRes.ok) {
+          return cors(new Response(JSON.stringify({ error: 'eBay fetch failed', status: ebayRes.status }), { status: 502, headers: { 'Content-Type': 'application/json' } }));
+        }
+
+        const html = await ebayRes.text();
+        const results = parseEbayListings(html);
+
+        // Save to cache (upsert)
+        try {
+          await fetch(`${env.SUPABASE_URL}/rest/v1/ebay_sold_cache`, {
+            method: 'POST',
+            headers: {
+              apikey: env.SUPABASE_KEY,
+              Authorization: `Bearer ${env.SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({ cache_key: cacheKey, results: results, cached_at: new Date().toISOString() })
+          });
+        } catch (e) {}
+
+        return cors(new Response(JSON.stringify({ results, cached: false }), { headers: { 'Content-Type': 'application/json' } }));
+
+      } catch (err) {
+        return cors(new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } }));
+      }
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
+
+// ── PARSE EBAY HTML ────────────────────────────────────────────────────────
+function parseEbayListings(html) {
+  const results = [];
+
+  // Match each listing item block
+  const itemPattern = /<li[^>]+s-item[^>]*>([\s\S]*?)<\/li>/g;
+  let itemMatch;
+
+  while ((itemMatch = itemPattern.exec(html)) !== null) {
+    const block = itemMatch[1];
+
+    // Skip promoted/ad items
+    if (/s-item__info-sponsored|Sponsored/i.test(block) && results.length > 0) continue;
+
+    // Title
+    const titleMatch = block.match(/class="s-item__title[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
+    let title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').trim() : null;
+    if (!title || title === 'Shop on eBay') continue;
+
+    // Price
+    const priceMatch = block.match(/class="s-item__price"[^>]*>[\s\S]*?\$([0-9,]+\.?\d*)/);
+    const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : null;
+    if (!price) continue;
+
+    // Date sold
+    const dateMatch = block.match(/class="s-item__ended-date[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
+    let dateSold = null;
+    if (dateMatch) {
+      dateSold = dateMatch[1].replace(/<[^>]+>/g, '').replace(/Sold\s*/i, '').trim();
+    }
+
+    // Listing type (Buy It Now / Auction)
+    const typeMatch = block.match(/class="s-item__purchase-options-with-icon[^"]*"[^>]*>([\s\S]*?)<\/[^>]+>/);
+    const listingType = typeMatch ? typeMatch[1].replace(/<[^>]+>/g, '').trim() : 'Buy It Now';
+
+    // Item URL
+    const urlMatch = block.match(/href="(https:\/\/www\.ebay\.com\/itm\/[^"?]+)/);
+    const itemUrl = urlMatch ? urlMatch[1] : null;
+
+    results.push({ title, price, dateSold, listingType, itemUrl });
+    if (results.length >= 20) break;
+  }
+
+  return results;
+}
 
 function cors(response) {
   const r = new Response(response.body, response);
