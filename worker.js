@@ -188,6 +188,7 @@ function parseScpListings(html, tab) {
   const results = [];
 
   // Map our tab to SCP's div class
+  // SCP structure: <div class="completed-auctions-used"> ... <table> ... </table> ... </div>
   const tabClassMap = {
     raw: 'completed-auctions-used',
     psa9: 'completed-auctions-graded',
@@ -195,30 +196,25 @@ function parseScpListings(html, tab) {
   };
   const tabClass = tabClassMap[tab] || tabClassMap['raw'];
 
-  // Find the section div for this tab — it wraps the table
-  // SCP structure: <div id="TAB_CLASS_section"> ... <table> ... </table> ... </div>
+  // Find the section div: <div class="completed-auctions-used">...</div>
   const sectionPattern = new RegExp(
-    'id="' + tabClass + '_section"[\s\S]*?(<table[\s\S]*?<\/table>)',
+    '<div class="' + tabClass + '"[^>]*>([\s\S]*?)<\/div>\s*<div class="completed-auctions-',
     'i'
   );
   let sectionMatch = html.match(sectionPattern);
+  let tableHtml = sectionMatch ? sectionMatch[1] : null;
 
-  // Fallback: find by class on a sibling div near the tab label
-  if (!sectionMatch) {
+  // Fallback: find table that appears after the div class marker
+  if (!tableHtml) {
     const altPattern = new RegExp(
-      tabClass + '[\s\S]{0,2000}?(<table class="hoverable-rows[\s\S]*?<\/table>)',
+      '<div class="' + tabClass + '"[^>]*>[\s\S]*?(<table class="hoverable-rows[\s\S]*?<\/table>)',
       'i'
     );
-    sectionMatch = html.match(altPattern);
+    const altMatch = html.match(altPattern);
+    tableHtml = altMatch ? altMatch[1] : null;
   }
 
-  // Last resort: grab the first hoverable-rows table (which is the Ungraded/Raw tab by default)
-  if (!sectionMatch) {
-    sectionMatch = html.match(/(<table class="hoverable-rows sortable"[\s\S]*?<\/table>)/i);
-  }
-
-  if (!sectionMatch) return results;
-  const tableHtml = sectionMatch[1];
+  if (!tableHtml) return results;
 
   // Match each ebay row by id pattern
   const rowPattern = /<tr id="ebay-\d+"[^>]*>([\s\S]*?)<\/tr>/gi;
