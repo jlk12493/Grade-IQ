@@ -488,6 +488,22 @@ async function fetchEbaySold(tab){
       return;
     }
 
+    // If not cached and no results, SCP may have been slow — retry once after 3s
+    if(!data.cached && (!data.results || data.results.length === 0)){
+      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Loading sold listings...</div><div class="cs-sub" style="margin-top:8px;">Fetching from SCP...</div></div>';
+      setTimeout(async function(){
+        try {
+          var res2 = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
+          var data2 = await res2.json();
+          LISTING_CACHE[tab] = data2;
+          if(badge) badge.textContent = data2.cached ? 'Cached' : 'Live';
+          renderListings(data2.results || [], tab);
+        } catch(e) {
+          renderListings([], tab);
+        }
+      }, 3000);
+      return;
+    }
     LISTING_CACHE[tab] = data;
     if(badge) badge.textContent = data.cached ? 'Cached' : 'Live';
     renderListings(data.results || [], tab);
