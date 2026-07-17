@@ -197,7 +197,8 @@ function parseScpListings(html, tab) {
   const tabClass = tabClassMap[tab] || tabClassMap['raw'];
 
   // Find the position of the div for this tab, then extract the table inside it
-  const divMarker = '<div class="' + tabClass + '">';
+  const divMarker = '<div class="' + tabClass + '"';
+  // Note: no closing > since SCP adds style="display:block" on the active tab
   const divIdx = html.indexOf(divMarker);
   if (divIdx === -1) return results;
 
