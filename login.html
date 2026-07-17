@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — GradeIQ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared.js"></script>
+<style>
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: var(--black); }
+.login-box { width: 100%; max-width: 380px; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo img { height: 36px; }
+.login-title { font-size: 20px; font-weight: 900; color: var(--text); text-align: center; margin-bottom: 6px; }
+.login-sub { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 28px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.field input { width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
+.field input:focus { border-color: var(--green); }
+.btn-login { width: 100%; background: var(--green); color: #000; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; margin-top: 8px; }
+.btn-login:hover { opacity: .88; }
+.btn-login:disabled { opacity: .5; cursor: not-allowed; }
+.error-msg { color: #f87171; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="login-logo">
+    <img src="/gradeiq-logo.png" alt="GradeIQ" onerror="this.style.display='none'">
+  </div>
+  <div class="login-title">Welcome back</div>
+  <div class="login-sub">Sign in to your GradeIQ account</div>
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+  <button class="btn-login" id="login-btn" onclick="signIn()">Sign In</button>
+  <div class="error-msg" id="error-msg"></div>
+</div>
+
+<script>
+async function signIn(){
+  var email = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var btn = document.getElementById('login-btn');
+  var err = document.getElementById('error-msg');
+
+  if(!email || !password){ showErr('Please enter your email and password.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  err.style.display = 'none';
+
+  var res = await sb.auth.signInWithPassword({ email: email, password: password });
+
+  if(res.error){
+    showErr(res.error.message);
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+    return;
+  }
+
+  window.location.href = '/index.html';
+}
+
+function showErr(msg){
+  var err = document.getElementById('error-msg');
+  err.textContent = msg;
+  err.style.display = 'block';
+}
+
+// Allow Enter key
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Enter') signIn();
+});
+
+// If already logged in, redirect
+sb.auth.getSession().then(function(res){
+  if(res.data.session) window.location.href = '/index.html';
+});
+</script>
+</body>
+</html>
