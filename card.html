@@ -466,8 +466,8 @@ function renderCard(){
 
   g('page-content').innerHTML = html;
 
-  // Auto-load Raw sold listings
-  setTimeout(function(){ fetchEbaySold('raw'); }, 100);
+  // Auto-load Raw sold listings — slight delay ensures DOM panels exist after innerHTML set
+  setTimeout(function(){ fetchEbaySold('raw'); }, 200);
 }
 
 // ── LISTING TABS ──────────────────────────────────────────────────────────
@@ -489,6 +489,8 @@ async function fetchEbaySold(tab){
   if(LISTING_CACHE[tab]){
     renderListings(LISTING_CACHE[tab].results, tab);
     if(badge) badge.textContent = LISTING_CACHE[tab].cached ? 'Cached' : 'Live';
+    if(LISTING_CACHE[tab].salesVolume) renderSalesVolume(LISTING_CACHE[tab].salesVolume);
+    if(LISTING_CACHE[tab].popData) renderPopData(LISTING_CACHE[tab].popData);
     return;
   }
 
