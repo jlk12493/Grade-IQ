@@ -7,97 +7,147 @@
 <meta name="theme-color" content="#B6FF00">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>GradeIQ — Home</title>
+<title>GradeIQ — Market Intelligence</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/shared.js"></script>
 <style>
-/* ── HOME DASHBOARD ───────────────────────────────────────────────────────── */
+/* ── HOME: MARKET INTELLIGENCE ───────────────────────────────────────────── */
 
-/* Welcome strip */
-.welcome{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
-.welcome-left h2{font-size:20px;font-weight:900;color:var(--text);margin-bottom:2px;}
-.welcome-left p{font-size:12px;color:var(--text-muted);}
-.welcome-right{display:flex;gap:8px;align-items:center;}
-.scanner-badge{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text-muted);}
-.scanner-dot{width:7px;height:7px;border-radius:50%;background:#F87171;flex-shrink:0;}
-.scanner-dot.live{background:var(--green);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-
-/* Portfolio strip */
-.portfolio-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
-@media(max-width:900px){.portfolio-strip{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:480px){.portfolio-strip{grid-template-columns:repeat(2,1fr);}}
-.ps-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s;}
-.ps-card:hover{border-color:rgba(182,255,0,.3);}
-.ps-lbl{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
-.ps-val{font-size:22px;font-weight:900;color:var(--text);line-height:1;}
-.ps-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+/* Scanner Pulse strip */
+.pulse-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pulse-strip-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pdot 2s infinite; }
+@keyframes pdot { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.pulse-stat { font-size: 12px; color: var(--text-muted); }
+.pulse-stat strong { color: var(--text); }
+.pulse-divider { width: 1px; height: 14px; background: var(--border); }
+.pulse-updated { font-size: 11px; color: var(--text-muted); }
 
 /* Section headers */
-.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.sec-title{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
-.sec-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--green);border-radius:2px;}
-.sec-link{font-size:11px;color:var(--text-muted);cursor:pointer;transition:color .15s;}
-.sec-link:hover{color:var(--green);}
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.sec-title { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.sec-title::before { content:''; display:inline-block; width:3px; height:14px; background:var(--green); border-radius:2px; }
+.sec-link { font-size: 11px; color: var(--text-muted); cursor: pointer; transition: color .15s; text-decoration: none; }
+.sec-link:hover { color: var(--green); }
 
-/* Two column layout */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
-@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+/* ── MARKET INDEX ─────────────────────────────────────────────────────────── */
+.index-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+@media(max-width:768px) { .index-grid { grid-template-columns: repeat(2, 1fr); } }
+.index-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .15s;
+  cursor: default;
+}
+.index-card:hover { border-color: rgba(182,255,0,.3); }
+.index-sport { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+.index-score { font-size: 36px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+.index-label { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.index-stats { display: flex; gap: 12px; }
+.index-stat { }
+.index-stat-lbl { font-size: 8px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+.index-stat-val { font-size: 13px; font-weight: 800; }
+.index-mini-bars { display: flex; gap: 2px; align-items: flex-end; height: 28px; margin-top: 10px; }
+.imb { flex: 1; border-radius: 2px 2px 0 0; background: rgba(182,255,0,.15); min-width: 4px; }
+.index-card-bg { position: absolute; right: -10px; top: -10px; font-size: 64px; opacity: .04; pointer-events: none; }
 
-/* Market pulse */
-.pulse-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
-.pulse-card:hover{border-color:rgba(182,255,0,.3);}
-.pulse-card:last-child{margin-bottom:0;}
-.pulse-thumb{width:48px;height:67px;border-radius:5px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0;}
-.pulse-thumb img{width:100%;height:100%;object-fit:cover;}
-.pulse-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
-.pulse-info{flex:1;min-width:0;}
-.pulse-player{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pulse-set{font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-.pulse-chips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
-.pulse-stats{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;}
-.pulse-iq{font-size:22px;font-weight:900;line-height:1;}
-.pulse-ev{font-size:11px;font-weight:700;}
-.pulse-buy{font-size:10px;color:var(--text-muted);}
+/* ── SPORT SPOTLIGHT ──────────────────────────────────────────────────────── */
+.spotlight-section { margin-bottom: 28px; }
+.sport-tabs { display: flex; gap: 2px; margin-bottom: 14px; flex-wrap: wrap; }
+.stab {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .5px;
+}
+.stab:hover { border-color: var(--green); color: var(--green); }
+.stab.active { background: var(--green); color: #000; border-color: var(--green); }
+.spotlight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media(max-width:640px) { .spotlight-grid { grid-template-columns: 1fr; } }
+.spot-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.spot-card:hover { border-color: rgba(182,255,0,.4); transform: translateY(-2px); }
+.spot-img { height: 160px; overflow: hidden; background: var(--surface-2); position: relative; }
+.spot-img img { width: 100%; height: 100%; object-fit: cover; }
+.spot-img-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.spot-rank { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.75); color: var(--green); font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px); letter-spacing: 1px; }
+.spot-iq { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.75); color: var(--green); font-size: 14px; font-weight: 900; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
+.spot-body { padding: 12px 14px; }
+.spot-player { font-size: 14px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.spot-set { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+.spot-stats { display: flex; justify-content: space-between; align-items: flex-end; }
+.spot-ev { font-size: 18px; font-weight: 900; color: var(--green); }
+.spot-ev-lbl { font-size: 8px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.spot-buy { text-align: right; }
+.spot-buy-lbl { font-size: 8px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.spot-buy-val { font-size: 13px; font-weight: 800; color: var(--text); }
 
-/* Top picks grid */
-.picks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
-.pick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .15s;}
-.pick-card:hover{border-color:rgba(182,255,0,.3);}
-.pick-img{height:120px;overflow:hidden;background:var(--surface-2);position:relative;}
-.pick-img img{width:100%;height:100%;object-fit:cover;}
-.pick-img-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
-.pick-iq-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.75);color:var(--green);font-size:11px;font-weight:900;padding:2px 7px;border-radius:4px;backdrop-filter:blur(4px);}
-.pick-body{padding:10px 12px;}
-.pick-player{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pick-set{font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
-.pick-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
-.pick-ev{font-size:11px;font-weight:700;color:var(--green);}
-.pick-buy{font-size:10px;color:var(--text-muted);}
+/* ── BEST VALUE BY PRICE ──────────────────────────────────────────────────── */
+.value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+@media(max-width:768px) { .value-grid { grid-template-columns: 1fr; } }
+.value-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.value-col-head {
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.value-col-title { font-size: 12px; font-weight: 800; color: var(--text); }
+.value-col-sub { font-size: 10px; color: var(--text-muted); }
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+}
+.value-row:hover { background: rgba(182,255,0,.04); }
+.value-row:last-child { border-bottom: none; }
+.value-thumb { width: 36px; height: 50px; border-radius: 4px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--border); flex-shrink: 0; }
+.value-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.value-thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.value-info { flex: 1; min-width: 0; }
+.value-player { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.value-set { font-size: 9px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.value-right { text-align: right; flex-shrink: 0; }
+.value-ev { font-size: 13px; font-weight: 800; color: var(--green); }
+.value-raw { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
 
-/* Portfolio inventory preview */
-.inv-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
-.inv-row:last-child{border-bottom:none;}
-.inv-thumb{width:36px;height:50px;border-radius:4px;overflow:hidden;background:var(--surface-2);border:1px solid var(--border);flex-shrink:0;}
-.inv-thumb img{width:100%;height:100%;object-fit:cover;}
-.inv-thumb-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
-.inv-info{flex:1;min-width:0;}
-.inv-player{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.inv-set{font-size:10px;color:var(--text-muted);margin-top:1px;}
-.inv-stats{text-align:right;flex-shrink:0;}
-.inv-cost{font-size:12px;font-weight:700;color:var(--text);}
-.inv-ev{font-size:10px;font-weight:700;}
-.inv-status{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
-
-/* Empty states */
-.empty-dash{text-align:center;padding:40px 20px;color:var(--text-muted);}
-.empty-icon{font-size:32px;margin-bottom:10px;}
-.empty-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px;}
-.empty-sub{font-size:12px;margin-bottom:14px;}
-
-/* Loading shimmer */
-.shimmer{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;animation:shim 1.5s infinite;}
-@keyframes shim{0%,100%{opacity:.5;}50%{opacity:.9;}}
+/* Loading */
+.shimmer { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); animation: shim 1.5s infinite; }
+@keyframes shim { 0%,100%{opacity:.5;} 50%{opacity:.9;} }
+.empty-state { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -105,71 +155,62 @@
 
 <div class="main">
 
-  <!-- WELCOME -->
-  <div class="welcome" id="welcome-strip">
-    <div class="welcome-left">
-      <h2 id="welcome-msg">Good morning ⚡</h2>
-      <p id="welcome-sub">Here's what's happening in your collection today.</p>
+  <!-- SCANNER PULSE STRIP -->
+  <div class="pulse-strip" id="pulse-strip">
+    <div class="pulse-strip-left">
+      <div class="pulse-dot"></div>
+      <div class="pulse-stat" id="pulse-signals">-- active buy signals</div>
+      <div class="pulse-divider"></div>
+      <div class="pulse-stat" id="pulse-avg-ev">Avg EV: --</div>
+      <div class="pulse-divider"></div>
+      <div class="pulse-stat" id="pulse-avg-gem">Avg Gem Rate: --</div>
     </div>
-    <div class="welcome-right">
-      <div class="scanner-badge">
-        <div class="scanner-dot" id="scanner-dot"></div>
-        <span id="scanner-status">Checking scanner...</span>
-      </div>
+    <div class="pulse-updated" id="pulse-updated">Checking scanner...</div>
+  </div>
+
+  <!-- GRADEIQ MARKET INDEX -->
+  <div style="margin-bottom:28px;">
+    <div class="sec-head">
+      <div class="sec-title">GradeIQ Market Index</div>
+      <span class="sec-link" onclick="goPage('signals')">View All Signals →</span>
+    </div>
+    <div class="index-grid" id="market-index">
+      <div class="shimmer" style="height:140px;"></div>
+      <div class="shimmer" style="height:140px;opacity:.8;"></div>
+      <div class="shimmer" style="height:140px;opacity:.6;"></div>
+      <div class="shimmer" style="height:140px;opacity:.4;"></div>
     </div>
   </div>
 
-  <!-- PORTFOLIO STRIP -->
-  <div class="portfolio-strip" id="portfolio-strip">
-    <div class="shimmer" style="height:74px;"></div>
-    <div class="shimmer" style="height:74px;opacity:.8;"></div>
-    <div class="shimmer" style="height:74px;opacity:.6;"></div>
-    <div class="shimmer" style="height:74px;opacity:.4;"></div>
-    <div class="shimmer" style="height:74px;opacity:.3;"></div>
+  <!-- SPORT SPOTLIGHT -->
+  <div class="spotlight-section">
+    <div class="sec-head">
+      <div class="sec-title">Sport Spotlight</div>
+      <span class="sec-link" onclick="goPage('signals')">View All →</span>
+    </div>
+    <div class="sport-tabs" id="sport-tabs">
+      <button class="stab active" data-sport="Basketball" onclick="setSpotlight('Basketball',this)">🏀 Basketball</button>
+      <button class="stab" data-sport="Baseball" onclick="setSpotlight('Baseball',this)">⚾ Baseball</button>
+      <button class="stab" data-sport="Football" onclick="setSpotlight('Football',this)">🏈 Football</button>
+      <button class="stab" data-sport="TCG" onclick="setSpotlight('TCG',this)">🃏 TCG</button>
+    </div>
+    <div class="spotlight-grid" id="spotlight-grid">
+      <div class="shimmer" style="height:240px;"></div>
+      <div class="shimmer" style="height:240px;opacity:.7;"></div>
+      <div class="shimmer" style="height:240px;opacity:.4;"></div>
+    </div>
   </div>
 
-  <!-- TWO COLUMN: MARKET PULSE + TOP PICKS -->
-  <div class="two-col">
-
-    <!-- MARKET PULSE -->
-    <div>
-      <div class="sec-header">
-        <div class="sec-title">Market Pulse</div>
-        <span class="sec-link" onclick="goPage('signals')">View All →</span>
-      </div>
-      <div id="market-pulse">
-        <div class="shimmer" style="height:82px;"></div>
-        <div class="shimmer" style="height:82px;opacity:.7;"></div>
-        <div class="shimmer" style="height:82px;opacity:.5;"></div>
-        <div class="shimmer" style="height:82px;opacity:.3;"></div>
-        <div class="shimmer" style="height:82px;opacity:.2;"></div>
-      </div>
-    </div>
-
-    <!-- TOP PICKS -->
-    <div>
-      <div class="sec-header">
-        <div class="sec-title">Top Picks Today</div>
-        <span class="sec-link" onclick="goPage('signals')">View All →</span>
-      </div>
-      <div class="picks-grid" id="top-picks">
-        <div class="shimmer" style="height:200px;"></div>
-        <div class="shimmer" style="height:200px;opacity:.7;"></div>
-        <div class="shimmer" style="height:200px;opacity:.5;"></div>
-        <div class="shimmer" style="height:200px;opacity:.3;"></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- PORTFOLIO INVENTORY PREVIEW -->
+  <!-- BEST VALUE BY PRICE RANGE -->
   <div>
-    <div class="sec-header">
-      <div class="sec-title">My Collection</div>
-      <span class="sec-link" onclick="goPage('collection')">View All →</span>
+    <div class="sec-head">
+      <div class="sec-title">Best Value by Price Range</div>
+      <span class="sec-link" onclick="goPage('signals')">View All →</span>
     </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0 16px;" id="inv-preview">
-      <div class="shimmer" style="height:60px;margin:0 -16px;border-radius:0;"></div>
+    <div class="value-grid" id="value-grid">
+      <div class="shimmer" style="height:280px;"></div>
+      <div class="shimmer" style="height:280px;opacity:.7;"></div>
+      <div class="shimmer" style="height:280px;opacity:.4;"></div>
     </div>
   </div>
 
@@ -178,74 +219,53 @@
 <script>
 var PLATFORM_FEE = 0.135;
 var GRADING_TIERS = [];
+var ALL_SIGNALS = [];
+var SPOTLIGHT_CACHE = {};
 
+var SPORT_CONFIG = {
+  Basketball: { emoji: '🏀', color: '#fb923c', bg: 'rgba(249,115,22,.12)' },
+  Baseball:   { emoji: '⚾', color: '#f87171', bg: 'rgba(239,68,68,.12)' },
+  Football:   { emoji: '🏈', color: '#34d399', bg: 'rgba(16,185,129,.12)' },
+  TCG:        { emoji: '🃏', color: '#c084fc', bg: 'rgba(168,85,247,.15)' },
+};
+
+// ── INIT ──────────────────────────────────────────────────────────────────
 (async function init(){
   var user = await requireAuth();
   if (!user) return;
-
-  setWelcome(user);
-  await Promise.all([
-    loadGradingTiers(),
-    checkScanner(),
-    loadPortfolioStrip(user),
-    loadInventoryPreview(user),
-  ]);
-  // Load signals after tiers are ready
-  loadMarketPulse();
-  loadTopPicks();
+  await Promise.all([loadGradingTiers(), loadAllSignals()]);
+  renderPulseStrip();
+  renderMarketIndex();
+  renderSpotlight('Basketball');
+  renderValueByPrice();
 })();
 
-// ── WELCOME ────────────────────────────────────────────────────────────────
-function setWelcome(user){
-  var hour = new Date().getHours();
-  var greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  var name = user.email.split('@')[0];
-  // Capitalize first letter
-  name = name.charAt(0).toUpperCase() + name.slice(1);
-  var el = g('welcome-msg');
-  if (el) el.textContent = greeting + ', ' + name + ' ⚡';
-}
-
-// ── SCANNER STATUS ─────────────────────────────────────────────────────────
-async function checkScanner(){
-  var dot = g('scanner-dot');
-  var status = g('scanner-status');
-  try {
-    var { data } = await sb.from('ev_scanner')
-      .select('scanned_at')
-      .order('scanned_at', {ascending:false})
-      .limit(1)
-      .single();
-    if (!data){ dot.classList.remove('live'); if(status) status.textContent='Scanner idle'; return; }
-    var mins = Math.floor((Date.now() - new Date(data.scanned_at).getTime()) / 60000);
-    if (mins < 5){
-      dot.classList.add('live');
-      if(status) status.textContent = 'Scanner live';
-    } else if (mins < 60){
-      dot.classList.add('live');
-      if(status) status.textContent = 'Updated ' + mins + 'm ago';
-    } else {
-      dot.classList.remove('live');
-      var hrs = Math.floor(mins/60);
-      if(status) status.textContent = 'Updated ' + hrs + 'h ago';
-    }
-  } catch(e){
-    dot.classList.remove('live');
-    if(status) status.textContent='Scanner status unknown';
-  }
-}
-
-// ── GRADING TIERS ──────────────────────────────────────────────────────────
 async function loadGradingTiers(){
   var res = await sb.from('grading_tiers').select('*').eq('active',true).order('cost_per_card',{ascending:true});
   var seen = {};
   GRADING_TIERS = (res.data||[]).filter(function(t){ if(seen[t.tier_name])return false; seen[t.tier_name]=true; return true; });
 }
 
-// ── EV HELPERS ─────────────────────────────────────────────────────────────
+async function loadAllSignals(){
+  var all = [], page = 0;
+  while(true){
+    var res = await sb.from('ev_scanner')
+      .select('scp_id,player,parallel,year,set_name,card_no,sport,scc_score,ev_pct,ev_dollar,max_buy_40,raw_price,psa10_price,psa9_price,actual_gem_rate,sales_volume,image_url,scanned_at,decision')
+      .eq('decision','BUY')
+      .order('scc_score',{ascending:false,nullsFirst:false})
+      .range(page*1000,(page+1)*1000-1);
+    var chunk = res.data||[];
+    all = all.concat(chunk);
+    if(chunk.length<1000) break;
+    page++;
+  }
+  ALL_SIGNALS = all;
+}
+
+// ── EV HELPERS ────────────────────────────────────────────────────────────
 function getBestEV(r){
   if(!GRADING_TIERS.length||!r.psa10_price) return {evPct:r.ev_pct||0, maxBuy:r.max_buy_40||0};
-  var bestAnn=-Infinity, bestEV={evPct:r.ev_pct||0, maxBuy:r.max_buy_40||0};
+  var bestAnn=-Infinity, result={evPct:r.ev_pct||0, maxBuy:r.max_buy_40||0};
   GRADING_TIERS.forEach(function(t){
     var n10=(r.psa10_price||0)*(1-PLATFORM_FEE);
     var n9=r.psa9_price?r.psa9_price*(1-PLATFORM_FEE):n10*0.30;
@@ -255,176 +275,178 @@ function getBestEV(r){
     var evP=total>0?(exp-total)/total:0;
     var days=(t.turnaround_business_days_avg||0)*1.4;
     var ann=days>0?Math.pow(1+evP,365/days)-1:-Infinity;
-    if(exp-total>0&&evP>=0.40&&ann>bestAnn){bestAnn=ann;bestEV={evPct:evP,maxBuy:Math.max(0,(exp/1.40)-t.cost_per_card)};}
+    if(exp-total>0&&evP>=0.40&&ann>bestAnn){bestAnn=ann;result={evPct:evP,maxBuy:Math.max(0,(exp/1.40)-t.cost_per_card)};}
   });
-  return bestEV;
+  return result;
 }
 
 function f$(v){ if(v==null||isNaN(v))return'--'; return(v<0?'-$':'$')+Math.abs(v).toFixed(2); }
-function fPct(v,d){ if(v==null)return'--'; return(v*100).toFixed(d||0)+'%'; }
+function fPct(v,d){ if(v==null)return'--'; return(v*100).toFixed(d==null?0:d)+'%'; }
 function stripSet(s){ return(s||'').replace(/^(Baseball|Football|Basketball|Hockey|Soccer|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim(); }
 
-function sportChip(sport){
-  var map={TCG:['rgba(168,85,247,.15)','#c084fc','TCG'],Baseball:['rgba(239,68,68,.12)','#f87171','BASEBALL'],Basketball:['rgba(249,115,22,.12)','#fb923c','BASKETBALL'],Football:['rgba(16,185,129,.12)','#34d399','FOOTBALL']};
-  var c=map[sport]; if(!c)return'';
-  return '<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;background:'+c[0]+';color:'+c[1]+';letter-spacing:.5px;">'+c[2]+'</span>';
+// ── SCANNER PULSE STRIP ───────────────────────────────────────────────────
+function renderPulseStrip(){
+  var signals = g('pulse-signals');
+  var avgEvEl = g('pulse-avg-ev');
+  var avgGemEl = g('pulse-avg-gem');
+  var updatedEl = g('pulse-updated');
+
+  var total = ALL_SIGNALS.length;
+  var avgEV = total ? ALL_SIGNALS.reduce(function(s,r){return s+(r.ev_pct||0);},0)/total : 0;
+  var avgGem = total ? ALL_SIGNALS.reduce(function(s,r){return s+(r.actual_gem_rate||0);},0)/total : 0;
+
+  if(signals) signals.innerHTML = '<strong>'+total+'</strong> active buy signals';
+  if(avgEvEl) avgEvEl.innerHTML = 'Avg EV: <strong style="color:var(--green);">'+fPct(avgEV,0)+'</strong>';
+  if(avgGemEl) avgGemEl.innerHTML = 'Avg Gem Rate: <strong>'+fPct(avgGem,1)+'</strong>';
+
+  // Last scanned
+  if(ALL_SIGNALS.length && updatedEl){
+    var latest = ALL_SIGNALS.reduce(function(a,b){
+      return new Date(b.scanned_at||0) > new Date(a.scanned_at||0) ? b : a;
+    }, ALL_SIGNALS[0]);
+    var mins = Math.floor((Date.now()-new Date(latest.scanned_at).getTime())/60000);
+    var ago = mins < 1 ? 'Just now' : mins < 60 ? mins+'m ago' : Math.floor(mins/60)+'h ago';
+    updatedEl.textContent = 'Updated ' + ago;
+  }
 }
 
-// ── PORTFOLIO STRIP ────────────────────────────────────────────────────────
-async function loadPortfolioStrip(user){
-  var userId = user.id;
-  var { data } = await sb.from('inventory').select('total_cost,ev_dollar,realized_profit,status,sale_price').eq('user_id',userId);
-  var cards = data||[];
-  var active = cards.filter(function(c){ return c.status!=='sold'; });
-  var sold = cards.filter(function(c){ return c.status==='sold'; });
-  var totalInvested = active.reduce(function(s,c){return s+(c.total_cost||0);},0);
-  var totalEV = active.reduce(function(s,c){return s+(c.ev_dollar||0);},0);
-  var totalProfit = sold.reduce(function(s,c){return s+(c.realized_profit||0);},0);
-  var avgEVPct = active.length ? active.reduce(function(s,c){return s+((c.ev_dollar||0)/(c.total_cost||1));},0)/active.length : 0;
+// ── MARKET INDEX ──────────────────────────────────────────────────────────
+function renderMarketIndex(){
+  var el = g('market-index'); if(!el) return;
+  var sports = ['Basketball','Baseball','Football','TCG'];
 
-  var items = [
-    {lbl:'Cards Owned', val:active.length, sub:cards.length+' total', color:'var(--text)', click:"goPage('collection')"},
-    {lbl:'Total Invested', val:f$(totalInvested), sub:'raw + grading + ship', color:'var(--text)', click:"goPage('collection')"},
-    {lbl:'Expected Value', val:(totalEV>=0?'+':'')+f$(totalEV), sub:'across active cards', color:totalEV>=0?'var(--green)':'#F87171', click:"goPage('collection')"},
-    {lbl:'Avg EV%', val:fPct(avgEVPct,1), sub:'active cards', color:avgEVPct>=0.40?'var(--green)':'var(--text)', click:"goPage('collection')"},
-    {lbl:'Realized P&L', val:(totalProfit>=0?'+':'')+f$(totalProfit), sub:sold.length+' cards sold', color:totalProfit>=0?'var(--green)':'#F87171', click:"goPage('collection')"},
-  ];
+  var html = sports.map(function(sport){
+    var cfg = SPORT_CONFIG[sport];
+    var cards = ALL_SIGNALS.filter(function(r){ return r.sport===sport; });
+    if(!cards.length){
+      return '<div class="index-card"><div class="index-sport" style="color:'+cfg.color+';">'+cfg.emoji+' '+sport+'</div>'
+        +'<div class="index-score" style="color:var(--text-muted);">--</div>'
+        +'<div class="index-label">No Data</div></div>';
+    }
 
-  var el = g('portfolio-strip');
-  if(!el) return;
-  el.innerHTML = items.map(function(item){
-    return '<div class="ps-card" onclick="'+item.click+'">'
-      +'<div class="ps-lbl">'+item.lbl+'</div>'
-      +'<div class="ps-val" style="color:'+item.color+';">'+item.val+'</div>'
-      +'<div class="ps-sub">'+item.sub+'</div>'
+    // GradeIQ Market Index Score = weighted avg of (EV% normalized × volume weight)
+    var totalVol = cards.reduce(function(s,r){return s+(r.sales_volume||0);},0)||1;
+    var weightedEV = cards.reduce(function(s,r){
+      var w = (r.sales_volume||1)/totalVol;
+      return s + (r.ev_pct||0)*w;
+    },0);
+    var avgGem = cards.reduce(function(s,r){return s+(r.actual_gem_rate||0);},0)/cards.length;
+    var avgIQ  = cards.reduce(function(s,r){return s+(r.scc_score||0);},0)/cards.length;
+
+    // Index score: 0-100 based on avg EV%, capped at 200% EV = 100
+    var indexScore = Math.min(100, Math.round(weightedEV * 50));
+    var scoreColor = indexScore >= 60 ? 'var(--green)' : indexScore >= 40 ? 'var(--amber,#F59E0B)' : '#F87171';
+
+    // Mini bars — simulate distribution
+    var buckets = [0,0,0,0,0,0,0];
+    cards.forEach(function(r){
+      var idx = Math.min(6, Math.floor((r.ev_pct||0)*3.5));
+      buckets[idx]++;
+    });
+    var maxB = Math.max.apply(null,buckets)||1;
+    var bars = buckets.map(function(b){
+      var h = Math.max(4, Math.round((b/maxB)*24));
+      return '<div class="imb" style="height:'+h+'px;background:'+cfg.color+'33;"></div>';
+    }).join('');
+
+    return '<div class="index-card">'
+      +'<div class="index-card-bg">'+cfg.emoji+'</div>'
+      +'<div class="index-sport" style="color:'+cfg.color+';">'+cfg.emoji+' '+sport+'</div>'
+      +'<div class="index-score" style="color:'+scoreColor+';">'+indexScore+'</div>'
+      +'<div class="index-label">Market Index</div>'
+      +'<div class="index-stats">'
+        +'<div class="index-stat"><div class="index-stat-lbl">Signals</div><div class="index-stat-val">'+cards.length+'</div></div>'
+        +'<div class="index-stat"><div class="index-stat-lbl">Avg EV</div><div class="index-stat-val" style="color:var(--green);">'+fPct(weightedEV,0)+'</div></div>'
+        +'<div class="index-stat"><div class="index-stat-lbl">Avg Gem</div><div class="index-stat-val">'+fPct(avgGem,1)+'</div></div>'
+      +'</div>'
+      +'<div class="index-mini-bars">'+bars+'</div>'
       +'</div>';
   }).join('');
+
+  el.innerHTML = html;
 }
 
-// ── MARKET PULSE ───────────────────────────────────────────────────────────
-async function loadMarketPulse(){
-  var { data } = await sb.from('ev_scanner')
-    .select('scp_id,player,parallel,year,set_name,card_no,sport,scc_score,ev_pct,ev_dollar,max_buy_40,raw_price,psa10_price,psa9_price,actual_gem_rate,image_url,scanned_at')
-    .eq('decision','BUY')
-    .order('scanned_at',{ascending:false})
-    .limit(5);
+// ── SPORT SPOTLIGHT ───────────────────────────────────────────────────────
+function setSpotlight(sport, btn){
+  document.querySelectorAll('.stab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderSpotlight(sport);
+}
 
-  var el = g('market-pulse');
-  if(!el) return;
-  if(!data||!data.length){
-    el.innerHTML='<div class="empty-dash"><div class="empty-icon">📡</div><div class="empty-title">Scanner is running</div><div class="empty-sub">New buy signals will appear here.</div></div>';
+function renderSpotlight(sport){
+  var el = g('spotlight-grid'); if(!el) return;
+  var top3 = ALL_SIGNALS.filter(function(r){ return r.sport===sport; }).slice(0,3);
+
+  if(!top3.length){
+    el.innerHTML='<div class="empty-state" style="grid-column:1/-1;">No '+sport+' signals available right now.</div>';
     return;
   }
 
-  el.innerHTML = data.map(function(r){
+  var ranks = ['#1','#2','#3'];
+  el.innerHTML = top3.map(function(r, i){
     var ev = getBestEV(r);
     var ss = stripSet(r.set_name);
-    var iq = Math.round(r.scc_score||0);
-    var sc = iq>=60?'var(--green)':'var(--text-muted)';
-    var ec = ev.evPct>=0.40?'var(--green)':'var(--text-muted)';
-    var thumb = r.image_url
-      ? '<img src="'+r.image_url+'" loading="lazy" onerror="this.style.display=\'none\'">'
-      : '<div class="pulse-thumb-empty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/></svg></div>';
-    return '<div class="pulse-card" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
-      +'<div class="pulse-thumb">'+thumb+'</div>'
-      +'<div class="pulse-info">'
-        +'<div class="pulse-player">'+(r.player||'--')+'</div>'
-        +'<div class="pulse-set">'+(r.year?r.year+' ':'')+ss+(r.card_no?' · #'+r.card_no:'')+'</div>'
-        +'<div class="pulse-chips">'+sportChip(r.sport||'')+'</div>'
-      +'</div>'
-      +'<div class="pulse-stats">'
-        +'<div class="pulse-iq" style="color:'+sc+';">'+iq+'</div>'
-        +'<div class="pulse-ev" style="color:'+ec+';">'+fPct(ev.evPct,0)+' EV</div>'
-        +'<div class="pulse-buy">Buy ≤ <strong style="color:var(--green);">'+f$(ev.maxBuy)+'</strong></div>'
-      +'</div>'
-      +'</div>';
-  }).join('');
-}
-
-// ── TOP PICKS ──────────────────────────────────────────────────────────────
-async function loadTopPicks(){
-  var { data } = await sb.from('ev_scanner')
-    .select('scp_id,player,parallel,year,set_name,card_no,sport,scc_score,ev_pct,max_buy_40,raw_price,psa10_price,psa9_price,actual_gem_rate,image_url')
-    .eq('decision','BUY')
-    .order('scc_score',{ascending:false,nullsFirst:false})
-    .limit(6);
-
-  var el = g('top-picks');
-  if(!el) return;
-  if(!data||!data.length){
-    el.innerHTML='<div class="empty-dash"><div class="empty-icon">⭐</div><div class="empty-title">No picks yet</div></div>';
-    return;
-  }
-
-  el.innerHTML = data.map(function(r){
-    var ev = getBestEV(r);
-    var ss = stripSet(r.set_name);
-    var iq = Math.round(r.scc_score||0);
-    var ec = ev.evPct>=0.40?'var(--green)':'var(--text-muted)';
     var imgHtml = r.image_url
       ? '<img src="'+r.image_url+'" loading="lazy" onerror="this.parentElement.style.background=\'var(--surface-3)\'">'
-      : '<div class="pick-img-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/></svg></div>';
-    return '<div class="pick-card" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
-      +'<div class="pick-img">'+imgHtml+'<div class="pick-iq-badge">'+iq+'</div></div>'
-      +'<div class="pick-body">'
-        +'<div class="pick-player">'+(r.player||'--')+'</div>'
-        +'<div class="pick-set">'+(r.year?r.year+' ':'')+ss+'</div>'
-        +'<div class="pick-footer">'
-          +'<div class="pick-ev" style="color:'+ec+';">'+fPct(ev.evPct,0)+' EV</div>'
-          +'<div class="pick-buy">≤ '+f$(ev.maxBuy)+'</div>'
+      : '<div class="spot-img-empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>';
+    return '<div class="spot-card" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
+      +'<div class="spot-img">'
+        +imgHtml
+        +'<div class="spot-rank">'+ranks[i]+'</div>'
+        +'<div class="spot-iq">'+Math.round(r.scc_score||0)+'</div>'
+      +'</div>'
+      +'<div class="spot-body">'
+        +'<div class="spot-player">'+(r.player||'--')+'</div>'
+        +'<div class="spot-set">'+(r.year?r.year+' ':'')+ss+(r.card_no?' · #'+r.card_no:'')+'</div>'
+        +'<div class="spot-stats">'
+          +'<div><div class="spot-ev-lbl">EV%</div><div class="spot-ev">'+fPct(ev.evPct,0)+'</div></div>'
+          +'<div class="spot-buy"><div class="spot-buy-lbl">Buy ≤</div><div class="spot-buy-val">'+f$(ev.maxBuy)+'</div></div>'
         +'</div>'
       +'</div>'
       +'</div>';
   }).join('');
 }
 
-// ── INVENTORY PREVIEW ──────────────────────────────────────────────────────
-async function loadInventoryPreview(user){
-  var { data } = await sb.from('inventory')
-    .select('id,player,year,set_name,card_no,parallel,total_cost,ev_pct,ev_dollar,status,image_url,psa_grade')
-    .eq('user_id',user.id)
-    .neq('status','sold')
-    .order('created_at',{ascending:false})
-    .limit(5);
+// ── BEST VALUE BY PRICE RANGE ─────────────────────────────────────────────
+function renderValueByPrice(){
+  var el = g('value-grid'); if(!el) return;
 
-  var el = g('inv-preview');
-  if(!el) return;
+  var ranges = [
+    { label: 'Under $20', sub: 'raw price ≤ $20', max: 20 },
+    { label: 'Under $50', sub: 'raw price ≤ $50', max: 50 },
+    { label: 'Under $100', sub: 'raw price ≤ $100', max: 100 },
+  ];
 
-  if(!data||!data.length){
-    el.innerHTML='<div class="empty-dash">'
-      +'<div class="empty-icon">📦</div>'
-      +'<div class="empty-title">Your collection is empty</div>'
-      +'<div class="empty-sub">Add cards from Buy Signals to start tracking your portfolio.</div>'
-      +'<button class="btn-p" onclick="goPage(\'signals\')">Browse Buy Signals</button>'
-      +'</div>';
-    return;
-  }
+  el.innerHTML = ranges.map(function(range){
+    var cards = ALL_SIGNALS
+      .filter(function(r){ return (r.raw_price||0) <= range.max; })
+      .slice(0,5);
 
-  var statusMap = {
-    raw:{bg:'rgba(59,130,246,.12)',color:'#60a5fa',label:'RAW'},
-    submitted:{bg:'rgba(234,179,8,.12)',color:'#facc15',label:'SUBMITTED'},
-    graded:{bg:'rgba(182,255,0,.1)',color:'var(--green)',label:'GRADED'},
-  };
+    var rows = cards.length ? cards.map(function(r){
+      var ev = getBestEV(r);
+      var ss = stripSet(r.set_name);
+      var thumb = r.image_url
+        ? '<img src="'+r.image_url+'" loading="lazy" onerror="this.style.display=\'none\'">'
+        : '<div class="value-thumb-empty"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/></svg></div>';
+      return '<div class="value-row" onclick="window.location.href=\'card.html?id='+r.scp_id+'\'">'
+        +'<div class="value-thumb">'+thumb+'</div>'
+        +'<div class="value-info">'
+          +'<div class="value-player">'+(r.player||'--')+'</div>'
+          +'<div class="value-set">'+(r.year?r.year+' ':'')+ss+'</div>'
+        +'</div>'
+        +'<div class="value-right">'
+          +'<div class="value-ev">'+fPct(ev.evPct,0)+'</div>'
+          +'<div class="value-raw">'+f$(r.raw_price)+' raw</div>'
+        +'</div>'
+        +'</div>';
+    }).join('') : '<div class="empty-state">No signals in this range</div>';
 
-  el.innerHTML = data.map(function(c){
-    var ss = stripSet(c.set_name);
-    var evPct = c.ev_pct||0;
-    var ec = evPct>=0.40?'var(--green)':'var(--text-muted)';
-    var st = statusMap[c.status]||statusMap['raw'];
-    var thumb = c.image_url
-      ? '<img src="'+c.image_url+'" loading="lazy" onerror="this.style.display=\'none\'">'
-      : '<div class="inv-thumb-empty"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/></svg></div>';
-    return '<div class="inv-row" onclick="goPage(\'collection\')" style="cursor:pointer;">'
-      +'<div class="inv-thumb">'+thumb+'</div>'
-      +'<div class="inv-info">'
-        +'<div class="inv-player">'+(c.player||'--')+(c.psa_grade?' · PSA '+c.psa_grade:'')+'</div>'
-        +'<div class="inv-set">'+(c.year?c.year+' ':'')+ss+(c.card_no?' · #'+c.card_no:'')+'</div>'
+    return '<div class="value-col">'
+      +'<div class="value-col-head">'
+        +'<div class="value-col-title">'+range.label+'</div>'
+        +'<div class="value-col-sub">'+range.sub+'</div>'
       +'</div>'
-      +'<div class="inv-stats">'
-        +'<div class="inv-cost">'+f$(c.total_cost)+'</div>'
-        +'<div class="inv-ev" style="color:'+ec+';">'+fPct(evPct,0)+' EV</div>'
-        +'<div class="inv-status" style="background:'+st.bg+';color:'+st.color+';margin-top:3px;">'+st.label+'</div>'
-      +'</div>'
+      +rows
       +'</div>';
   }).join('');
 }
