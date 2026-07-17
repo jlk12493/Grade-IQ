@@ -52,19 +52,35 @@
   position: relative;
   overflow: hidden;
   transition: border-color .15s;
-  cursor: default;
 }
 .index-card:hover { border-color: rgba(182,255,0,.3); }
-.index-sport { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
-.index-score { font-size: 36px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
-.index-label { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-.index-stats { display: flex; gap: 12px; }
-.index-stat { }
-.index-stat-lbl { font-size: 8px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-.index-stat-val { font-size: 13px; font-weight: 800; }
-.index-mini-bars { display: flex; gap: 2px; align-items: flex-end; height: 28px; margin-top: 10px; }
-.imb { flex: 1; border-radius: 2px 2px 0 0; background: rgba(182,255,0,.15); min-width: 4px; }
-.index-card-bg { position: absolute; right: -10px; top: -10px; font-size: 64px; opacity: .04; pointer-events: none; }
+.index-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.index-sport-info {}
+.index-emoji { font-size: 22px; line-height: 1; margin-bottom: 4px; }
+.index-sport-name { font-size: 13px; font-weight: 800; color: var(--text); }
+.index-signal-count { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+/* Circular score gauge */
+.index-gauge { position: relative; width: 60px; height: 60px; flex-shrink: 0; }
+.index-gauge svg { transform: rotate(-90deg); }
+.index-gauge-track { fill: none; stroke: var(--surface-2); stroke-width: 5; }
+.index-gauge-fill { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.index-gauge-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.index-gauge-score { font-size: 16px; font-weight: 900; line-height: 1; }
+.index-gauge-sub { font-size: 7px; color: var(--text-muted); font-weight: 700; letter-spacing: .5px; }
+/* EV distribution bar */
+.index-dist { margin-bottom: 12px; }
+.index-dist-lbl { font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+.index-dist-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 1px; }
+.idb-seg { height: 100%; border-radius: 2px; min-width: 2px; transition: flex .5s ease; }
+.index-dist-legend { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.idl-item { display: flex; align-items: center; gap: 3px; font-size: 9px; color: var(--text-muted); }
+.idl-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+/* Bottom stats */
+.index-bottom-stats { display: flex; gap: 0; border-top: 1px solid var(--border); padding-top: 10px; }
+.index-bottom-stat { flex: 1; text-align: center; }
+.index-bottom-stat + .index-bottom-stat { border-left: 1px solid var(--border); }
+.ibs-lbl { font-size: 7px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+.ibs-val { font-size: 13px; font-weight: 800; }
 
 /* ── SPORT SPOTLIGHT ──────────────────────────────────────────────────────── */
 .spotlight-section { margin-bottom: 28px; }
@@ -94,8 +110,8 @@
   transition: border-color .15s, transform .15s;
 }
 .spot-card:hover { border-color: rgba(182,255,0,.4); transform: translateY(-2px); }
-.spot-img { height: 160px; overflow: hidden; background: var(--surface-2); position: relative; }
-.spot-img img { width: 100%; height: 100%; object-fit: cover; }
+.spot-img { height: 200px; overflow: hidden; background: var(--surface-2); position: relative; display: flex; align-items: center; justify-content: center; }
+.spot-img img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
 .spot-img-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .spot-rank { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.75); color: var(--green); font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px); letter-spacing: 1px; }
 .spot-iq { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.75); color: var(--green); font-size: 14px; font-weight: 900; padding: 2px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
@@ -148,12 +164,42 @@
 .shimmer { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); animation: shim 1.5s infinite; }
 @keyframes shim { 0%,100%{opacity:.5;} 50%{opacity:.9;} }
 .empty-state { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 12px; }
+
+/* Promo ticker */
+.promo-ticker {
+  background: var(--green);
+  color: #000;
+  padding: 6px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  margin: -16px -16px 16px;
+  position: relative;
+}
+.promo-ticker-inner {
+  display: inline-block;
+  animation: ticker 30s linear infinite;
+  padding-left: 100%;
+}
+.promo-ticker-inner span { margin-right: 80px; font-size: 11px; font-weight: 700; letter-spacing: .5px; }
+@keyframes ticker { 0%{transform:translateX(0);} 100%{transform:translateX(-100%);} }
+
 </style>
 </head>
 <body>
 <script>buildNav('home');</script>
 
 <div class="main">
+
+  <!-- PROMO TICKER -->
+  <div class="promo-ticker">
+    <div class="promo-ticker-inner">
+      <span>⚡ GradeIQ 2.0 is here — faster scanner, card detail pages, and My Collection with full P&L tracking</span>
+      <span>🔥 Scanner runs nightly — 1,000+ buy signals updated daily across Baseball, Basketball, Football & TCG</span>
+      <span>📈 New feature: Add cards from Buy Signals directly to your inventory with one click</span>
+      <span>⚡ GradeIQ 2.0 is here — faster scanner, card detail pages, and My Collection with full P&L tracking</span>
+      <span>🔥 Scanner runs nightly — 1,000+ buy signals updated daily across Baseball, Basketball, Football & TCG</span>
+    </div>
+  </div>
 
   <!-- SCANNER PULSE STRIP -->
   <div class="pulse-strip" id="pulse-strip">
@@ -238,6 +284,7 @@ var SPORT_CONFIG = {
   renderMarketIndex();
   renderSpotlight('Basketball');
   renderValueByPrice();
+  startSpotlightRotation();
 })();
 
 async function loadGradingTiers(){
@@ -319,47 +366,74 @@ function renderMarketIndex(){
     var cfg = SPORT_CONFIG[sport];
     var cards = ALL_SIGNALS.filter(function(r){ return r.sport===sport; });
     if(!cards.length){
-      return '<div class="index-card"><div class="index-sport" style="color:'+cfg.color+';">'+cfg.emoji+' '+sport+'</div>'
-        +'<div class="index-score" style="color:var(--text-muted);">--</div>'
-        +'<div class="index-label">No Data</div></div>';
+      return '<div class="index-card"><div class="index-emoji">'+cfg.emoji+'</div>'
+        +'<div class="index-sport-name">'+sport+'</div>'
+        +'<div style="font-size:11px;color:var(--text-muted);margin-top:8px;">No data</div></div>';
     }
 
-    // GradeIQ Market Index Score = weighted avg of (EV% normalized × volume weight)
     var totalVol = cards.reduce(function(s,r){return s+(r.sales_volume||0);},0)||1;
     var weightedEV = cards.reduce(function(s,r){
-      var w = (r.sales_volume||1)/totalVol;
-      return s + (r.ev_pct||0)*w;
+      var w=(r.sales_volume||1)/totalVol; return s+(r.ev_pct||0)*w;
     },0);
     var avgGem = cards.reduce(function(s,r){return s+(r.actual_gem_rate||0);},0)/cards.length;
     var avgIQ  = cards.reduce(function(s,r){return s+(r.scc_score||0);},0)/cards.length;
 
-    // Index score: 0-100 based on avg EV%, capped at 200% EV = 100
-    var indexScore = Math.min(100, Math.round(weightedEV * 50));
-    var scoreColor = indexScore >= 60 ? 'var(--green)' : indexScore >= 40 ? 'var(--amber,#F59E0B)' : '#F87171';
+    // Index score 0-100
+    var indexScore = Math.min(100, Math.round(weightedEV*50));
+    var scoreColor = indexScore>=60?'var(--green)':indexScore>=40?'#F59E0B':'#F87171';
 
-    // Mini bars — simulate distribution
-    var buckets = [0,0,0,0,0,0,0];
+    // Gauge SVG (circle, r=26, circumference=163.4)
+    var circ = 163.4;
+    var dash = circ * (indexScore/100);
+    var gaugeSvg = '<svg width="60" height="60" viewBox="0 0 60 60">'
+      +'<circle class="index-gauge-track" cx="30" cy="30" r="26"/>'
+      +'<circle class="index-gauge-fill" cx="30" cy="30" r="26" stroke="'+scoreColor+'" '
+        +'stroke-dasharray="'+dash+' '+circ+'" stroke-dashoffset="0"/>'
+      +'</svg>';
+
+    // EV distribution: <40% = red, 40-100% = amber, 100-200% = green, 200%+ = bright green
+    var buckets = [{label:'<40%',color:'#F87171',count:0},{label:'40-100%',color:'#F59E0B',count:0},{label:'100-200%',color:'var(--green)',count:0},{label:'200%+',color:'#4ade80',count:0}];
     cards.forEach(function(r){
-      var idx = Math.min(6, Math.floor((r.ev_pct||0)*3.5));
-      buckets[idx]++;
+      var ev=(r.ev_pct||0)*100;
+      if(ev<40) buckets[0].count++;
+      else if(ev<100) buckets[1].count++;
+      else if(ev<200) buckets[2].count++;
+      else buckets[3].count++;
     });
-    var maxB = Math.max.apply(null,buckets)||1;
-    var bars = buckets.map(function(b){
-      var h = Math.max(4, Math.round((b/maxB)*24));
-      return '<div class="imb" style="height:'+h+'px;background:'+cfg.color+'33;"></div>';
+    var totalCards = cards.length;
+    var distBar = buckets.map(function(b){
+      var pct = (b.count/totalCards)*100;
+      return '<div class="idb-seg" style="flex:'+pct+';background:'+b.color+';opacity:.8;" title="'+b.label+': '+b.count+'"></div>';
+    }).join('');
+    var legend = buckets.filter(function(b){return b.count>0;}).map(function(b){
+      return '<div class="idl-item"><div class="idl-dot" style="background:'+b.color+';"></div>'+b.label+' ('+b.count+')</div>';
     }).join('');
 
     return '<div class="index-card">'
-      +'<div class="index-card-bg">'+cfg.emoji+'</div>'
-      +'<div class="index-sport" style="color:'+cfg.color+';">'+cfg.emoji+' '+sport+'</div>'
-      +'<div class="index-score" style="color:'+scoreColor+';">'+indexScore+'</div>'
-      +'<div class="index-label">Market Index</div>'
-      +'<div class="index-stats">'
-        +'<div class="index-stat"><div class="index-stat-lbl">Signals</div><div class="index-stat-val">'+cards.length+'</div></div>'
-        +'<div class="index-stat"><div class="index-stat-lbl">Avg EV</div><div class="index-stat-val" style="color:var(--green);">'+fPct(weightedEV,0)+'</div></div>'
-        +'<div class="index-stat"><div class="index-stat-lbl">Avg Gem</div><div class="index-stat-val">'+fPct(avgGem,1)+'</div></div>'
+      +'<div class="index-card-top">'
+        +'<div class="index-sport-info">'
+          +'<div class="index-emoji">'+cfg.emoji+'</div>'
+          +'<div class="index-sport-name">'+sport+'</div>'
+          +'<div class="index-signal-count">'+cards.length+' signals</div>'
+        +'</div>'
+        +'<div class="index-gauge">'
+          +gaugeSvg
+          +'<div class="index-gauge-label">'
+            +'<div class="index-gauge-score" style="color:'+scoreColor+';">'+indexScore+'</div>'
+            +'<div class="index-gauge-sub">INDEX</div>'
+          +'</div>'
+        +'</div>'
       +'</div>'
-      +'<div class="index-mini-bars">'+bars+'</div>'
+      +'<div class="index-dist">'
+        +'<div class="index-dist-lbl">EV% Distribution</div>'
+        +'<div class="index-dist-bar">'+distBar+'</div>'
+        +'<div class="index-dist-legend">'+legend+'</div>'
+      +'</div>'
+      +'<div class="index-bottom-stats">'
+        +'<div class="index-bottom-stat"><div class="ibs-lbl">Avg EV</div><div class="ibs-val" style="color:var(--green);">'+fPct(weightedEV,0)+'</div></div>'
+        +'<div class="index-bottom-stat"><div class="ibs-lbl">Avg Gem</div><div class="ibs-val">'+fPct(avgGem,1)+'</div></div>'
+        +'<div class="index-bottom-stat"><div class="ibs-lbl">Avg IQ</div><div class="ibs-val" style="color:var(--green);">'+Math.round(avgIQ)+'</div></div>'
+      +'</div>'
       +'</div>';
   }).join('');
 
@@ -367,10 +441,30 @@ function renderMarketIndex(){
 }
 
 // ── SPORT SPOTLIGHT ───────────────────────────────────────────────────────
+var SPOTLIGHT_SPORTS = ['Basketball','Baseball','Football','TCG'];
+var SPOTLIGHT_IDX = 0;
+var SPOTLIGHT_TIMER = null;
+
+function startSpotlightRotation(){
+  clearInterval(SPOTLIGHT_TIMER);
+  SPOTLIGHT_TIMER = setInterval(function(){
+    SPOTLIGHT_IDX = (SPOTLIGHT_IDX + 1) % SPOTLIGHT_SPORTS.length;
+    var sport = SPOTLIGHT_SPORTS[SPOTLIGHT_IDX];
+    var tabs = document.querySelectorAll('.stab');
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.sport===sport); });
+    renderSpotlight(sport);
+  }, 4000);
+}
+
 function setSpotlight(sport, btn){
+  // Reset timer on manual click
+  clearInterval(SPOTLIGHT_TIMER);
+  SPOTLIGHT_IDX = SPOTLIGHT_SPORTS.indexOf(sport);
   document.querySelectorAll('.stab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   renderSpotlight(sport);
+  // Restart auto-rotation after 10s
+  setTimeout(startSpotlightRotation, 10000);
 }
 
 function renderSpotlight(sport){
