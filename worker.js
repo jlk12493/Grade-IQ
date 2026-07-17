@@ -213,7 +213,37 @@ export default {
       }
     }
 
-        return env.ASSETS.fetch(request);
+        // ── DEBUG ROUTE ──────────────────────────────────────────────────────────
+    if (url.pathname === '/api/debug-scp') {
+      const scpId = url.searchParams.get('scp_id') || '11484611';
+      try {
+        const scpRes = await fetch(`https://www.sportscardspro.com/game/${scpId}`, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        });
+        const html = await scpRes.text();
+        const first500 = html.substring(0, 500);
+        const hasVGPC = html.indexOf('VGPC.pop_data') > -1;
+        const hasTabFrame = html.indexOf('completed-auctions-used') > -1;
+        const hasEbayRows = html.indexOf('ebay-') > -1;
+        const vol = parseScpVolume(html);
+        const pop = parseScpPop(html);
+        const listings = parseScpListings(html, 'raw');
+        return cors(new Response(JSON.stringify({
+          status: scpRes.status,
+          first500,
+          hasVGPC,
+          hasTabFrame,
+          hasEbayRows,
+          listingsCount: listings.length,
+          vol,
+          pop
+        }, null, 2), { headers: { 'Content-Type': 'application/json' } }));
+      } catch(e) {
+        return cors(new Response(JSON.stringify({ error: e.message }), { headers: { 'Content-Type': 'application/json' } }));
+      }
+    }
+
+    return env.ASSETS.fetch(request);
   }
 };
 
