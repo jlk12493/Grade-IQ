@@ -17,6 +17,7 @@
 .pulse-strip {
   background: var(--surface);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
   border-radius: var(--r);
   padding: 10px 16px;
   display: flex;
@@ -26,13 +27,14 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.pulse-strip-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pdot 2s infinite; }
-@keyframes pdot { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.pulse-strip-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pdot 2s infinite; box-shadow: 0 0 6px var(--green); }
+@keyframes pdot { 0%,100%{opacity:1;box-shadow:0 0 6px var(--green);} 50%{opacity:.3;box-shadow:none;} }
+.pulse-label { font-size: 10px; font-weight: 700; color: var(--green); letter-spacing: 1px; text-transform: uppercase; }
 .pulse-stat { font-size: 12px; color: var(--text-muted); }
-.pulse-stat strong { color: var(--text); }
+.pulse-stat strong { color: var(--text); font-weight: 700; }
 .pulse-divider { width: 1px; height: 14px; background: var(--border); }
-.pulse-updated { font-size: 11px; color: var(--text-muted); }
+.pulse-updated { font-size: 10px; color: var(--text-muted); font-style: italic; }
 
 /* Section headers */
 .sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -170,10 +172,11 @@
 .promo-ticker {
   background: var(--green);
   color: #000;
-  padding: 6px 0;
+  padding: 7px 0;
   overflow: hidden;
   white-space: nowrap;
   margin: -16px -16px 16px;
+  width: calc(100% + 32px);
   position: relative;
 }
 .promo-ticker-inner {
@@ -206,6 +209,8 @@
   <div class="pulse-strip" id="pulse-strip">
     <div class="pulse-strip-left">
       <div class="pulse-dot"></div>
+      <div class="pulse-label">Scanner Live</div>
+      <div class="pulse-divider"></div>
       <div class="pulse-stat" id="pulse-signals">-- active buy signals</div>
       <div class="pulse-divider"></div>
       <div class="pulse-stat" id="pulse-avg-ev">Avg EV: --</div>
