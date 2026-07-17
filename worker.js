@@ -196,25 +196,21 @@ function parseScpListings(html, tab) {
   };
   const tabClass = tabClassMap[tab] || tabClassMap['raw'];
 
-  // Find the section div: <div class="completed-auctions-used">...</div>
-  const sectionPattern = new RegExp(
-    '<div class="' + tabClass + '"[^>]*>([\s\S]*?)<\/div>\s*<div class="completed-auctions-',
-    'i'
-  );
-  let sectionMatch = html.match(sectionPattern);
-  let tableHtml = sectionMatch ? sectionMatch[1] : null;
+  // Find the position of the div for this tab, then extract the table inside it
+  const divMarker = '<div class="' + tabClass + '">';
+  const divIdx = html.indexOf(divMarker);
+  if (divIdx === -1) return results;
 
-  // Fallback: find table that appears after the div class marker
-  if (!tableHtml) {
-    const altPattern = new RegExp(
-      '<div class="' + tabClass + '"[^>]*>[\s\S]*?(<table class="hoverable-rows[\s\S]*?<\/table>)',
-      'i'
-    );
-    const altMatch = html.match(altPattern);
-    tableHtml = altMatch ? altMatch[1] : null;
-  }
+  // From that position, find the first hoverable-rows table
+  const afterDiv = html.slice(divIdx);
+  const tableStart = afterDiv.indexOf('<table class="hoverable-rows sortable">');
+  if (tableStart === -1) return results;
 
-  if (!tableHtml) return results;
+  // Find the matching </table>
+  const tableEnd = afterDiv.indexOf('</table>', tableStart);
+  if (tableEnd === -1) return results;
+
+  const tableHtml = afterDiv.slice(tableStart, tableEnd + 8);
 
   // Match each ebay row by id pattern
   const rowPattern = /<tr id="ebay-\d+"[^>]*>([\s\S]*?)<\/tr>/gi;
