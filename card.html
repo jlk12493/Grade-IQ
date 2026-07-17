@@ -480,16 +480,6 @@ function setListingTab(tab, btn){
   fetchEbaySold(tab);
 }
 
-function buildEbayQuery(tab){
-  if(!CARD) return '';
-  var r = CARD;
-  var base = (r.player||'') + (r.year?' '+r.year:'') + (r.card_no?' #'+r.card_no:'') + (r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'');
-  if(tab==='raw') return base + ' -psa -bgs -sgc';
-  if(tab==='psa10') return base + ' PSA 10';
-  if(tab==='psa9') return base + ' PSA 9';
-  return base;
-}
-
 async function fetchEbaySold(tab){
   var content = document.getElementById('listing-content');
   var badge = document.getElementById('listing-cache-badge');
@@ -504,14 +494,13 @@ async function fetchEbaySold(tab){
 
   content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Fetching sold listings...</div></div>';
 
-  var q = buildEbayQuery(tab);
-  if(!q){
+  if(!CARD || !CARD.scp_id){
     content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-title">No card data available.</div></div>';
     return;
   }
 
   try {
-    var res = await fetch('/api/ebay-sold?q=' + encodeURIComponent(q));
+    var res = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
     var data = await res.json();
 
     if(data.error){
