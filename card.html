@@ -716,7 +716,8 @@ function addToInventory(){
       card_no:CARD.card_no||'', parallel:CARD.parallel||'', sport:CARD.sport||'',
       raw_price:CARD.raw_price||0, source:'Buy Signals', scp_id:CARD.scp_id||'',
       psa10:CARD.psa10_price||0, psa9:CARD.psa9_price||0,
-      gem_rate:CARD.actual_gem_rate||0, image_url:CARD.image_url||''
+      gem_rate:CARD.actual_gem_rate||0, image_url:CARD.image_url||'',
+      best_tier:CARD.best_tier||''
     }));
   }catch(e){}
   window.location.href='collection.html?add=1';
