@@ -168,24 +168,7 @@
 @keyframes shim { 0%,100%{opacity:.5;} 50%{opacity:.9;} }
 .empty-state { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 12px; }
 
-/* Promo ticker */
-.promo-ticker {
-  background: var(--green);
-  color: #000;
-  padding: 7px 0;
-  overflow: hidden;
-  white-space: nowrap;
-  width: 100%;
-  position: relative;
-  margin-bottom: 0;
-}
-.promo-ticker-inner {
-  display: inline-block;
-  animation: ticker 60s linear infinite;
-  padding-left: 100%;
-}
-.promo-ticker-inner span { margin-right: 80px; font-size: 11px; font-weight: 700; letter-spacing: .5px; }
-@keyframes ticker { 0%{transform:translateX(0);} 100%{transform:translateX(-100%);} }
+
 
 </style>
 </head>
@@ -193,15 +176,7 @@
 <script>buildNav('home');</script>
 
 <!-- PROMO TICKER - full width between nav and content -->
-<div class="promo-ticker">
-  <div class="promo-ticker-inner">
-    <span>⚡ GradeIQ 2.0 is here — faster scanner, card detail pages, and My Collection with full P&L tracking</span>
-    <span>🔥 Scanner runs nightly — 1,000+ buy signals updated daily across Baseball, Basketball, Football & TCG</span>
-    <span>📈 New feature: Add cards from Buy Signals directly to your inventory with one click</span>
-    <span>⚡ GradeIQ 2.0 is here — faster scanner, card detail pages, and My Collection with full P&L tracking</span>
-    <span>🔥 Scanner runs nightly — 1,000+ buy signals updated daily across Baseball, Basketball, Football & TCG</span>
-  </div>
-</div>
+
 
 <div class="main">
 
