@@ -108,12 +108,12 @@
 /* Panels */
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
 .panel-head { padding: 10px 14px; background: var(--surface-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.panel-title { font-size: 9px; font-weight: 700; color: var(--text); letter-spacing: 1.5px; text-transform: uppercase; }
+.panel-title { font-size: 9px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
 .panel-badge { font-size: 9px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); padding: 2px 7px; border-radius: 10px; }
 
 /* Tier table */
 .tier-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.tier-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.tier-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .tier-tbl th:not(:first-child) { text-align: right; }
 .tier-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 .tier-tbl td:not(:first-child) { text-align: right; }
@@ -139,7 +139,7 @@
 
 /* Sales volume / pop table */
 .data-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.data-tbl th { padding: 7px 12px; text-align: right; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.data-tbl th { padding: 7px 12px; text-align: right; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .data-tbl th:first-child { text-align: left; }
 .data-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); text-align: right; }
 .data-tbl td:first-child { text-align: left; font-weight: 600; }
@@ -150,7 +150,7 @@
 .ltab { padding: 8px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
 .ltab.active { color: var(--green); border-bottom-color: var(--green); }
 .listing-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.listing-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.listing-tbl th { padding: 7px 12px; text-align: left; font-size: 8px; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; background: var(--surface-2); border-bottom: 1px solid var(--border); }
 .listing-tbl th:not(:first-child) { text-align: right; }
 .listing-tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 .listing-tbl td:not(:first-child) { text-align: right; }
@@ -174,10 +174,6 @@
 
 /* Loading */
 .loading-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
-
-/* Chart tabs */
-.chart-tab { padding: 3px 8px; font-size: 9px; font-weight: 700; background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all .15s; }
-.chart-tab.active { background: var(--green); color: #000; border-color: var(--green); }
 </style>
 </head>
 <body>
@@ -203,8 +199,7 @@ var ACTIVE_LISTING_TAB = 'raw';
   var params = new URLSearchParams(window.location.search);
   var scpId = params.get('id');
   if (!scpId){ renderNotFound('No card ID provided.'); return; }
-  await loadGradingTiers();
-  await loadCard(scpId);
+  await Promise.all([loadCard(scpId), loadGradingTiers()]);
 })();
 
 async function loadGradingTiers(){
@@ -221,11 +216,6 @@ async function loadCard(scpId){
   CARD = res.data;
   document.title = (CARD.player||'Card') + ' — GradeIQ';
   renderCard();
-}
-
-async function loadGradingTiersAndRender(){
-  await loadGradingTiers();
-  if(CARD) renderCard();
 }
 
 // ── EV CALC ───────────────────────────────────────────────────────────────
@@ -410,34 +400,53 @@ function renderCard(){
           <tbody>${tierRows}</tbody>
         </table>
       </div>
-      <div class="panel" id="price-history-panel">
+      <div class="panel">
         <div class="panel-head">
           <span class="panel-title">Price History & Analytics</span>
-          <div style="display:flex;gap:4px;" id="chart-tab-bar">
-            <button class="chart-tab active" onclick="setChartTab('raw',this)">Raw</button>
-            <button class="chart-tab" onclick="setChartTab('psa9',this)">PSA 9</button>
-            <button class="chart-tab" onclick="setChartTab('psa10',this)">PSA 10</button>
-          </div>
+          <span class="panel-badge">Building</span>
         </div>
-        <div id="price-chart-container" style="padding:14px;">
+        <div style="padding:0 14px 8px;">
           <div class="coming-soon">
             <div class="cs-icon">📈</div>
             <div class="cs-title">Price history is accumulating</div>
-            <div class="cs-sub">Load sold listings to see price chart.</div>
+            <div class="cs-sub">GradeIQ captures a price snapshot every scanner cycle. Charts appear automatically once enough data builds up — check back in 30 days.</div>
             <div class="cs-bars">${bars}</div>
           </div>
         </div>
       </div>
     </div>
 
-
+    <!-- SALES VOLUME + POP CHANGE -->
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Sales Volume</span><span class="panel-badge">Coming Soon</span></div>
+        <table class="data-tbl">
+          <thead><tr><th>Period</th><th>PSA 10</th><th>PSA 9</th><th>Raw</th></tr></thead>
+          <tbody>
+            <tr><td>7 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>30 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>90 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Sales volume data will populate as the scanner accumulates history.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Population Change</span><span class="panel-badge">Coming Soon</span></div>
+        <table class="data-tbl">
+          <thead><tr><th>Period</th><th>PSA 10</th><th>PSA 9</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>7 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>30 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+            <tr><td>90 Day</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td><td style="color:var(--text-muted);">--</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">PSA population data integration coming in a future update.</div>
+      </div>
+    </div>
 
     <!-- PAST LISTINGS -->
     <div class="panel" style="margin-bottom:20px;">
-      <div class="panel-head">
-        <span class="panel-title">Past Listings (eBay Sold)</span>
-        <span class="panel-badge" id="listing-cache-badge"></span>
-      </div>
+      <div class="panel-head"><span class="panel-title">Past Listings (eBay)</span></div>
       <div class="listing-tabs">
         <button class="ltab active" onclick="setListingTab('raw',this)">Raw</button>
         <button class="ltab" onclick="setListingTab('psa10',this)">PSA 10</button>
@@ -445,359 +454,27 @@ function renderCard(){
       </div>
       <div id="listing-content">
         <div class="coming-soon" style="padding:24px;">
-          <div class="cs-icon" style="font-size:24px;">⏳</div>
-          <div class="cs-title">Loading sold listings...</div>
+          <div class="cs-icon" style="font-size:24px;">🛒</div>
+          <div class="cs-title">Live eBay sold data coming soon</div>
+          <div class="cs-sub">Will show recent completed listings with sale prices, dates, and listing types.</div>
+          <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
+            <a href="${ebayRaw}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View Raw Listings →</a>
+            <a href="${ebay10}" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View PSA 10 Listings →</a>
+          </div>
         </div>
       </div>
     </div>
   `;
 
   g('page-content').innerHTML = html;
-
-  // Auto-load Raw sold listings — delay ensures page is fully settled
-  setTimeout(function(){ fetchEbaySold('raw'); }, 1500);
 }
 
 // ── LISTING TABS ──────────────────────────────────────────────────────────
-var LISTING_CACHE = {};
-
 function setListingTab(tab, btn){
   ACTIVE_LISTING_TAB = tab;
   document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
-  fetchEbaySold(tab);
-  // Sync chart tab
-  var chartBtn = document.querySelector('.chart-tab[onclick*="' + tab + '"]');
-  if(chartBtn && !chartBtn.classList.contains('active')){
-    document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
-    chartBtn.classList.add('active');
-    ACTIVE_CHART_TAB = tab;
-    renderPriceChart(CHART_DATA[tab], tab);
-  }
-}
-
-async function fetchEbaySold(tab){
-  var content = document.getElementById('listing-content');
-  var badge = document.getElementById('listing-cache-badge');
-  if(!content) return;
-
-  // Return from memory cache instantly if already fetched this session
-  if(LISTING_CACHE[tab]){
-    renderListings(LISTING_CACHE[tab].results, tab);
-    if(badge) badge.textContent = LISTING_CACHE[tab].cached ? 'Cached' : 'Live';
-    storeChartData(LISTING_CACHE[tab].results || [], tab);
-    return;
-  }
-
-  content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Fetching sold listings...</div></div>';
-
-  if(!CARD || !CARD.scp_id){
-    content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-title">No card data available.</div></div>';
-    return;
-  }
-
-  try {
-    var res = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
-    var data = await res.json();
-
-    if(data.error){
-      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon">⚠️</div><div class="cs-title">Could not load listings</div><div class="cs-sub">'+data.error+'</div></div>';
-      return;
-    }
-
-    // If not cached and no results, SCP may be flaky — retry up to 3 times
-    if(!data.cached && (!data.results || data.results.length === 0)){
-      content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon" style="font-size:24px;">⏳</div><div class="cs-title">Loading sold listings...</div><div class="cs-sub" style="margin-top:8px;">Connecting to SCP...</div></div>';
-      var retryCount = 0;
-      var maxRetries = 3;
-      function retry(){
-        retryCount++;
-        setTimeout(async function(){
-          try {
-            var res2 = await fetch('/api/ebay-sold?scp_id=' + encodeURIComponent(CARD.scp_id) + '&tab=' + tab);
-            var data2 = await res2.json();
-            if(data2.results && data2.results.length > 0){
-              LISTING_CACHE[tab] = data2;
-              if(badge) badge.textContent = data2.cached ? 'Cached' : 'Live';
-              renderListings(data2.results, tab);
-            } else if(retryCount < maxRetries){
-              retry();
-            } else {
-              renderListings([], tab);
-            }
-          } catch(e) {
-            if(retryCount < maxRetries) retry();
-            else renderListings([], tab);
-          }
-        }, 2000);
-      }
-      retry();
-      return;
-    }
-    LISTING_CACHE[tab] = data;
-    if(badge) badge.textContent = data.cached ? 'Cached' : 'Live';
-    renderListings(data.results || [], tab);
-    storeChartData(data.results || [], tab);
-    // Populate sales volume and pop tables if data came back (raw tab fetch)
-
-  } catch(err){
-    content.innerHTML = '<div class="coming-soon" style="padding:24px;"><div class="cs-icon">⚠️</div><div class="cs-title">Failed to load listings</div><div class="cs-sub">'+err.message+'</div></div>';
-  }
-}
-
-function renderSalesVolume(vol){
-  var panel = document.querySelector('.vol-panel');
-  if(!panel) return;
-
-  var monthRows = '';
-  if(vol.monthly && vol.monthly.length){
-    monthRows = '<div style="display:flex;gap:0;">'
-      + vol.monthly.map(function(m, i){
-          var isLast = i === vol.monthly.length - 1;
-          return '<div style="flex:1;text-align:center;padding:16px 8px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
-            +'<div style="font-size:26px;font-weight:900;color:var(--text);">'+m.count+'</div>'
-            +'<div style="font-size:9px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;">'+m.label+'</div>'
-            +'</div>';
-        }).join('')
-      +'</div>'
-      +'<div style="padding:8px 12px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);">Total sales across all grades per month</div>';
-  } else {
-    monthRows = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:12px;">No volume data available</div>';
-  }
-
-  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Sales Volume</span></div>' + monthRows;
-}
-
-function renderPopData(pop){
-  var panel = document.querySelector('.pop-panel');
-  if(!panel) return;
-
-  // Grade bars — show PSA 9 and PSA 10 as large stat cards
-  var total = pop.psaTotal || 1;
-  var pct9 = total > 0 ? ((pop.psa9 / total) * 100).toFixed(1) : 0;
-  var pct10 = total > 0 ? ((pop.psa10 / total) * 100).toFixed(1) : 0;
-
-  var statCards = '<div style="display:flex;gap:0;">'
-    + [
-        {label:'PSA 9', val:pop.psa9, pct:pct9, color:'rgba(59,130,246,.8)'},
-        {label:'PSA 10', val:pop.psa10, pct:pct10, color:'var(--green)'},
-        {label:'PSA Total', val:pop.psaTotal, pct:null, color:'var(--text)'}
-      ].map(function(s){
-        return '<div style="flex:1;padding:14px 12px;border-right:1px solid var(--border);text-align:center;">'
-          +'<div style="font-size:22px;font-weight:900;color:'+s.color+';">'+s.val.toLocaleString()+'</div>'
-          +(s.pct!=null?'<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+s.pct+'% of total</div>':'')
-          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">'+s.label+'</div>'
-          +'</div>';
-      }).join('')
-    +'</div>';
-
-  // CGC row if present
-  var cgcRow = '';
-  if(pop.cgc10 || pop.cgcTotal){
-    cgcRow = '<div style="border-top:1px solid var(--border);display:flex;gap:0;">'
-      +[
-        {label:'CGC 10', val:pop.cgc10},
-        {label:'CGC Total', val:pop.cgcTotal}
-      ].map(function(s){
-        return '<div style="flex:1;padding:10px 12px;border-right:1px solid var(--border);text-align:center;">'
-          +'<div style="font-size:15px;font-weight:700;color:var(--text);">'+(s.val||0).toLocaleString()+'</div>'
-          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">'+s.label+'</div>'
-          +'</div>';
-      }).join('')
-    +'</div>';
-  }
-
-  panel.innerHTML = '<div class="panel-head"><span class="panel-title">Graded Population</span></div>'
-    + statCards + cgcRow
-;
-}
-
-// ── PRICE CHART ───────────────────────────────────────────────────────────
-var CHART_DATA = { raw: [], psa9: [], psa10: [] };
-var ACTIVE_CHART_TAB = 'raw';
-
-function setChartTab(tab, btn){
-  ACTIVE_CHART_TAB = tab;
-  document.querySelectorAll('.chart-tab').forEach(function(t){ t.classList.remove('active'); });
-  btn.classList.add('active');
-  renderPriceChart(CHART_DATA[tab], tab);
-  // Sync listing tab
-  var listingBtn = document.querySelector('.ltab[onclick*="' + tab + '"]');
-  if(listingBtn && !listingBtn.classList.contains('active')){
-    document.querySelectorAll('.ltab').forEach(function(t){ t.classList.remove('active'); });
-    listingBtn.classList.add('active');
-    fetchEbaySold(tab);
-  }
-}
-
-function storeChartData(results, tab){
-  if(!results || !results.length) return;
-  CHART_DATA[tab] = results.filter(function(r){ return r.price && r.dateSold; })
-    .map(function(r){ return { date: r.dateSold, price: r.price }; })
-    .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  if(tab === ACTIVE_CHART_TAB) renderPriceChart(CHART_DATA[tab], tab);
-}
-
-function renderPriceChart(data, tab){
-  var container = document.getElementById('price-chart-container');
-  if(!container) return;
-
-  if(!data || data.length < 2){
-    container.innerHTML = '<div class="coming-soon" style="padding:28px 20px;">'
-      +'<div class="cs-icon">📈</div>'
-      +'<div class="cs-title">Not enough data</div>'
-      +'<div class="cs-sub">Need at least 2 sold listings to draw a chart.</div>'
-      +'</div>';
-    return;
-  }
-
-  // Calculate stats
-  var prices = data.map(function(d){ return d.price; });
-  var avg = prices.reduce(function(a,b){return a+b;},0) / prices.length;
-  var high = Math.max.apply(null, prices);
-  var low = Math.min.apply(null, prices);
-  var now = new Date();
-
-  var d7 = data.filter(function(d){ return daysDiff(d.date, now) <= 7; });
-  var d14 = data.filter(function(d){ return daysDiff(d.date, now) <= 14; });
-  var d30 = data.filter(function(d){ return daysDiff(d.date, now) <= 30; });
-
-  var avg7 = d7.length ? (d7.reduce(function(a,b){return a+b.price;},0)/d7.length) : null;
-  var avg14 = d14.length ? (d14.reduce(function(a,b){return a+b.price;},0)/d14.length) : null;
-  var avg30 = d30.length ? (d30.reduce(function(a,b){return a+b.price;},0)/d30.length) : null;
-
-  // Draw SVG line chart
-  var W = 500, H = 160, padL = 50, padR = 16, padT = 16, padB = 32;
-  var chartW = W - padL - padR;
-  var chartH = H - padT - padB;
-
-  var minP = low * 0.92;
-  var maxP = high * 1.08;
-  var priceRange = maxP - minP || 1;
-
-  var dates = data.map(function(d){ return new Date(d.date).getTime(); });
-  var minD = Math.min.apply(null, dates);
-  var maxD = Math.max.apply(null, dates);
-  var dateRange = maxD - minD || 1;
-
-  function px(d){ return padL + ((new Date(d.date).getTime() - minD) / dateRange) * chartW; }
-  function py(d){ return padT + (1 - (d.price - minP) / priceRange) * chartH; }
-
-  // Build polyline points
-  var points = data.map(function(d){ return px(d).toFixed(1)+','+py(d).toFixed(1); }).join(' ');
-
-  // X axis labels
-  var firstDate = new Date(data[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  var lastDate = new Date(data[data.length-1].date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
-
-  // Y axis: 3 grid lines + labels
-  var yTicks = [minP, (minP+maxP)/2, maxP];
-  var yGridLines = yTicks.map(function(p){
-    var y = (padT + (1-(p-minP)/priceRange)*chartH).toFixed(1);
-    return '<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+chartW)+'" y2="'+y+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>'
-      +'<text x="'+(padL-8)+'" y="'+(parseFloat(y)+3.5)+'" text-anchor="end" font-size="8" fill="var(--text-muted)">$'+Math.round(p)+'</text>';
-  }).join('');
-
-  // Small clean dots
-  var dots = data.map(function(d){
-    return '<circle cx="'+px(d).toFixed(1)+'" cy="'+py(d).toFixed(1)+'" r="2.5" fill="var(--surface-2)" stroke="var(--green)" stroke-width="1.5">'
-      +'<title>'+d.date+': $'+d.price.toFixed(2)+'</title>'
-      +'</circle>';
-  }).join('');
-
-  // Fill area under line
-  var fillPoints = padL+','+(padT+chartH)+' '+points+' '+(padL+chartW)+','+(padT+chartH);
-
-  var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">'
-    // Background
-    +'<rect x="'+padL+'" y="'+padT+'" width="'+chartW+'" height="'+chartH+'" fill="rgba(0,0,0,0.15)" rx="2"/>'
-    // Grid lines + Y labels
-    + yGridLines
-    // Bottom axis
-    +'<line x1="'+padL+'" y1="'+(padT+chartH)+'" x2="'+(padL+chartW)+'" y2="'+(padT+chartH)+'" stroke="var(--border)" stroke-width="1"/>'
-    // Fill area
-    +'<polygon points="'+fillPoints+'" fill="rgba(182,255,0,0.08)"/>'
-    // Line — slightly thinner, smoother
-    +'<polyline points="'+points+'" fill="none" stroke="rgba(182,255,0,0.85)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>'
-    // Dots on top
-    + dots
-    // X labels
-    +'<text x="'+(padL+4)+'" y="'+(H-6)+'" text-anchor="start" font-size="8" fill="var(--text-muted)">'+firstDate+'</text>'
-    +'<text x="'+(padL+chartW-4)+'" y="'+(H-6)+'" text-anchor="end" font-size="8" fill="var(--text-muted)">'+lastDate+'</text>'
-    +'</svg>';
-
-  // Stat strip
-  var stats = '<div style="display:flex;gap:0;border-top:1px solid var(--border);">'
-    + [
-        {label:'7D AVG', val: avg7, sub: d7.length ? d7.length+' sales' : null},
-        {label:'14D AVG', val: avg14, sub: d14.length ? d14.length+' sales' : null},
-        {label:'30D AVG', val: avg30, sub: d30.length ? d30.length+' sales' : null},
-        {label:'HIGH', val: high, sub: null},
-        {label:'LOW', val: low, sub: null}
-      ].map(function(s, i){
-        var isLast = i === 4;
-        var valStr = s.val != null ? '$'+Number(s.val).toFixed(0) : '--';
-        var color = i === 3 ? 'var(--green)' : i === 4 ? '#f87171' : 'var(--text)';
-        return '<div style="flex:1;text-align:center;padding:10px 4px;'+(isLast?'':'border-right:1px solid var(--border);')+'">'
-          +'<div style="font-size:14px;font-weight:800;color:'+color+';">'+valStr+'</div>'
-          +(s.sub ? '<div style="font-size:8px;color:var(--text-muted);margin-top:1px;">'+s.sub+'</div>' : '')
-          +'<div style="font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">'+s.label+'</div>'
-          +'</div>';
-      }).join('')
-    +'</div>';
-
-  container.innerHTML = '<div style="padding:4px 0 0;">' + svg + '</div>' + stats;
-}
-
-function daysDiff(dateStr, now){
-  var d = new Date(dateStr);
-  return (now - d) / (1000 * 60 * 60 * 24);
-}
-
-function renderListings(results, tab){
-  var content = document.getElementById('listing-content');
-  if(!content) return;
-  var r = CARD;
-  var bq = tab==='raw'
-    ? encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' -psa -bgs -sgc')
-    : tab==='psa10'
-    ? encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 10')
-    : encodeURIComponent((r.player||'')+' '+(r.year||'')+(r.card_no?' #'+r.card_no:'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' '+r.parallel:'')+' PSA 9');
-  var ebayLink = 'https://www.ebay.com/sch/i.html?_nkw='+bq+'&LH_Sold=1&LH_Complete=1&_sop=13&mkevt=1&mkcid=1&campid=5339155811&toolid=10001&mkrid=711-53200-19255-0';
-
-  if(!results || results.length === 0){
-    content.innerHTML = '<div class="coming-soon" style="padding:24px;">'
-      +'<div class="cs-icon">🔍</div>'
-      +'<div class="cs-title">No recent sold listings found</div>'
-      +'<div class="cs-sub">Try searching directly on eBay.</div>'
-      +'<div style="margin-top:14px;"><a href="'+ebayLink+'" target="_blank" class="hbtn hbtn-ghost" style="font-size:11px;">View on eBay →</a></div>'
-      +'</div>';
-    return;
-  }
-
-  var rows = results.map(function(item){
-    var titleShort = item.title && item.title.length > 60 ? item.title.substring(0,60)+'…' : (item.title||'--');
-    var priceStr = item.price ? '$'+item.price.toFixed(2) : '--';
-    var dateStr = item.dateSold || '--';
-    var typeStr = item.listingType || 'Buy It Now';
-    var titleCell = item.itemUrl
-      ? '<a href="'+item.itemUrl+'" target="_blank" title="'+((item.title||'').replace(/"/g,'&quot;'))+'">'+titleShort+'</a>'
-      : titleShort;
-    return '<tr>'
-      +'<td style="text-align:left;">'+titleCell+'</td>'
-      +'<td>'+dateStr+'</td>'
-      +'<td style="color:var(--green);font-weight:700;">'+priceStr+'</td>'
-      +'<td>'+typeStr+'</td>'
-      +'</tr>';
-  }).join('');
-
-  content.innerHTML = '<table class="listing-tbl">'
-    +'<thead><tr><th style="text-align:left;">Title</th><th style="text-align:right;">Date Sold</th><th style="text-align:right;">Price</th><th style="text-align:right;">Type</th></tr></thead>'
-    +'<tbody>'+rows+'</tbody>'
-    +'</table>'
-    +'<div style="padding:10px 12px;border-top:1px solid var(--border);text-align:right;">'
-    +'<a href="'+ebayLink+'" target="_blank" style="font-size:11px;color:var(--text-muted);">View all on eBay →</a>'
-    +'</div>';
+  // Future: fetch eBay data here
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────
@@ -812,7 +489,7 @@ function addToInventory(){
       gem_rate:CARD.actual_gem_rate||0, image_url:CARD.image_url||''
     }));
   }catch(e){}
-  window.location.href='collection.html';
+  window.location.href='collection.html?add=1';
 }
 
 function toggleAdminEdit(){
