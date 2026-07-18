@@ -61,6 +61,7 @@
 .status-submitted{background:rgba(234,179,8,.12);color:#facc15;border:1px solid rgba(234,179,8,.25);}
 .status-graded{background:rgba(182,255,0,.1);color:var(--green);border:1px solid rgba(182,255,0,.2);}
 .status-sold{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);}
+.status-listed{background:rgba(251,146,60,.12);color:#fb923c;border:1px solid rgba(251,146,60,.25);}
 
 /* Row actions */
 .row-actions{display:flex;gap:6px;}
@@ -151,6 +152,7 @@ select.form-input{cursor:pointer;}
     <button class="sub-tab active" data-tab="raw" onclick="switchTab('raw',this)">Raw Inventory <span class="tab-count" id="count-raw">--</span></button>
     <button class="sub-tab" data-tab="submitted" onclick="switchTab('submitted',this)">Submissions <span class="tab-count" id="count-submitted">--</span></button>
     <button class="sub-tab" data-tab="graded" onclick="switchTab('graded',this)">Graded <span class="tab-count" id="count-graded">--</span></button>
+    <button class="sub-tab" data-tab="listed" onclick="switchTab('listed',this)">Listed <span class="tab-count" id="count-listed">--</span></button>
     <button class="sub-tab" data-tab="sold" onclick="switchTab('sold',this)">Sold <span class="tab-count" id="count-sold">--</span></button>
   </div>
 
@@ -269,6 +271,7 @@ select.form-input{cursor:pointer;}
             <option value="raw">Raw</option>
             <option value="submitted">Submitted to PSA</option>
             <option value="graded">Graded — Returned</option>
+            <option value="listed">Listed for Sale</option>
             <option value="sold">Sold</option>
           </select>
         </div>
@@ -433,11 +436,12 @@ async function loadCards(){
 // COUNTS & PORTFOLIO
 // ──────────────────────────────────────────────────────────────────────────
 function updateCounts(){
-  var counts = { raw: 0, submitted: 0, graded: 0, sold: 0 };
+  var counts = { raw: 0, submitted: 0, graded: 0, listed: 0, sold: 0 };
   ALL_CARDS.forEach(function(c){
     if (c.status === 'raw') counts.raw++;
     else if (c.status === 'submitted') counts.submitted++;
     else if (c.status === 'graded') counts.graded++;
+    else if (c.status === 'listed') counts.listed++;
     else if (c.status === 'sold') counts.sold++;
   });
   Object.keys(counts).forEach(function(k){
@@ -486,6 +490,7 @@ function renderCurrentTab(){
     if (CURRENT_TAB === 'raw' && c.status !== 'raw') return false;
     if (CURRENT_TAB === 'submitted' && c.status !== 'submitted') return false;
     if (CURRENT_TAB === 'graded' && c.status !== 'graded') return false;
+    if (CURRENT_TAB === 'listed' && c.status !== 'listed') return false;
     if (CURRENT_TAB === 'sold' && c.status !== 'sold') return false;
     if (sport && c.sport !== sport) return false;
     if (search && !(c.player||'').toLowerCase().includes(search) && !(c.set_name||'').toLowerCase().includes(search)) return false;
