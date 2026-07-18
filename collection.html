@@ -371,14 +371,14 @@ var PLATFORM_FEE = 0.135;
 var GRADING_TIERS = [];
 
 async function loadGradingTiers(){
-  var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost', {ascending: true});
+  var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost_per_card', {ascending: true});
   if(res.data){
     GRADING_TIERS = res.data;
     var sel = document.getElementById('f-grading-tier');
     if(sel){
       sel.innerHTML = '<option value="">Select tier...</option>'
         + GRADING_TIERS.map(function(t){
-            return '<option value="'+t.cost+'" data-name="'+t.name+'">'+t.name+' — $'+t.cost+'</option>';
+            return '<option value="'+t.cost_per_card+'" data-name="'+t.tier_name+'">'+t.tier_name+' — $'+t.cost_per_card+'</option>';
           }).join('');
     }
   }
@@ -717,9 +717,9 @@ function openEditModal(id){
   if(card.best_tier && GRADING_TIERS.length){
     var sel = document.getElementById('f-grading-tier');
     if(sel){
-      var matched = GRADING_TIERS.find(function(t){ return t.name && t.name.toLowerCase() === card.best_tier.toLowerCase(); });
+      var matched = GRADING_TIERS.find(function(t){ return t.tier_name && t.tier_name.toLowerCase() === card.best_tier.toLowerCase(); });
       if(matched){
-        sel.value = matched.cost;
+        sel.value = matched.cost_per_card;
         g('f-grading').value = matched.cost;
       }
     }
