@@ -247,6 +247,12 @@ select.form-input{cursor:pointer;}
           <input class="form-input" type="number" step="0.01" id="f-ship" placeholder="0.00" oninput="calcTotalCost()">
         </div>
         <div class="form-group">
+          <label class="form-label">Grading Tier</label>
+          <select class="form-input" id="f-grading-tier" onchange="onTierChange()">
+            <option value="">Select tier...</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">Grading Cost $</label>
           <input class="form-input" type="number" step="0.01" id="f-grading" placeholder="0.00" oninput="calcTotalCost()">
         </div>
@@ -362,6 +368,22 @@ var PLATFORM_FEE = 0.135;
 // ──────────────────────────────────────────────────────────────────────────
 // INIT
 // ──────────────────────────────────────────────────────────────────────────
+var GRADING_TIERS = [];
+
+async function loadGradingTiers(){
+  var res = await sb.from('grading_tiers').select('*').eq('active', true).order('cost', {ascending: true});
+  if(res.data){
+    GRADING_TIERS = res.data;
+    var sel = document.getElementById('f-grading-tier');
+    if(sel){
+      sel.innerHTML = '<option value="">Select tier...</option>'
+        + GRADING_TIERS.map(function(t){
+            return '<option value="'+t.cost+'" data-name="'+t.name+'">'+t.name+' — $'+t.cost+'</option>';
+          }).join('');
+    }
+  }
+}
+
 (async function init(){
   var user = await requireAuth();
   if (!user) return;
@@ -376,6 +398,7 @@ var PLATFORM_FEE = 0.135;
     }
   } catch(e){}
 
+  await loadGradingTiers();
   await loadCards();
 })();
 
@@ -690,7 +713,19 @@ function openEditModal(id){
   g('f-source').value = card.source||'';
   g('f-price').value = card.price||'';
   g('f-ship').value = card.ship||'';
-  g('f-grading').value = card.grading||'';
+  // Auto-select grading tier if best_tier is available
+  if(card.best_tier && GRADING_TIERS.length){
+    var sel = document.getElementById('f-grading-tier');
+    if(sel){
+      var matched = GRADING_TIERS.find(function(t){ return t.name && t.name.toLowerCase() === card.best_tier.toLowerCase(); });
+      if(matched){
+        sel.value = matched.cost;
+        g('f-grading').value = matched.cost;
+      }
+    }
+  } else {
+    g('f-grading').value = card.grading||'';
+  }
   g('f-total').value = card.total_cost||'';
   g('f-status').value = card.status||'raw';
   g('f-gemrate').value = card.gem_rate ? (card.gem_rate*100).toFixed(1) : '';
@@ -735,6 +770,14 @@ function onStatusChange(){
   var status = g('f-status').value;
   g('f-grade-wrap').style.display = status === 'graded' ? 'block' : 'none';
   g('sold-section').style.display = status === 'sold' ? 'block' : 'none';
+}
+
+function onTierChange(){
+  var sel = document.getElementById('f-grading-tier');
+  var cost = parseFloat(sel.value) || 0;
+  var g = document.getElementById('f-grading');
+  if(g){ g.value = cost || ''; }
+  calcTotalCost();
 }
 
 function calcTotalCost(){
