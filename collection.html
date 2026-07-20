@@ -510,6 +510,7 @@ function renderCurrentTab(){
   if (CURRENT_TAB === 'raw')       renderRawTable(cards);
   else if (CURRENT_TAB === 'submitted') renderSubmittedTable(cards);
   else if (CURRENT_TAB === 'graded')   renderGradedTable(cards);
+  else if (CURRENT_TAB === 'listed')   renderListedTable(cards);
   else if (CURRENT_TAB === 'sold')     renderSoldTable(cards);
 }
 
@@ -618,8 +619,35 @@ function renderGradedTable(cards){
       + '<td class="num'+evColor+'">'+fPct(c.ev_pct)+'</td>'
       + '<td class="num green">'+f$(marketVal)+'</td>'
       + '<td><div class="row-actions">'
+        + '<button class="row-btn primary" data-action="markListed" data-id="'+c.id+'">Mark as Listed</button>'
+        + '<button class="row-btn" data-action="ebay" data-id="'+c.id+'">&#x1F6D2; List on eBay</button>'
+        + '<button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button>'
+      + '</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderListedTable(cards){
+  var el = g('tab-content'); if(!el) return;
+  if (!cards.length){ el.innerHTML = emptyState("No listed cards yet", "Cards you've marked as listed will appear here."); return; }
+  var html = '<div class="table-wrap"><table class="inv-table"><thead><tr>'
+    + '<th>Card</th><th>Sport</th><th>PSA Grade</th><th>Total Cost</th><th>PSA 10 Value</th><th>Actions</th>'
+    + '</tr></thead><tbody>';
+  cards.forEach(function(c){
+    var grade = c.psa_grade || 10;
+    var gradeColor = grade >= 10 ? 'var(--green)' : grade >= 9 ? '#60a5fa' : 'var(--text)';
+    var marketVal = grade >= 10 ? (c.psa10||0) : (c.psa9||0);
+    html += '<tr>'
+      + '<td><div class="card-name">'+c.player+'</div><div class="card-meta">'+(c.year||'')+' '+(c.set_name||'')+(c.card_no?' #'+c.card_no:'')+' '+(c.parallel&&c.parallel.toLowerCase()!=='base'?c.parallel:'')+'</div></td>'
+      + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
+      + '<td><span style="font-size:18px;font-weight:900;color:'+gradeColor+';">'+(grade?'PSA '+grade:'--')+'</span></td>'
+      + '<td class="num">'+f$(c.total_cost)+'</td>'
+      + '<td class="num green">'+f$(marketVal)+'</td>'
+      + '<td><div class="row-actions">'
         + '<button class="row-btn primary" data-action="sold" data-id="'+c.id+'">Mark Sold</button>'
-        + '<button class="row-btn" data-action="ebay" data-id="'+c.id+'">&#x1F6D2; eBay</button>'
+        + '<button class="row-btn" data-action="ebay" data-id="'+c.id+'">&#x1F6D2; List on eBay</button>'
         + '<button class="row-btn" data-action="edit" data-id="'+c.id+'">Edit</button>'
       + '</div></td>'
       + '</tr>';
@@ -1004,6 +1032,17 @@ function toggleBatch(bk){
   if(chev) chev.classList.toggle('open');
 }
 
+// ── MARK AS LISTED ────────────────────────────────────────────────────────
+async function markAsListed(id){
+  var { error } = await sb.from('inventory').update({ status: 'listed' }).eq('id', id);
+  if(error){ toast('Error: ' + error.message, true); return; }
+  var card = ALL_CARDS.find(function(c){ return c.id === id; });
+  if(card) card.status = 'listed';
+  toast('Card marked as listed!');
+  renderCurrentTab();
+  updateCounts();
+}
+
 // ── EBAY LISTING ──────────────────────────────────────────────────────────
 function listOnEbay(id){
   var card=ALL_CARDS.find(function(c){return c.id===id;}); if(!card) return;
@@ -1025,6 +1064,7 @@ document.addEventListener('click', function(e){
   if (action === 'edit')    openEditModal(id);
   if (action === 'delete')  deleteCard(id);
   if (action === 'graded')  markGraded(id);
+  if (action === 'markListed') markAsListed(id);
   if (action === 'sold')    markSold(id);
   if (action === 'ebay')    listOnEbay(id);
 });
