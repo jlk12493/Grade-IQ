@@ -488,14 +488,14 @@ function renderValueByPrice(){
   var el = g('value-grid'); if(!el) return;
 
   var ranges = [
-    { label: 'Under $20', sub: 'raw price ≤ $20', max: 20 },
-    { label: 'Under $50', sub: 'raw price ≤ $50', max: 50 },
-    { label: 'Under $100', sub: 'raw price ≤ $100', max: 100 },
+    { label: 'Under $20', sub: 'raw price under $20', min: 0, max: 20 },
+    { label: '$20 – $50', sub: 'raw price $20 to $50', min: 20, max: 50 },
+    { label: '$50 – $100', sub: 'raw price $50 to $100', min: 50, max: 100 },
   ];
 
   el.innerHTML = ranges.map(function(range){
     var cards = ALL_SIGNALS
-      .filter(function(r){ return (r.raw_price||0) <= range.max; })
+      .filter(function(r){ return (r.raw_price||0) > range.min && (r.raw_price||0) <= range.max; })
       .slice(0,5);
 
     var rows = cards.length ? cards.map(function(r){
