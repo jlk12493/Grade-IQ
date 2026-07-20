@@ -639,8 +639,9 @@ function renderListedTable(cards){
     var grade = c.psa_grade || 10;
     var gradeColor = grade >= 10 ? 'var(--green)' : grade >= 9 ? '#60a5fa' : 'var(--text)';
     var marketVal = grade >= 10 ? (c.psa10||0) : (c.psa9||0);
+    var evColor = c.ev_pct >= 0.40 ? ' green' : '';
     html += '<tr>'
-      + '<td><div class="card-name">'+c.player+'</div><div class="card-meta">'+(c.year||'')+' '+((c.set_name||'').replace(/^(Basketball|Baseball|Football|Hockey|TCG)\s+Cards\s+/i,'').replace(/^\d{4}\s+/,'').trim())+(c.card_no?' #'+c.card_no:'')+' '+(c.parallel&&c.parallel.toLowerCase()!=='base'?c.parallel:'')+'</div></td>'
+      + '<td>'+playerCell(c)+'</td>'
       + '<td>'+(c.sport?sportChip(c.sport):'--')+'</td>'
       + '<td><span style="font-size:18px;font-weight:900;color:'+gradeColor+';">'+(grade?'PSA '+grade:'--')+'</span></td>'
       + '<td class="num">'+f$(c.total_cost)+'</td>'
