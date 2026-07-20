@@ -208,7 +208,7 @@ td.blue{color:#60a5fa;}
   </div>
 
   <!-- CONTENT TAB -->
-  <div class="tab-content" id="tab-content">
+  <div class="tab-content" id="tab-mgmt">
     <div class="section-title">Grading Tiers</div>
     <div class="card" style="margin-bottom:16px;">
       <div class="card-title">Active Tiers</div>
@@ -295,7 +295,8 @@ function switchTab(tab, btn){
   document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
   btn.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
-  g('tab-' + tab).classList.add('active');
+  var tabId = tab === 'content' ? 'tab-mgmt' : 'tab-' + tab;
+  g(tabId).classList.add('active');
   loadTab(tab);
 }
 
