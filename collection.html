@@ -567,6 +567,7 @@ function renderRawTable(cards){
       + '<td class="num">'+f$(c.psa10)+'</td>'
       + '<td><div class="row-actions">'
         + '<button class="row-btn primary" onclick="submitToGrading(\''+c.id+'\')">Submit</button>'
+        + '<button class="row-btn" data-action="markListed" data-id="'+c.id+'">Mark as Listed</button>'
         + '<button class="row-btn" onclick="openEditModal(\''+c.id+'\')">Edit</button>'
         + '<button class="row-btn danger" onclick="deleteCard(\''+c.id+'\')">Delete</button>'
       + '</div></td>'
