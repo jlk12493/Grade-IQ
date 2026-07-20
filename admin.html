@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Hub — GradeIQ</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/shared.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--black);color:var(--text);font-family:var(--font);min-height:100vh;}
+.admin-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:20px;height:52px;}
+.admin-logo{font-size:13px;font-weight:900;color:var(--text);letter-spacing:1px;text-transform:uppercase;}
+.admin-logo span{color:var(--green);}
+.admin-nav{display:flex;gap:2px;margin-left:auto;}
+.nav-tab{padding:6px 14px;font-size:11px;font-weight:700;background:transparent;border:none;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;}
+.nav-tab.active{background:var(--green);color:#000;}
+.nav-tab:hover:not(.active){background:var(--surface-2);color:var(--text);}
+.admin-body{padding:24px;max-width:1400px;margin:0 auto;}
+.section-title{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;}
+.stat-big{font-size:32px;font-weight:900;color:var(--text);line-height:1;}
+.stat-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+.stat-green{color:var(--green);}
+.stat-red{color:#f87171;}
+.stat-blue{color:#60a5fa;}
+.btn{padding:7px 14px;font-size:11px;font-weight:700;border:none;border-radius:6px;cursor:pointer;transition:all .15s;}
+.btn-primary{background:var(--green);color:#000;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.btn-ghost:hover{border-color:var(--green);color:var(--text);}
+.btn-danger{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:#f87171;}
+.btn-danger:hover{background:rgba(248,113,113,.25);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:8px 12px;text-align:left;font-size:8px;font-weight:700;color:var(--text);letter-spacing:1px;text-transform:uppercase;background:var(--surface-2);border-bottom:1px solid var(--border);}
+td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text-muted);}
+tr:hover td{background:rgba(255,255,255,.02);}
+td.num{text-align:right;}
+td.green{color:var(--green);}
+td.red{color:#f87171;}
+td.blue{color:#60a5fa;}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.badge-green{background:rgba(182,255,0,.12);color:var(--green);border:1px solid rgba(182,255,0,.2);}
+.badge-red{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.badge-blue{background:rgba(96,165,250,.12);color:#60a5fa;border:1px solid rgba(96,165,250,.2);}
+.badge-yellow{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.2);}
+.badge-muted{background:rgba(148,163,184,.1);color:#94a3b8;border:1px solid rgba(148,163,184,.2);}
+.input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;outline:none;width:100%;}
+.input:focus{border-color:var(--green);}
+.row-actions{display:flex;gap:6px;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.health-bar{height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;margin-top:8px;}
+.health-fill{height:100%;border-radius:3px;background:var(--green);transition:width .5s;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:12px;font-weight:600;color:var(--text);z-index:9999;display:none;}
+.search-row{display:flex;gap:8px;margin-bottom:16px;}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+</style>
+</head>
+<body>
+
+<div class="admin-header">
+  <div class="admin-logo">Grade<span>IQ</span> Admin</div>
+  <div class="admin-nav">
+    <button class="nav-tab active" onclick="switchTab('scanner',this)">Scanner</button>
+    <button class="nav-tab" onclick="switchTab('data',this)">Data</button>
+    <button class="nav-tab" onclick="switchTab('users',this)">Users</button>
+    <button class="nav-tab" onclick="switchTab('content',this)">Content</button>
+    <button class="nav-tab" onclick="switchTab('metrics',this)">Metrics</button>
+  </div>
+  <a href="/index.html" style="font-size:11px;color:var(--text-muted);text-decoration:none;margin-left:16px;">← Back to App</a>
+</div>
+
+<div class="admin-body">
+
+  <!-- SCANNER TAB -->
+  <div class="tab-content active" id="tab-scanner">
+    <div class="section-title">Scanner Health</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title">Total Cards</div>
+        <div class="stat-big" id="s-total">--</div>
+        <div class="stat-sub">in ev_scanner</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Scanned / Hour</div>
+        <div class="stat-big stat-green" id="s-per-hour">--</div>
+        <div class="stat-sub">last 60 minutes</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Est. Cycle Time</div>
+        <div class="stat-big" id="s-cycle">--</div>
+        <div class="stat-sub">hours per full pass</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Last Scan</div>
+        <div class="stat-big stat-blue" id="s-last">--</div>
+        <div class="stat-sub">most recent activity</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Queue Status</div>
+        <div id="s-queue-stats" style="display:flex;gap:24px;margin-bottom:12px;">
+          <div><div style="font-size:22px;font-weight:900;color:var(--green);" id="q-completed">--</div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Completed</div></div>
+          <div><div style="font-size:22px;font-weight:900;color:#fbbf24;" id="q-processing">--</div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Processing</div></div>
+          <div><div style="font-size:22px;font-weight:900;color:var(--text-muted);" id="q-total">--</div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Total</div></div>
+        </div>
+        <div class="health-bar"><div class="health-fill" id="q-bar" style="width:0%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-ghost" onclick="refreshScannerStats()">🔄 Refresh Stats</button>
+          <button class="btn btn-danger" onclick="clearGhostRows()">🧹 Clear Ghost Processing Rows</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Stale Cards (Not scanned in 48h+)</div>
+      <div id="stale-cards-list" style="color:var(--text-muted);font-size:12px;">Loading...</div>
+    </div>
+
+    <div style="margin-top:16px;" class="card">
+      <div class="card-title">Search & Rescan Card</div>
+      <div class="search-row">
+        <input class="input" id="rescan-input" placeholder="Player name or scp_id..." style="max-width:360px;">
+        <button class="btn btn-primary" onclick="searchCard()">Search</button>
+      </div>
+      <div id="rescan-results"></div>
+    </div>
+  </div>
+
+  <!-- DATA TAB -->
+  <div class="tab-content" id="tab-data">
+    <div class="section-title">Cache Management</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">eBay Sold Cache</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+          <div><div class="stat-big" id="cache-count">--</div><div class="stat-sub">cached entries</div></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="loadCacheStats()">🔄 Refresh</button>
+          <button class="btn btn-danger" onclick="clearCache()">🗑 Clear All Cache</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">GemRate Upload Status</div>
+        <div id="gemrate-status" style="font-size:12px;color:var(--text-muted);">Loading...</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Clear Cache for Specific Card</div>
+      <div class="search-row">
+        <input class="input" id="cache-scp-input" placeholder="scp_id (e.g. 11484611)..." style="max-width:300px;">
+        <button class="btn btn-danger" onclick="clearCardCache()">Clear Card Cache</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recent Cache Entries</div>
+      <div id="cache-table">Loading...</div>
+    </div>
+  </div>
+
+  <!-- USERS TAB -->
+  <div class="tab-content" id="tab-users">
+    <div class="section-title">Member Overview</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title">Active Members</div>
+        <div class="stat-big stat-green" id="u-active">--</div>
+        <div class="stat-sub">status = active</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Trial Members</div>
+        <div class="stat-big stat-yellow" id="u-trial" style="color:#fbbf24;">--</div>
+        <div class="stat-sub">is_trial = true</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Expired</div>
+        <div class="stat-big stat-red" id="u-expired">--</div>
+        <div class="stat-sub">status = expired</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active Last 7 Days</div>
+        <div class="stat-big stat-blue" id="u-recent">--</div>
+        <div class="stat-sub">logged in recently</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">All Members</div>
+      <div class="search-row">
+        <input class="input" id="user-search" placeholder="Search by email..." style="max-width:300px;" oninput="filterUsers()">
+      </div>
+      <div id="users-table">Loading...</div>
+    </div>
+  </div>
+
+  <!-- CONTENT TAB -->
+  <div class="tab-content" id="tab-content">
+    <div class="section-title">Grading Tiers</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Active Tiers</div>
+      <div id="tiers-table">Loading...</div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section-title">Buy Signals — Top Cards</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Currently Flagged Cards</div>
+      <div id="flagged-table">Loading...</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Flag / Unflag a Card</div>
+      <div class="search-row">
+        <input class="input" id="flag-input" placeholder="scp_id or player name..." style="max-width:300px;">
+        <button class="btn btn-primary" onclick="searchFlag()">Search</button>
+      </div>
+      <div id="flag-results"></div>
+    </div>
+  </div>
+
+  <!-- METRICS TAB -->
+  <div class="tab-content" id="tab-metrics">
+    <div class="section-title">Business Overview</div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Total Members Ever</div>
+        <div class="stat-big" id="m-total">--</div>
+        <div class="stat-sub">all time signups</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cards in Scanner</div>
+        <div class="stat-big stat-green" id="m-cards">--</div>
+        <div class="stat-sub">actively tracked</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Scanner Health</div>
+        <div class="stat-big stat-green" id="m-health">--</div>
+        <div class="stat-sub">cards / hour</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">New Members by Month</div>
+        <div id="m-monthly-users" style="font-size:12px;color:var(--text-muted);">Loading...</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cards Added by Month</div>
+        <div id="m-monthly-cards" style="font-size:12px;color:var(--text-muted);">Loading...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Trial Conversion Funnel</div>
+      <div id="m-funnel" style="font-size:12px;color:var(--text-muted);">Loading...</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ADMIN_UID = 'a87a87ef-0f88-4426-888b-64e264baf59c';
+var ALL_USERS = [];
+var CURRENT_TAB = 'scanner';
+
+function g(id){ return document.getElementById(id); }
+
+function toast(msg, err){
+  var t = g('toast');
+  t.textContent = msg;
+  t.style.borderColor = err ? '#f87171' : 'var(--green)';
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display = 'none'; }, 3000);
+}
+
+function switchTab(tab, btn){
+  CURRENT_TAB = tab;
+  document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
+  g('tab-' + tab).classList.add('active');
+  loadTab(tab);
+}
+
+function loadTab(tab){
+  if(tab === 'scanner') loadScannerTab();
+  else if(tab === 'data') loadDataTab();
+  else if(tab === 'users') loadUsersTab();
+  else if(tab === 'content') loadContentTab();
+  else if(tab === 'metrics') loadMetricsTab();
+}
+
+// ── SCANNER ───────────────────────────────────────────────────────────────
+async function loadScannerTab(){
+  await refreshScannerStats();
+  await loadStaleCards();
+}
+
+async function refreshScannerStats(){
+  // Total cards
+  var total = await sb.from('ev_scanner').select('*', {count:'exact',head:true});
+  g('s-total').textContent = total.count || '--';
+  g('m-cards').textContent = total.count || '--';
+
+  // Cards scanned in last hour
+  var hr = new Date(Date.now() - 3600000).toISOString();
+  var recent = await sb.from('ev_scanner').select('*', {count:'exact',head:true}).gte('scanned_at', hr);
+  var perHour = recent.count || 0;
+  g('s-per-hour').textContent = perHour;
+  g('m-health').textContent = perHour;
+
+  // Cycle time
+  var cycle = total.count && perHour ? (total.count / perHour).toFixed(1) : '--';
+  g('s-cycle').textContent = cycle;
+
+  // Last scan
+  var last = await sb.from('ev_scanner').select('scanned_at').order('scanned_at', {ascending:false}).limit(1);
+  if(last.data && last.data[0]){
+    var d = new Date(last.data[0].scanned_at);
+    g('s-last').textContent = d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  }
+
+  // Queue
+  var queue = await sb.from('scanner_queue').select('status');
+  if(queue.data){
+    var completed = queue.data.filter(function(r){ return r.status === 'completed'; }).length;
+    var processing = queue.data.filter(function(r){ return r.status === 'processing'; }).length;
+    var qtotal = queue.data.length;
+    g('q-completed').textContent = completed;
+    g('q-processing').textContent = processing;
+    g('q-total').textContent = qtotal;
+    g('q-bar').style.width = qtotal ? ((completed/qtotal)*100)+'%' : '0%';
+  }
+
+  toast('Scanner stats refreshed');
+}
+
+async function loadStaleCards(){
+  var cutoff = new Date(Date.now() - 48 * 3600000).toISOString();
+  var res = await sb.from('ev_scanner').select('scp_id,player,year,set_name,scanned_at').lt('scanned_at', cutoff).order('scanned_at', {ascending:true}).limit(20);
+  var el = g('stale-cards-list');
+  if(!res.data || !res.data.length){ el.innerHTML = '<span style="color:var(--green);">✓ All cards scanned within 48 hours</span>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>Year</th><th>Set</th><th>Last Scanned</th><th></th></tr></thead><tbody>'
+    + res.data.map(function(r){
+        return '<tr><td>'+r.player+'</td><td>'+r.year+'</td><td>'+(r.set_name||'--')+'</td>'
+          +'<td class="red">'+new Date(r.scanned_at).toLocaleDateString()+'</td>'
+          +'<td><button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;" onclick="forceRescan(\''+r.scp_id+'\')">Rescan</button></td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function clearGhostRows(){
+  var res = await sb.from('scanner_queue').update({status:'completed'}).eq('status','processing');
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Ghost rows cleared');
+  await refreshScannerStats();
+}
+
+async function searchCard(){
+  var q = g('rescan-input').value.trim();
+  if(!q) return;
+  var res = await sb.from('ev_scanner').select('scp_id,player,year,set_name,parallel,ev_pct,scanned_at')
+    .or('player.ilike.%'+q+'%,scp_id.eq.'+q)
+    .limit(10);
+  var el = g('rescan-results');
+  if(!res.data || !res.data.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No results found.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>Year</th><th>Set</th><th>EV%</th><th>Last Scanned</th><th></th></tr></thead><tbody>'
+    + res.data.map(function(r){
+        return '<tr><td>'+r.player+'</td><td>'+(r.year||'')+'</td><td>'+(r.set_name||'')+(r.parallel&&r.parallel.toLowerCase()!=='base'?' · '+r.parallel:'')+'</td>'
+          +'<td class="green">'+(r.ev_pct?(r.ev_pct*100).toFixed(1)+'%':'--')+'</td>'
+          +'<td>'+new Date(r.scanned_at).toLocaleDateString()+'</td>'
+          +'<td><button class="btn btn-primary" style="font-size:10px;padding:4px 8px;" onclick="forceRescan(\''+r.scp_id+'\')">Rescan</button></td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function forceRescan(scpId){
+  // Reset scanned_at to trigger rescan on next cycle
+  var res = await sb.from('ev_scanner').update({scanned_at: new Date(0).toISOString()}).eq('scp_id', scpId);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Card queued for rescan: '+scpId);
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+async function loadDataTab(){
+  await loadCacheStats();
+  await loadGemRateStatus();
+}
+
+async function loadCacheStats(){
+  var res = await sb.from('ebay_sold_cache').select('*', {count:'exact',head:true});
+  g('cache-count').textContent = res.count || 0;
+
+  // Recent entries
+  var recent = await sb.from('ebay_sold_cache').select('cache_key,cached_at').order('cached_at',{ascending:false}).limit(20);
+  var el = g('cache-table');
+  if(!recent.data || !recent.data.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">No cache entries.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Cache Key</th><th>Cached At</th><th></th></tr></thead><tbody>'
+    + recent.data.map(function(r){
+        return '<tr><td style="font-family:monospace;font-size:11px;">'+r.cache_key+'</td>'
+          +'<td>'+new Date(r.cached_at).toLocaleString()+'</td>'
+          +'<td><button class="btn btn-danger" style="font-size:10px;padding:3px 8px;" onclick="deleteCacheKey(\''+r.cache_key+'\')">Delete</button></td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function loadGemRateStatus(){
+  var sports = ['Baseball','Basketball','Football','Hockey'];
+  var el = g('gemrate-status');
+  var today = new Date().toISOString().split('T')[0];
+  var rows = '';
+  for(var s of sports){
+    var res = await sb.from('gem_rates').select('uploaded_at').eq('sport', s).order('uploaded_at',{ascending:false}).limit(1);
+    var lastUpload = res.data && res.data[0] ? new Date(res.data[0].uploaded_at) : null;
+    var isToday = lastUpload && lastUpload.toISOString().split('T')[0] === today;
+    rows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">'
+      +'<span style="font-weight:600;color:var(--text);">'+s+'</span>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +(lastUpload ? '<span style="font-size:11px;color:var(--text-muted);">'+lastUpload.toLocaleDateString()+'</span>' : '')
+      +'<span class="badge '+(isToday?'badge-green':'badge-red')+'">'+(isToday?'Today':'Stale')+'</span>'
+      +'</div></div>';
+  }
+  el.innerHTML = rows || '<span>No data</span>';
+}
+
+async function clearCache(){
+  if(!confirm('Clear ALL eBay sold cache? This cannot be undone.')) return;
+  var res = await sb.from('ebay_sold_cache').delete().neq('id', 0);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Cache cleared');
+  await loadCacheStats();
+}
+
+async function clearCardCache(){
+  var scpId = g('cache-scp-input').value.trim();
+  if(!scpId) return;
+  var res = await sb.from('ebay_sold_cache').delete().like('cache_key', 'scp_'+scpId+'%');
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Cache cleared for '+scpId);
+  await loadCacheStats();
+}
+
+async function deleteCacheKey(key){
+  var res = await sb.from('ebay_sold_cache').delete().eq('cache_key', key);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Deleted: '+key);
+  await loadCacheStats();
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────────
+async function loadUsersTab(){
+  var members = await sb.from('whop_members').select('*').order('joined_at', {ascending:false});
+  var profiles = await sb.from('profiles').select('email,last_active');
+  ALL_USERS = members.data || [];
+
+  var profileMap = {};
+  (profiles.data||[]).forEach(function(p){ profileMap[p.email] = p.last_active; });
+
+  var active = ALL_USERS.filter(function(u){ return u.status === 'active' && !u.is_trial; }).length;
+  var trial = ALL_USERS.filter(function(u){ return u.is_trial; }).length;
+  var expired = ALL_USERS.filter(function(u){ return u.status === 'expired'; }).length;
+  var sevenDaysAgo = new Date(Date.now() - 7*24*3600000).toISOString();
+  var recentlyActive = (profiles.data||[]).filter(function(p){ return p.last_active && p.last_active > sevenDaysAgo; }).length;
+
+  g('u-active').textContent = active;
+  g('u-trial').textContent = trial;
+  g('u-expired').textContent = expired;
+  g('u-recent').textContent = recentlyActive;
+  g('m-total').textContent = ALL_USERS.length;
+
+  renderUsersTable(ALL_USERS, profileMap);
+  window._profileMap = profileMap;
+}
+
+function renderUsersTable(users, profileMap){
+  var pm = profileMap || window._profileMap || {};
+  var el = g('users-table');
+  if(!users.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No users found.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
+    +'<th>Email</th><th>Status</th><th>Trial</th><th>Joined</th><th>Last Active</th><th>Renewal</th>'
+    +'</tr></thead><tbody>'
+    + users.map(function(u){
+        var lastActive = pm[u.email] ? new Date(pm[u.email]).toLocaleDateString() : '--';
+        var statusBadge = u.status === 'active' ? '<span class="badge badge-green">Active</span>'
+          : u.status === 'expired' ? '<span class="badge badge-red">Expired</span>'
+          : '<span class="badge badge-muted">'+u.status+'</span>';
+        var trialBadge = u.is_trial ? '<span class="badge badge-yellow">Trial</span>' : '--';
+        return '<tr>'
+          +'<td>'+u.email+'</td>'
+          +'<td>'+statusBadge+'</td>'
+          +'<td>'+trialBadge+'</td>'
+          +'<td>'+(u.joined_at?new Date(u.joined_at).toLocaleDateString():'--')+'</td>'
+          +'<td>'+lastActive+'</td>'
+          +'<td>'+(u.renewal_date?new Date(u.renewal_date).toLocaleDateString():'--')+'</td>'
+          +'</tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+function filterUsers(){
+  var q = g('user-search').value.toLowerCase();
+  var filtered = q ? ALL_USERS.filter(function(u){ return u.email && u.email.toLowerCase().includes(q); }) : ALL_USERS;
+  renderUsersTable(filtered);
+}
+
+// ── CONTENT ───────────────────────────────────────────────────────────────
+async function loadContentTab(){
+  await loadTiers();
+  await loadFlaggedCards();
+}
+
+async function loadTiers(){
+  var res = await sb.from('grading_tiers').select('*').order('cost_per_card', {ascending:true});
+  var el = g('tiers-table');
+  if(!res.data || !res.data.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">No tiers found.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
+    +'<th>Grader</th><th>Tier Name</th><th class="num">Cost</th><th>Turnaround</th><th>Status</th><th></th>'
+    +'</tr></thead><tbody>'
+    + res.data.map(function(t){
+        return '<tr>'
+          +'<td>'+t.grader+'</td>'
+          +'<td style="font-weight:600;color:var(--text);">'+t.tier_name+'</td>'
+          +'<td class="num green">$'+t.cost_per_card+'</td>'
+          +'<td class="num">'+(t.turnaround_business_days_avg?t.turnaround_business_days_avg+'d avg':'--')+'</td>'
+          +'<td>'+(t.active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-muted">Inactive</span>')+'</td>'
+          +'<td><button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;" onclick="toggleTier('+t.id+','+!t.active+')">'+(t.active?'Deactivate':'Activate')+'</button></td>'
+          +'</tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function toggleTier(id, active){
+  var res = await sb.from('grading_tiers').update({active:active}).eq('id', id);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Tier updated');
+  await loadTiers();
+}
+
+async function loadFlaggedCards(){
+  var res = await sb.from('ev_scanner').select('scp_id,player,year,set_name,parallel,ev_pct,flag_reason').eq('flagged', true).limit(20);
+  var el = g('flagged-table');
+  if(!res.data || !res.data.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">No flagged cards.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>Year</th><th>Set</th><th>EV%</th><th>Flag Reason</th><th></th></tr></thead><tbody>'
+    + res.data.map(function(r){
+        return '<tr><td>'+r.player+'</td><td>'+(r.year||'')+'</td><td>'+(r.set_name||'')+'</td>'
+          +'<td class="green">'+(r.ev_pct?(r.ev_pct*100).toFixed(1)+'%':'--')+'</td>'
+          +'<td class="red">'+(r.flag_reason||'--')+'</td>'
+          +'<td><button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;" onclick="unflagCard(\''+r.scp_id+'\')">Unflag</button></td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function searchFlag(){
+  var q = g('flag-input').value.trim();
+  if(!q) return;
+  var res = await sb.from('ev_scanner').select('scp_id,player,year,set_name,parallel,ev_pct,flagged,flag_reason')
+    .or('player.ilike.%'+q+'%,scp_id.eq.'+q)
+    .limit(10);
+  var el = g('flag-results');
+  if(!res.data || !res.data.length){ el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No results.</div>'; return; }
+  el.innerHTML = '<div class="tbl-wrap" style="margin-top:12px;"><table><thead><tr><th>Player</th><th>Year</th><th>Set</th><th>EV%</th><th>Status</th><th></th></tr></thead><tbody>'
+    + res.data.map(function(r){
+        return '<tr><td>'+r.player+'</td><td>'+(r.year||'')+'</td><td>'+(r.set_name||'')+'</td>'
+          +'<td class="green">'+(r.ev_pct?(r.ev_pct*100).toFixed(1)+'%':'--')+'</td>'
+          +'<td>'+(r.flagged?'<span class="badge badge-red">Flagged</span>':'<span class="badge badge-muted">Normal</span>')+'</td>'
+          +'<td><button class="btn '+(r.flagged?'btn-ghost':'btn-danger')+'" style="font-size:10px;padding:4px 8px;" onclick="toggleFlag(\''+r.scp_id+'\','+!r.flagged+')">'+(r.flagged?'Unflag':'Flag')+'</button></td></tr>';
+      }).join('')
+    + '</tbody></table></div>';
+}
+
+async function toggleFlag(scpId, flag){
+  var reason = flag ? prompt('Flag reason (optional):') : null;
+  var res = await sb.from('ev_scanner').update({flagged:flag, flag_reason:reason||null}).eq('scp_id', scpId);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast(flag ? 'Card flagged' : 'Card unflagged');
+  await loadFlaggedCards();
+  await searchFlag();
+}
+
+async function unflagCard(scpId){
+  var res = await sb.from('ev_scanner').update({flagged:false, flag_reason:null}).eq('scp_id', scpId);
+  if(res.error){ toast('Error: '+res.error.message, true); return; }
+  toast('Card unflagged');
+  await loadFlaggedCards();
+}
+
+// ── METRICS ───────────────────────────────────────────────────────────────
+async function loadMetricsTab(){
+  // Monthly new users
+  var users = await sb.from('whop_members').select('joined_at').not('joined_at','is',null).order('joined_at',{ascending:true});
+  if(users.data){
+    var byMonth = {};
+    users.data.forEach(function(u){
+      var m = u.joined_at.substring(0,7);
+      byMonth[m] = (byMonth[m]||0)+1;
+    });
+    var months = Object.keys(byMonth).slice(-6);
+    g('m-monthly-users').innerHTML = '<div style="display:flex;gap:0;align-items:flex-end;height:80px;">'
+      + months.map(function(m){
+          var count = byMonth[m];
+          var max = Math.max.apply(null, months.map(function(k){ return byMonth[k]; }));
+          var pct = max ? (count/max)*100 : 0;
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+            +'<div style="font-size:11px;font-weight:700;color:var(--green);">'+count+'</div>'
+            +'<div style="width:80%;background:rgba(182,255,0,.15);border-radius:3px 3px 0 0;height:'+pct+'%;min-height:4px;"></div>'
+            +'<div style="font-size:8px;color:var(--text-muted);">'+m.substring(5)+'</div>'
+            +'</div>';
+        }).join('')
+      +'</div>';
+  }
+
+  // Monthly cards added
+  var cards = await sb.from('ev_scanner').select('scanned_at').order('scanned_at',{ascending:true});
+  if(cards.data){
+    var byMonth = {};
+    cards.data.forEach(function(c){
+      var m = c.scanned_at.substring(0,7);
+      byMonth[m] = (byMonth[m]||0)+1;
+    });
+    var months = Object.keys(byMonth).slice(-6);
+    g('m-monthly-cards').innerHTML = '<div style="display:flex;gap:0;align-items:flex-end;height:80px;">'
+      + months.map(function(m){
+          var count = byMonth[m];
+          var max = Math.max.apply(null, months.map(function(k){ return byMonth[k]; }));
+          var pct = max ? (count/max)*100 : 0;
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+            +'<div style="font-size:11px;font-weight:700;color:#60a5fa;">'+count+'</div>'
+            +'<div style="width:80%;background:rgba(96,165,250,.15);border-radius:3px 3px 0 0;height:'+pct+'%;min-height:4px;"></div>'
+            +'<div style="font-size:8px;color:var(--text-muted);">'+m.substring(5)+'</div>'
+            +'</div>';
+        }).join('')
+      +'</div>';
+  }
+
+  // Trial funnel
+  var all = await sb.from('whop_members').select('is_trial,status,trial_day1_sent,trial_day7_sent,trial_day14_sent,trial_expired_sent');
+  if(all.data){
+    var total = all.data.length;
+    var trials = all.data.filter(function(u){ return u.is_trial; }).length;
+    var active = all.data.filter(function(u){ return u.status==='active'&&!u.is_trial; }).length;
+    var expired = all.data.filter(function(u){ return u.status==='expired'; }).length;
+    g('m-funnel').innerHTML = '<div style="display:flex;gap:16px;">'
+      +[
+        {label:'Total Signups', val:total, color:'var(--text)'},
+        {label:'On Trial', val:trials, color:'#fbbf24'},
+        {label:'Converted', val:active, color:'var(--green)'},
+        {label:'Churned', val:expired, color:'#f87171'},
+        {label:'Conv. Rate', val:total?Math.round((active/total)*100)+'%':'--', color:'var(--green)'}
+      ].map(function(s){
+        return '<div style="flex:1;text-align:center;padding:12px 8px;background:var(--surface-2);border-radius:8px;">'
+          +'<div style="font-size:22px;font-weight:900;color:'+s.color+';">'+s.val+'</div>'
+          +'<div style="font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">'+s.label+'</div>'
+          +'</div>';
+      }).join('')
+      +'</div>';
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+(async function(){
+  var user = await requireAuth();
+  if(!user) return;
+  if(user.id !== ADMIN_UID){
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;"><div style="font-size:24px;">🚫</div><div style="color:var(--text-muted);">Access denied.</div><a href="/index.html" style="color:var(--green);font-size:12px;">← Go back</a></div>';
+    return;
+  }
+  loadScannerTab();
+})();
+</script>
+</body>
+</html>
