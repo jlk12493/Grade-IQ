@@ -1010,7 +1010,7 @@ function listOnEbay(id){
   var grade=card.psa_grade||10;
   var ss=(card.set_name||'').replace(/^(Baseball|Football|Basketball|Hockey|TCG) Cards /i,'').replace(/^\d{4}\s+/,'').trim();
   var title=[card.year,card.player,ss,card.card_no?'#'+card.card_no:'',card.parallel&&card.parallel.toLowerCase()!=='base'?card.parallel:'','PSA '+grade].filter(Boolean).join(' ').substring(0,80);
-  window.open('https://www.ebay.com/sell/listing/create?title='+encodeURIComponent(title),'_blank');
+  window.open('https://www.ebay.com/sl/prelist/home?sr=shListingsCTA&title='+encodeURIComponent(title),'_blank');
 }
 
 // ── EVENT DELEGATION FOR TABLE BUTTONS ──────────────────────────────────
