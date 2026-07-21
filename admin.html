@@ -72,6 +72,7 @@ td.blue{color:#60a5fa;}
     <button class="nav-tab" onclick="switchTab('users',this)">Users</button>
     <button class="nav-tab" onclick="switchTab('content',this)">Content</button>
     <button class="nav-tab" onclick="switchTab('metrics',this)">Metrics</button>
+    <button class="nav-tab" onclick="switchTab('revenue',this)">Revenue</button>
   </div>
   <a href="/index.html" style="font-size:11px;color:var(--text-muted);text-decoration:none;margin-left:16px;">← Back to App</a>
 </div>
@@ -271,6 +272,101 @@ td.blue{color:#60a5fa;}
     </div>
   </div>
 
+  <!-- REVENUE TAB -->
+  <div class="tab-content" id="tab-revenue">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" style="margin:0;">Revenue Intelligence</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);">📂 Upload Whop CSV</span>
+        <input type="file" id="whop-csv-input" accept=".csv" style="display:none;" onchange="loadWhopCSV(this)">
+      </label>
+    </div>
+
+    <div id="rev-no-data" style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:12px;">📊</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">No data loaded</div>
+      <div style="font-size:12px;">Upload your latest Whop member export CSV to see revenue metrics.</div>
+    </div>
+
+    <div id="rev-content" style="display:none;">
+      <!-- KPI Strip -->
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="card" style="border-color:rgba(182,255,0,.3);">
+          <div class="card-title">Monthly Recurring Revenue</div>
+          <div class="stat-big stat-green" id="rev-mrr">--</div>
+          <div class="stat-sub" id="rev-mrr-sub">--</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Annual Run Rate</div>
+          <div class="stat-big" id="rev-arr">--</div>
+          <div class="stat-sub">projected annual revenue</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Subscribers</div>
+          <div class="stat-big stat-blue" id="rev-active">--</div>
+          <div class="stat-sub" id="rev-active-sub">--</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Revenue (Whop)</div>
+          <div class="stat-big" id="rev-total">--</div>
+          <div class="stat-sub">all time platform spend</div>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">Churn Rate</div>
+          <div class="stat-big stat-red" id="rev-churn">--</div>
+          <div class="stat-sub" id="rev-churn-sub">--</div>
+        </div>
+        <div class="card">
+          <div class="card-title">At Risk (Canceling)</div>
+          <div class="stat-big" style="color:#fbbf24;" id="rev-atrisk">--</div>
+          <div class="stat-sub" id="rev-atrisk-sub">MRR at risk</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Avg. LTV</div>
+          <div class="stat-big stat-green" id="rev-ltv">--</div>
+          <div class="stat-sub">per churned member</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Renewals This Month</div>
+          <div class="stat-big stat-blue" id="rev-renewals">--</div>
+          <div class="stat-sub" id="rev-renewals-sub">upcoming</div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">Growth — New Members by Month</div>
+          <div id="rev-growth-chart" style="padding-top:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">MRR Trend (Est.)</div>
+          <div id="rev-mrr-chart" style="padding-top:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Member tables -->
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">Renewing Soon (Next 30 Days)</div>
+          <div id="rev-renewing-table"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recently Churned</div>
+          <div id="rev-churned-table"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">All Active Members</div>
+        <div id="rev-members-table"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -304,6 +400,7 @@ function loadTab(tab){
   else if(tab === 'users') loadUsersTab();
   else if(tab === 'content') loadContentTab();
   else if(tab === 'metrics') loadMetricsTab();
+  else if(tab === 'revenue') {} // loaded via CSV upload
 }
 
 // ── SCANNER ───────────────────────────────────────────────────────────────
@@ -670,6 +767,204 @@ async function loadMetricsTab(){
       }).join('')
       +'</div>';
   }
+}
+
+// ── REVENUE ──────────────────────────────────────────────────────────────
+var WHOP_DATA = [];
+
+function loadWhopCSV(input){
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = e.target.result;
+    var rows = parseCSV(text);
+    WHOP_DATA = rows;
+    renderRevenueDashboard(rows);
+    toast('Loaded '+rows.length+' members from Whop');
+  };
+  reader.readAsText(file);
+}
+
+function parseCSV(text){
+  var lines = text.split('
+');
+  var headers = lines[0].split(',').map(function(h){ return h.replace(/"/g,'').trim(); });
+  var rows = [];
+  for(var i=1;i<lines.length;i++){
+    if(!lines[i].trim()) continue;
+    var vals = lines[i].match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g) || lines[i].split(',');
+    var row = {};
+    headers.forEach(function(h,idx){
+      row[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim();
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function renderRevenueDashboard(rows){
+  g('rev-no-data').style.display = 'none';
+  g('rev-content').style.display = 'block';
+
+  var now = new Date();
+  var thisMonth = now.toISOString().substring(0,7);
+  var in30 = new Date(now.getTime() + 30*24*3600000);
+
+  // Categorize
+  var active = rows.filter(function(r){ return r['Renewal date'] && !r['Churned date'] && !r['Left date']; });
+  var churned = rows.filter(function(r){ return r['Churned date'] || r['Left date']; });
+  var canceling = rows.filter(function(r){ return r['Canceling date'] && !r['Churned date']; });
+  var totalSpend = rows.reduce(function(s,r){ return s + (parseFloat(r['Platform spend (USD)'])||0); }, 0);
+
+  // MRR/ARR
+  var PRICE = 19.99;
+  var mrr = active.length * PRICE;
+  var arr = mrr * 12;
+  var mrrAtRisk = canceling.length * PRICE;
+
+  // LTV
+  var churnedSpend = churned.reduce(function(s,r){ return s + (parseFloat(r['Platform spend (USD)'])||0); }, 0);
+  var ltv = churned.length ? churnedSpend / churned.length : 0;
+
+  // Churn rate
+  var churnRate = rows.length ? (churned.length / rows.length * 100).toFixed(1) : 0;
+
+  // Renewals this month / next 30 days
+  var renewingsSoon = active.filter(function(r){
+    if(!r['Renewal date']) return false;
+    try { var d = new Date(r['Renewal date']); return d <= in30 && d >= now; } catch(e){ return false; }
+  });
+
+  // New members this month
+  var newThisMonth = rows.filter(function(r){
+    return r['Joined date'] && r['Joined date'].substring(0,7) === thisMonth;
+  });
+
+  // Set KPIs
+  g('rev-mrr').textContent = '$'+mrr.toFixed(2);
+  g('rev-mrr-sub').textContent = active.length+' subscribers × $'+PRICE;
+  g('rev-arr').textContent = '$'+arr.toFixed(0);
+  g('rev-active').textContent = active.length;
+  g('rev-active-sub').textContent = newThisMonth.length+' new this month';
+  g('rev-total').textContent = '$'+totalSpend.toFixed(2);
+  g('rev-churn').textContent = churnRate+'%';
+  g('rev-churn-sub').textContent = churned.length+' total churned';
+  g('rev-atrisk').textContent = canceling.length;
+  g('rev-atrisk-sub').textContent = '$'+mrrAtRisk.toFixed(2)+' MRR at risk';
+  g('rev-ltv').textContent = ltv > 0 ? '$'+ltv.toFixed(2) : '--';
+  g('rev-renewals').textContent = renewingsSoon.length;
+  g('rev-renewals-sub').textContent = 'in next 30 days';
+
+  // Growth chart
+  var months = {};
+  rows.forEach(function(r){
+    if(r['Joined date']){
+      var m = r['Joined date'].substring(0,7);
+      if(!months[m]) months[m] = {new:0, churn:0};
+      months[m].new++;
+    }
+    if(r['Churned date']){
+      var m = r['Churned date'].substring(0,7);
+      if(!months[m]) months[m] = {new:0, churn:0};
+      months[m].churn++;
+    }
+  });
+  var sortedMonths = Object.keys(months).sort().slice(-8);
+  var maxVal = Math.max.apply(null, sortedMonths.map(function(m){ return months[m].new; }));
+  g('rev-growth-chart').innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;">'
+    + sortedMonths.map(function(m){
+        var newH = maxVal ? (months[m].new/maxVal)*80 : 0;
+        var churnH = maxVal ? (months[m].churn/maxVal)*80 : 0;
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
+          +'<div style="font-size:9px;color:var(--green);font-weight:700;">'+months[m].new+'</div>'
+          +'<div style="width:100%;position:relative;height:80px;display:flex;align-items:flex-end;gap:1px;">'
+          +'<div style="flex:1;background:rgba(182,255,0,.7);border-radius:2px 2px 0 0;height:'+newH+'px;" title="New: '+months[m].new+'"></div>'
+          +(months[m].churn?'<div style="flex:1;background:rgba(248,113,113,.7);border-radius:2px 2px 0 0;height:'+churnH+'px;" title="Churn: '+months[m].churn+'"></div>':'')
+          +'</div>'
+          +'<div style="font-size:8px;color:var(--text-muted);">'+m.substring(5)+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>'
+    +'<div style="display:flex;gap:12px;margin-top:8px;font-size:9px;color:var(--text-muted);">'
+    +'<span><span style="color:var(--green);">■</span> New</span>'
+    +'<span><span style="color:#f87171;">■</span> Churned</span>'
+    +'</div>';
+
+  // MRR trend (cumulative active estimate)
+  var cumulativeActive = 0;
+  var mrrTrend = sortedMonths.map(function(m){
+    cumulativeActive += (months[m].new||0) - (months[m].churn||0);
+    return { m: m, mrr: Math.max(0, cumulativeActive) * PRICE };
+  });
+  var maxMRR = Math.max.apply(null, mrrTrend.map(function(d){ return d.mrr; })) || 1;
+  g('rev-mrr-chart').innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;">'
+    + mrrTrend.map(function(d){
+        var h = (d.mrr/maxMRR)*80;
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
+          +'<div style="font-size:9px;color:#60a5fa;font-weight:700;">$'+Math.round(d.mrr)+'</div>'
+          +'<div style="width:100%;height:80px;display:flex;align-items:flex-end;">'
+          +'<div style="width:100%;background:rgba(96,165,250,.7);border-radius:2px 2px 0 0;height:'+h+'px;"></div>'
+          +'</div>'
+          +'<div style="font-size:8px;color:var(--text-muted);">'+d.m.substring(5)+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>';
+
+  // Renewing soon table
+  var renewEl = g('rev-renewing-table');
+  if(renewingsSoon.length){
+    renewEl.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Renewal</th><th>Spend</th></tr></thead><tbody>'
+      + renewingsSoon.sort(function(a,b){ return new Date(a['Renewal date']) - new Date(b['Renewal date']); })
+        .map(function(r){
+          var d = new Date(r['Renewal date']);
+          var daysLeft = Math.ceil((d-now)/(1000*60*60*24));
+          return '<tr><td>'+r['Email']+'</td>'
+            +'<td><span style="color:'+(daysLeft<=7?'#f87171':'#fbbf24')+';">'+d.toLocaleDateString()+' ('+daysLeft+'d)</span></td>'
+            +'<td class="green">$'+(parseFloat(r['Platform spend (USD)'])||0).toFixed(2)+'</td></tr>';
+        }).join('')
+      +'</tbody></table></div>';
+  } else {
+    renewEl.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No renewals in next 30 days.</div>';
+  }
+
+  // Recently churned table
+  var churnEl = g('rev-churned-table');
+  var recentChurn = churned.slice(0,10);
+  if(recentChurn.length){
+    churnEl.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Churned</th><th>Spend</th></tr></thead><tbody>'
+      + recentChurn.map(function(r){
+          var d = r['Churned date']||r['Left date'];
+          return '<tr><td>'+r['Email']+'</td>'
+            +'<td class="red">'+(d?new Date(d).toLocaleDateString():'--')+'</td>'
+            +'<td>$'+(parseFloat(r['Platform spend (USD)'])||0).toFixed(2)+'</td></tr>';
+        }).join('')
+      +'</tbody></table></div>';
+  } else {
+    churnEl.innerHTML = '<div style="color:var(--green);font-size:12px;padding:8px 0;">✓ No recent churn.</div>';
+  }
+
+  // All active members
+  var membersEl = g('rev-members-table');
+  membersEl.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>Email</th><th>Name</th><th>Location</th><th>Joined</th><th>Renewal</th><th>Spend</th><th>Status</th></tr></thead><tbody>'
+    + active.sort(function(a,b){ return new Date(a['Renewal date']||0) - new Date(b['Renewal date']||0); })
+      .map(function(r){
+        var isCanceling = !!r['Canceling date'];
+        var statusBadge = isCanceling
+          ? '<span class="badge badge-yellow">Canceling</span>'
+          : '<span class="badge badge-green">Active</span>';
+        var loc = [r['City'],r['State'],r['Country']].filter(Boolean).join(', ');
+        return '<tr>'
+          +'<td>'+r['Email']+'</td>'
+          +'<td style="color:var(--text);">'+r['Name']+'</td>'
+          +'<td style="font-size:11px;">'+loc+'</td>'
+          +'<td>'+(r['Joined date']?new Date(r['Joined date']).toLocaleDateString():'--')+'</td>'
+          +'<td>'+(r['Renewal date']?new Date(r['Renewal date']).toLocaleDateString():'--')+'</td>'
+          +'<td class="green">$'+(parseFloat(r['Platform spend (USD)'])||0).toFixed(2)+'</td>'
+          +'<td>'+statusBadge+'</td>'
+          +'</tr>';
+      }).join('')
+    +'</tbody></table></div>';
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────
