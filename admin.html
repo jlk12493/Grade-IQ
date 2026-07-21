@@ -793,7 +793,9 @@ function parseCSV(text){
   var rows = [];
   for(var i=1;i<lines.length;i++){
     if(!lines[i].trim()) continue;
-    var vals = lines[i].match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g) || lines[i].split(',');
+    var vals=[];var cur='';var inQ=false;
+    for(var c=0;c<lines[i].length;c++){var ch=lines[i][c];if(ch=='"'){inQ=!inQ;}else if(ch==','&&!inQ){vals.push(cur.trim());cur='';}else{cur+=ch;}}
+    vals.push(cur.trim());
     var row = {};
     headers.forEach(function(h,idx){
       row[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim();
