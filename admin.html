@@ -787,8 +787,7 @@ function loadWhopCSV(input){
 }
 
 function parseCSV(text){
-  var lines = text.split('
-');
+  var lines = text.split('\n');
   var headers = lines[0].split(',').map(function(h){ return h.replace(/"/g,'').trim(); });
   var rows = [];
   for(var i=1;i<lines.length;i++){
