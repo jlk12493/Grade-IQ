@@ -209,7 +209,7 @@ body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,
 
 /* TABLES */
 .twrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);}
-.dtbl{width:100%;border-collapse:collapse;min-width:700px;}
+.dtbl{width:100%;border-collapse:collapse;min-width:700px;}.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .dtbl thead{background:var(--near-black);}
 .dtbl th{padding:8px 10px;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;text-align:left;border-bottom:2px solid var(--green);white-space:nowrap;}
 .dtbl td{padding:8px 10px;font-size:12px;color:var(--text-2);border-bottom:1px solid #1e1e1e;white-space:nowrap;}
@@ -351,7 +351,7 @@ input.fi{flex:1;min-width:160px;}
 .bsv{font-size:14px;font-weight:700;color:#fff;font-family:'Courier New',monospace;}
 
 @media(max-width:1100px){.kgrid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:700px){.kgrid{grid-template-columns:repeat(2,1fr);}.dgrid,.agrid{grid-template-columns:1fr;}.bmeta{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.kgrid{grid-template-columns:repeat(2,1fr);}.dgrid,.agrid{grid-template-columns:1fr;}.bmeta{grid-template-columns:repeat(2,1fr);}.scanner-stats-grid{grid-template-columns:repeat(2,1fr) !important;}.scanner-filter-grid{grid-template-columns:1fr !important;}}
 
 /* NOTES TOOLTIP */
 .note-cell{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);font-size:11px;cursor:help;}
@@ -1079,21 +1079,21 @@ body.logged-in #app-footer{display:block;}
           <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Scanner</h2>
           <div style="font-size:12px;color:var(--text-muted);">Auto-scanned opportunities ranked by EV%. Last run: <span id="scanner-last-run">Never</span></div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-a" style="background:var(--green);color:#000;" onclick="runScanner()">&#9654; Run All Sets</button>
-          <button class="btn-s" style="border-color:var(--green);color:var(--green);" onclick="scanNewSets()" id="btn-scan-new">&#10133; Scan New Sets Only</button>
-          <button class="btn-s" onclick="openInventoryCheck()">&#128202; Inventory Check</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;max-width:100%;">
+          <button class="btn-a" style="background:var(--green);color:#000;white-space:nowrap;" onclick="runScanner()">&#9654; Run All Sets</button>
+          <button class="btn-s" style="border-color:var(--green);color:var(--green);white-space:nowrap;" onclick="scanNewSets()" id="btn-scan-new">&#10133; Scan New Sets Only</button>
+          <button class="btn-s" style="white-space:nowrap;" onclick="openInventoryCheck()">&#128202; Inventory Check</button>
         </div>
       </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;" class="scanner-stats-grid">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Opps</div><div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div><div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Top EV%</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-topev">--</div></div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;" class="scanner-filter-grid">
 
           <!-- Player multi-select -->
           <div class="ff" style="grid-column:1/-1;">
